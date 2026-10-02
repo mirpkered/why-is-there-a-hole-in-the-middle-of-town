@@ -20,6 +20,7 @@ New Game → name and class → town → accept posted quests → enter the hole
 - `js/game.js`: game actions and rule changes.
 - `js/state.js`: authoritative state shape, map helpers, and versioned save access.
 - `js/data.js`: starter item and quest definitions.
+- `assets/images/` and `assets/icons/`: source home-screen artwork and resized browser/mobile app icons; `site.webmanifest` defines the install experience.
 - `docs/`: state, architecture, and content conventions.
 
 The app has no server API, account, or cloud save. See [ROADMAP.md](ROADMAP.md). The named canonical roadmap was not included in the supplied project files; its absence is recorded there.
