@@ -1,5 +1,9 @@
 const battleTheme = new URL('../assets/audio/music/battle-theme.mp3', import.meta.url).href;
 let channel = null;
+let audioContext = null;
+let gainNode = null;
+let sourceNode = null;
+let audioLevel = 0;
 let trackId = null;
 let enabled = true;
 let volume = 0.28;
@@ -21,20 +25,45 @@ function ensureChannel(){
   channel.preload='auto';
   channel.loop=true;
   channel.volume=0;
+  // iOS Safari may ignore HTMLMediaElement.volume. A single gain stage keeps
+  // the in-game volume slider and fades effective while reusing the same track.
+  const AudioContextType=typeof window!=='undefined'&&(window.AudioContext||window.webkitAudioContext);
+  if(AudioContextType){
+    try{
+      audioContext=new AudioContextType();
+      sourceNode=audioContext.createMediaElementSource(channel);
+      gainNode=audioContext.createGain();
+      gainNode.gain.value=0;
+      sourceNode.connect(gainNode);
+      gainNode.connect(audioContext.destination);
+      channel.volume=1;
+    }catch{
+      gainNode=null;
+      sourceNode=null;
+      audioContext?.close?.();
+      audioContext=null;
+    }
+  }
   channel.addEventListener('ended',()=>{
     if(!channel?.loop){trackId=null;qaPlayback=false}
   });
   return channel;
 }
 
+function setAudioLevel(value){
+  audioLevel=Math.max(0,Math.min(1,value));
+  if(gainNode)gainNode.gain.value=audioLevel;
+  else if(channel)channel.volume=audioLevel;
+}
+
 function fadeTo(target,duration=220,finish){
   if(!channel)return;
   cancelFade();
-  const id=++transitionId,start=channel.volume,started=performance.now();
+  const id=++transitionId,start=audioLevel,started=performance.now();
   fadeTimer=setInterval(()=>{
     if(id!==transitionId||!channel){clearInterval(fadeTimer);fadeTimer=null;return}
     const progress=Math.min(1,(performance.now()-started)/duration);
-    channel.volume=Math.max(0,Math.min(1,start+(target-start)*progress));
+    setAudioLevel(start+(target-start)*progress);
     if(progress===1){clearInterval(fadeTimer);fadeTimer=null;finish?.()}
   },32);
 }
@@ -43,13 +72,15 @@ async function start(loop=true,userGesture=false){
   const el=ensureChannel();
   if(!el||!enabled)return false;
   el.loop=loop;
-  if(trackId==='battle'&&!el.paused){fadeTo(volume,140);return true}
+  if(trackId==='battle'&&!el.paused){audioContext?.resume?.().catch(()=>{});fadeTo(volume,140);return true}
   if(!userGesture)return false;
   const requestId=++playRequestId;
   trackId='battle';
-  el.volume=0;
+  setAudioLevel(0);
   try{
-    await el.play();
+    const playPromise=el.play();
+    const resumePromise=audioContext?.resume?.()||Promise.resolve();
+    await Promise.all([playPromise,resumePromise]);
     if(requestId!==playRequestId||!enabled||(!combatActive&&!qaPlayback)){stopMusic();return false}
     fadeTo(volume,500);
     return true;
@@ -96,8 +127,10 @@ export function stopMusic(){
 export function currentMusicTrack(){return trackId==='battle'?'Battle Theme':'None'}
 
 document.addEventListener('visibilitychange',()=>{
-  if(document.visibilityState==='visible'&&enabled&&(combatActive||qaPlayback)&&channel?.paused){
+  if(document.visibilityState==='visible'&&enabled&&(combatActive||qaPlayback)&&channel){
     // Reuse the single existing element after iOS suspends a background tab.
-    channel.play().then(()=>{if(enabled&&(combatActive||qaPlayback))fadeTo(volume,240)}).catch(()=>{});
+    const resumePromise=audioContext?.resume?.()||Promise.resolve();
+    const playbackPromise=channel.paused?channel.play():Promise.resolve();
+    Promise.all([playbackPromise,resumePromise]).then(()=>{if(enabled&&(combatActive||qaPlayback))fadeTo(volume,240)}).catch(()=>{});
   }
 });

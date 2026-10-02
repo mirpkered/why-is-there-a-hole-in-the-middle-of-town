@@ -2,7 +2,7 @@ import {loadState,hasSave,SAVE_KEY,freshState,EQUIPMENT_SLOTS,wallAt} from './st
 import {state,setState,startGame,STARTING_CLASSES,acceptQuest,enterDungeon,move,attack,defend,useTonic,useItem,collectFind,collectGroundLoot,persist,resolveDungeonEvent,triggerEvent,triggerRandomEvent,revealLandmark,qaSetTemporaryEffect,qaResetEventState,qaSetRoom,temporaryEffect} from './game.js?v=procedural-floor-20261002c';
 import {equipItem,unequipSlot,buyItem,sellItem,salePrice,compareEquipment,descend,ascend,retreat,retreatChancePercent,returnPlan,attemptReturn,storeStock,canTrade,completeTrade,buyNpcStock,closeNpc,talkNpc,qaGiveItem,qaGiveGold,qaSpawnMonster,qaSpawnNpc,qaAdvanceFloor,qaSetStat,qaClearInventory,qaTeleport,qaTeleportEdge,qaRegenerateFloor,qaRevealFloor,qaFloorValidation,qaForceAttack,qaSetResources,qaRevealNearby,qaRevealReturnRoute,inventoryUsed,inventoryCapacity,countItem} from './game.js?v=procedural-floor-20261002c';
 import {quests,items,monsters,dungeonNpcs,trades,shopStock,townNpcs,dungeonEvents,roomTypes} from './data.js?v=procedural-floor-20261002c';
-import {syncCombatMusic,updateMusicPreferences,playBattleTheme,stopMusic,currentMusicTrack} from './audio.js?v=battle-audio-20261002';
+import {syncCombatMusic,updateMusicPreferences,playBattleTheme,stopMusic,currentMusicTrack} from './audio.js?v=battle-audio-20261002-iosgain';
 
 const app=document.querySelector('#app'),modal=document.querySelector('#modal-root'),qa=new URLSearchParams(location.search).get('qa')==='1';
 let screen='title',message='The town has posted new notices. The hole remains open.',pendingPurchase=null,transactionFeedback='',mapExpanded=false;
