@@ -23,6 +23,18 @@ export const monsters={
   paperMimic:{id:'paper-mimic',name:'Permit-Office Mimic',minDepth:3,hp:25,attack:7,defense:3,speed:2,xp:26,gold:[8,16],rarity:'rare',lootTable:'mimic-drops',encounterText:'The filing cabinet has too many teeth.',behavior:{type:'critical',criticalChance:.15,description:'Heavy strikes from a convincing cabinet.'}}
 };
 
+const attackSets={
+  rat:[['nibble','Nibble',2,4,.68,'A suspiciously confident nibble.'],['lunge','Lunge',3,5,.32,'The rat lunges with municipal purpose.']],
+  kobold:[['toll-club','Tolling bonk',2,5,.72,'The kobold demands payment in bruises.'],['pocket-sand','Pocket sand',3,6,.28,'A handful of grit arrives with surprising force.']],
+  killerRabbit:[['scratch','Scratch',3,6,.76,'The rabbit scratches with alarming focus.'],['leap','Throatward leap',5,7,.24,'The rabbit launches itself at your neck.']],
+  kungFuGoose:[['wing-slap','Wing slap',1,3,.7,'A wing catches you on the shoulder.'],['flying-kick','Flying kick',3,5,.3,'The goose delivers a perfectly committed kick.']],
+  pocketSlime:[['ooze','Ooze bump',1,4,.8,'The slime bumps you with damp determination.'],['splorch','Splorch',2,5,.2,'The slime splorches directly into your boots.']],
+  fireWorm:[['bite','Bite',3,6,.7,'The earthworm bites down.'],['flame-belch','Flame belch',4,7,.3,'The earthworm exhales a tiny, furious flame.']],
+  skeleton:[['rattle','Rattling swipe',3,6,.72,'The skeleton swipes with a loose bone.'],['clipboard','Clipboard smack',4,7,.28,'A clipboard appears from nowhere.']],
+  paperMimic:[['snap','Cabinet snap',4,7,.76,'The filing cabinet snaps shut on you.'],['forms','Paperwork avalanche',5,8,.24,'A stack of forms hits like a brick.']]
+};
+for(const [id,m] of Object.entries(monsters)){m.attacks=attackSets[id].map(([attackId,name,minDamage,maxDamage,weight,flavor])=>({id:attackId,name,minDamage,maxDamage,accuracy:.94,weight,flavor,...(id==='fireWorm'&&attackId==='flame-belch'?{effect:'burn',effectChance:.45,effectTurns:2}:{})}));m.sprite={src:`assets/monsters/${m.id}.svg`,scale:1,offsetY:0}}
+
 export const items={
   'rusty-sword':{id:'rusty-sword',name:'Rusty Sword',category:'equipment',slot:'mainHand',rarity:'common',buyValue:12,sellValue:5,modifiers:{attack:2},flavor:'The rust is mostly decorative. Probably.',stackable:false},
   'patched-coat':{id:'patched-coat',name:'Patched Coat',category:'equipment',slot:'body',rarity:'common',buyValue:10,sellValue:4,modifiers:{defense:1,hp:2},flavor:'One patch is an official town map.',stackable:false},
