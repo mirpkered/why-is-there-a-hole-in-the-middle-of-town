@@ -12,6 +12,8 @@ Use one creature per source image, with a strong dark outline, plain background,
 
 Processing workflow: photograph or scan the drawing; crop it; remove the background; clean photographic artifacts while retaining the hand-drawn lines; add simple color; export a transparent PNG; attach it through the monster's `sprite` metadata (`src`, optional `scale`, and optional `offsetY`); then check the complete sprite at mobile combat size. Keep source/reference files separate from runtime sprites when retaining them.
 
+Current custom runtime sprites: `assets/images/enemies/kung-fungoose.png`, `deadly-rat.png`, `fire-breathing-earthworm.png`, `killer-rabbit.png`, and `pocket-slime.png`. Their display scale and vertical offset are set per monster in `js/data.js`; all other monsters retain their SVG fallback sprites.
+
 ## Equipment and items
 
 Add an `items` entry with `id`, `name`, `category`, `rarity`, `buyValue`, `sellValue`, and optional `slot`, `modifiers`, `effects`, `classes`, `effect`, `questItem`, `stackable`, and `flavor`. Equipment uses Head, Body, Main Hand, Off Hand, Feet, and Accessory slots. Item effects currently support healing and short encounter-counted buffs.

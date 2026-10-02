@@ -1,5 +1,5 @@
-import {freshState,saveState,wallAt,INVENTORY_CAPACITY,EQUIPMENT_SLOTS,createFloorMap} from './state.js?v=enemy-art-20261002';
-import {quests,items,monsters,lootTables,floorEncounterTable,dungeonNpcs,npcEncounterIds,trades,shopStock,rarities,dungeonEvents,roomTypes} from './data.js?v=enemy-art-20261002';
+import {freshState,saveState,wallAt,INVENTORY_CAPACITY,EQUIPMENT_SLOTS,createFloorMap} from './state.js?v=enemy-art-20261002b';
+import {quests,items,monsters,lootTables,floorEncounterTable,dungeonNpcs,npcEncounterIds,trades,shopStock,rarities,dungeonEvents,roomTypes} from './data.js?v=enemy-art-20261002b';
 
 export let state=freshState();
 export const STARTING_CLASSES={Fighter:{str:4,agi:2,mind:1,vit:4,hp:24,mp:4},Wizard:{str:1,agi:2,mind:4,vit:2,hp:17,mp:12},Rogue:{str:2,agi:4,mind:2,vit:2,hp:19,mp:6},Cleric:{str:2,agi:1,mind:3,vit:4,hp:22,mp:9}};

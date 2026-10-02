@@ -39,6 +39,9 @@ monsters.kungFuGoose.name='Kung Fungoose';
 monsters.kungFuGoose.sprite={src:'assets/images/enemies/kung-fungoose.png',scale:1.12,offsetY:-1};
 monsters.rat.name='Deadly Rat';
 monsters.rat.sprite={src:'assets/images/enemies/deadly-rat.png',scale:1.08,offsetY:1};
+monsters.fireWorm.sprite={src:'assets/images/enemies/fire-breathing-earthworm.png',scale:1.08,offsetY:0};
+monsters.killerRabbit.sprite={src:'assets/images/enemies/killer-rabbit.png',scale:1.08,offsetY:0};
+monsters.pocketSlime.sprite={src:'assets/images/enemies/pocket-slime.png',scale:1.12,offsetY:-2};
 
 export const items={
   'rusty-sword':{id:'rusty-sword',name:'Rusty Sword',category:'equipment',slot:'mainHand',rarity:'common',buyValue:12,sellValue:5,modifiers:{attack:2},flavor:'The rust is mostly decorative. Probably.',stackable:false},
