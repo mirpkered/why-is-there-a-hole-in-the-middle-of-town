@@ -16,6 +16,10 @@ The five shipped user drawings have paired ink/color files: `kung-fungoose-*`, `
 
 Current custom runtime sprites use paired `*-ink.png` and `*-colored.png` files for Kung Fungoose, Deadly Rat, Fire-Breathing Earthworm, Killer Rabbit, and Pocket Slime. Their display scale and vertical offset are set per monster in `js/data.js`; all other monsters retain their SVG fallback sprites.
 
+### Handmade audio
+
+Treat user performances and recordings as the composition. Preserve their timing and character; do not replace them with MIDI or a newly composed track. Light cleanup, restrained EQ/compression, and layers made from the same recording are appropriate when they help it sit in the game. Keep runtime formats compact, prevent playback before a user gesture where browsers require one, and test loop points over consecutive plays. The first battle theme is `assets/audio/music/battle-theme.mp3`, arranged from the supplied vocal performance as a clean pass followed by a quieter octave-down layer.
+
 ## Equipment and items
 
 Add an `items` entry with `id`, `name`, `category`, `rarity`, `buyValue`, `sellValue`, and optional `slot`, `modifiers`, `effects`, `classes`, `effect`, `questItem`, `stackable`, and `flavor`. Equipment uses Head, Body, Main Hand, Off Hand, Feet, and Accessory slots. Item effects currently support healing and short encounter-counted buffs.

@@ -10,6 +10,7 @@ The title screen starts a new character or resumes the saved model. The town lin
 - `game.js` owns character creation, quest progression, movement, combat, event resolution, items, and rewards.
 - `state.js` defines the save key/version, starter state, map helpers, migrations, and serialization.
 - `data.js` contains stable IDs and definitions for quests, monsters, items, NPCs, room types, and weighted dungeon events.
+- `audio.js` owns the single background music channel, its fade transitions, and combat music lifecycle.
 
 ## Persistence
 
@@ -28,3 +29,7 @@ On narrow screens, the dungeon uses a compact HUD with minimap, character status
 ## Content model
 
 Quests use stable IDs, source/giver, type, target, count, and reward. Active entries store progress. Items use stable IDs, categories, rarity, prices, quantity rules, equipment modifiers, and optional effects. Content definitions stay separate from player inventory instances. See `docs/CONTENT_GUIDE.md` for event and room conventions.
+
+## Audio
+
+The user-performed battle theme at `assets/audio/music/battle-theme.mp3` is the default combat track. Combat starts it from a player action; battle actions reuse the active track, and leaving combat fades it out. One `HTMLAudioElement` is reused through visibility changes so returning from a suspended mobile tab cannot stack another copy. Music on/off and volume preferences are stored separately in local storage and copied into character saves when available. Browsers that require a user gesture receive playback only from a game action, Continue, a settings interaction, or the QA music controls. QA mode includes a one-pass test, loop test, and stop control.
