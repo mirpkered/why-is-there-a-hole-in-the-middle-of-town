@@ -18,7 +18,7 @@ Current custom runtime sprites use paired `*-ink.png` and `*-colored.png` files 
 
 ### Handmade audio
 
-Treat user performances and recordings as the composition. Preserve their timing and character; do not replace them with MIDI or a newly composed track. Light cleanup, restrained EQ/compression, and layers made from the same recording are appropriate when they help it sit in the game. Keep runtime formats compact, prevent playback before a user gesture where browsers require one, and test loop points over consecutive plays. The first battle theme is `assets/audio/music/battle-theme.mp3`, arranged from the supplied vocal performance as a clean pass followed by a quieter octave-down layer.
+Treat user performances and recordings as the composition. Preserve their timing and character; do not replace them with MIDI or a newly composed track. Light cleanup, restrained EQ/compression, and layers made from the same recording are appropriate when they help it sit in the game. Keep runtime formats compact, prevent playback before a user gesture where browsers require one, and test loop points over consecutive plays. The first battle theme is `assets/audio/music/battle-theme.mp3`, arranged from the supplied vocal performance as a clean pass followed by a quieter octave-down layer. Its 24-bit lossless processed master is `assets/audio/source/battle-theme-master.flac`; the game does not load the archive copy.
 
 ## Equipment and items
 
