@@ -10,16 +10,16 @@ Serve this folder with any static HTTP server and open its address in a browser.
 
 ## Current play loop
 
-New Game → name and class → town → accept quests → enter the hole → fight across three floors → find gear and trade goods → trade, buy, or sell → decide whether to descend or retreat. Eight monsters populate the first three floors; named town residents provide quests, shopping, and rest. Dungeon visitors include a barter trader and a lost surveyor with emergency supplies. Saves are automatic in browser local storage.
+New Game → town → accept quests → explore three floors of combat and strange events → find gear and trade goods → trade, buy, or sell → decide whether to descend or retreat. Seventeen handcrafted events add choices, hazards, treasure, merchants, room identities, and landmarks alongside eight monsters. Named town residents provide services and react to a few discoveries. Saves are automatic in browser local storage.
 
 ## Architecture
 
 - `index.html`: static entry point; all asset paths are relative for project-site hosting.
 - `css/styles.css`: responsive dark stone and civic-paper presentation.
 - `js/app.js`: screen rendering, accessible controls, keyboard input, and QA tools.
-- `js/game.js`: combat, equipment, shops, trades, loot, retreat, floors, and save-backed progression.
+- `js/game.js`: combat, weighted event resolution, temporary effects, equipment, trade, loot, retreat, floors, and save-backed progression.
 - `js/state.js`: authoritative state shape, map helpers, inventory limits, and versioned save migration.
-- `js/data.js`: monster, gear, quest, NPC, trade, and loot-table definitions.
+- `js/data.js`: monster, gear, quest, NPC, trade, loot-table, room, and dungeon-event definitions.
 - `assets/images/` and `assets/icons/`: source home-screen artwork and resized browser/mobile app icons; `site.webmanifest` defines the install experience.
 - `docs/`: state, architecture, and content conventions.
 
