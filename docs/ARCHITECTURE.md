@@ -17,7 +17,9 @@ Meaningful actions call `persist()`, which writes one JSON snapshot to local sto
 
 ## Dungeon
 
-Coordinates are integer grid positions. Facing is north/east/south/west as 0–3. Movement checks wall cells before updating coordinates. Newly visited cells receive a saved room tag and may roll a weighted event or monster encounter; revisiting an event cell does not reroll it. Event definitions and choices are data-driven, with a small outcome resolver in `game.js`. Event state, landmarks, temporary effects, and town reaction notes are saved.
+Coordinates are integer grid positions. Facing is north/east/south/west as 0–3. Forward, left, right, and backward movement each attempt one adjacent cell relative to current facing; successful movement updates facing to the travel direction. A wall bump leaves position and facing unchanged and does not advance turns or encounter timing. Successful steps increment timing exactly once. Newly visited cells receive a saved room tag and may roll a weighted event or monster encounter; revisiting an event cell does not reroll it. Event definitions and choices are data-driven, with a small outcome resolver in `game.js`. Event state, landmarks, temporary effects, and town reaction notes are saved.
+
+On narrow screens, the dungeon uses a compact HUD with minimap, character status, first-person scene, movement pad, and context actions. Movement controls are replaced by combat actions during a fight; events continue to use their own choice screen. The QA state inspector includes the most recent movement direction, result, coordinates, and facing.
 
 ## Content model
 

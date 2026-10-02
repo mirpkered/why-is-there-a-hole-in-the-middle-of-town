@@ -27,7 +27,7 @@ The app has no server API, account, or cloud save. See [ROADMAP.md](ROADMAP.md).
 
 ## Controls
 
-On touch devices use the large dungeon buttons. On desktop, W/Up moves forward, S/Down moves backward, and A/Left or D/Right turns. Buttons remain available to keyboard and assistive technology users.
+Use the dungeon directional pad to move forward, left, right, or backward in one step; each successful step turns to face its travel direction. W/Up, A/Left, D/Right, and S/Down match those actions on a keyboard. A blocked move says “There's a wall there.” and does not consume a turn or advance encounters.
 
 Append `?qa=1` to the URL to show isolated development controls. QA options do not appear in ordinary play.
 
