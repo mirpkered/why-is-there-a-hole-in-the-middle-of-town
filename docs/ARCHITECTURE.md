@@ -8,6 +8,7 @@ The title screen starts a new character or resumes the saved model. The town lin
 
 - `app.js` owns screen templates, event delegation, keyboard controls, and QA-only actions.
 - `game.js` owns character creation, quest progression, movement, combat, event resolution, items, and rewards.
+- `enemy-scaling.js` builds fixed, saveable encounter snapshots and estimates threat against the current player.
 - `state.js` defines the save key/version, starter state, map helpers, migrations, and serialization.
 - `data.js` contains stable IDs and definitions for quests, monsters, items, NPCs, room types, and weighted dungeon events.
 - `audio.js` owns the single background music channel, its fade transitions, and combat music lifecycle.
@@ -21,6 +22,8 @@ Meaningful actions call `persist()`, which writes one JSON snapshot to local sto
 Coordinates are integer grid positions. Facing is north/east/south/west as 0–3. The old v3 implementation used one fixed 7×7 layout and checked only listed wall cells, so missing outer-edge walls allowed coordinates outside the floor. In v4, directional input is absolute, every coordinate outside the persisted map dimensions is blocked, and movement into a wall leaves position/facing/turn timing unchanged. New runs generate three connected 11×11 floors once from the run seed and persist each map (including its stairs); returning, descending, saving, and reloading reuse those maps. The layout uses a randomized depth-first carved corridor maze, then adds loops and small widened chambers. Each generated stair pair is checked for reachability before acceptance. New floor NPCs and Floor 1 quest markers are placed only on valid open cells.
 
 Version 3 saves keep their existing 7×7 geometry and coordinates for every floor already reached; floors not yet reached by those saves retain the same legacy layout on first entry. New runs use procedural layouts. Multi-floor return pathfinding reads the saved map for each floor. QA mode reports map seed, dimensions, walkable/connected counts, and stair connectivity; it can teleport to an edge, reveal a floor, or explicitly regenerate the current floor.
+
+Each combat encounter stores its level, optional rare variant, scaled HP/attacks/defense/behavior, and reward multipliers at spawn. Combat and reward resolution use these stored values, so a save/reload cannot reroll an enemy. v4 active fights migrate into a floor-appropriate snapshot while retaining their remaining-health percentage. Base tiers keep strong monsters above weak ones at equal depth; small per-monster attack-weight/effect changes preserve identity, and scaling has diminishing returns after ten depth steps. The current floor count is three; QA can preview and spawn encounters through synthetic depth 10. Settings store the threat display preference separately for use before character creation and also copy it into saves.
 
 Newly visited cells receive a saved room tag and may roll a weighted event or monster encounter; revisiting an event cell does not reroll it. Event definitions and choices are data-driven, with a small outcome resolver in `game.js`. Event state, landmarks, temporary effects, and town reaction notes are saved.
 

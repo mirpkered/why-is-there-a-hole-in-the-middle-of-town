@@ -53,3 +53,5 @@
 .qa-audio-controls{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,135px),1fr));gap:.45rem;margin:0 0 1rem;padding:.65rem;border:1px solid #575044;border-radius:8px;background:#171b19}
 .qa-audio-controls>b{grid-column:1/-1;color:var(--gold)}
 .qa-audio-controls button{min-height:42px;padding:.4rem .55rem;font-size:.85rem}
+
+.enemy-threat{display:inline-block;margin:.1rem 0 .45rem;padding:.16rem .55rem;border:1px solid #82734d;border-radius:999px;color:#e5c77f;font-weight:700;letter-spacing:.035em}.enemy-panel .row{margin-bottom:.1rem}.enemy-panel>small{display:block;margin-top:.25rem}
