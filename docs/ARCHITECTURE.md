@@ -23,7 +23,7 @@ Version 3 saves keep their existing 7×7 geometry and coordinates for every floo
 
 Newly visited cells receive a saved room tag and may roll a weighted event or monster encounter; revisiting an event cell does not reroll it. Event definitions and choices are data-driven, with a small outcome resolver in `game.js`. Event state, landmarks, temporary effects, and town reaction notes are saved.
 
-On narrow screens, the dungeon uses a compact HUD with minimap, character status, first-person scene, movement pad, and context actions. Movement controls are replaced by combat actions during a fight; events continue to use their own choice screen. The QA state inspector includes the most recent movement direction, result, coordinates, and facing.
+On narrow screens, the dungeon uses a compact HUD with minimap, character status, first-person scene, movement pad, and context actions. During exploration, the minimap can be tapped to open a read-only full-floor view using the same discovery-filtered cells and wall edges; tapping its map again closes it. It is temporary interface state, never saved, and keyboard movement is suspended while it is open. Expansion is disabled during combat so the map cannot cover combat choices; events use their own choice screen. The QA state inspector includes the most recent movement direction, result, coordinates, and facing.
 
 ## Content model
 
