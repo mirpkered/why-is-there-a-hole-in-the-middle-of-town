@@ -2,7 +2,7 @@ export const SAVE_KEY='mirpworks-hole-town-save';
 export const SAVE_VERSION=5;
 export const INVENTORY_CAPACITY=16;
 export const EQUIPMENT_SLOTS=['head','body','mainHand','offHand','feet','accessory'];
-import {monsters} from './data.js?v=enemy-depth-20261002';
+import {monsters} from './data.js?v=room-visuals-20261002d';
 import {scaleEnemy} from './enemy-scaling.js?v=enemy-depth-20261002';
 
 // Legacy v3 saves used this fixed 7x7 floor. Keep that geometry when migrating

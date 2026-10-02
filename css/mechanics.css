@@ -9,12 +9,12 @@
 @media(max-width:440px){.item-row{align-items:flex-start;flex-wrap:wrap}.item-row>button{margin-left:auto}.slot-grid{grid-template-columns:1fr}.dungeon-exits button{flex:1 1 100%}.item-actions{width:100%;justify-content:flex-start}}
 .event-panel{max-width:760px;margin:1rem auto;border-color:#756a4d;background:linear-gradient(140deg,#2a2d25,#202421)}.event-panel>p{max-width:62ch}.event-choices{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,230px),1fr));gap:.65rem;margin-top:1.2rem}.event-choice{display:grid;gap:.25rem;text-align:left;min-height:68px;background:#30352e}.event-choice small{color:var(--muted);font-weight:400}.cell.landmark{display:grid;place-items:center;color:var(--gold);font-size:.75rem;font-style:normal;font-weight:800;border-color:var(--gold)}.landmark-label{margin:.25rem 0;color:var(--gold);font-size:.88rem}.effect-pill{color:#c6d7a9;border-color:#657453}
 .dungeon-layout{grid-template-areas:"main side"}.dungeon-main{grid-area:main;min-width:0}.dungeon-side{grid-area:side;min-width:0;display:flex;flex-direction:column;gap:.6rem}.dungeon-side h2{font-size:1rem;margin:.1rem 0 .4rem}.dungeon-minimap .map{width:min(100%,260px)}.dungeon-hud .stats{gap:.35rem}.dungeon-hud .pill{font-size:.78rem;padding:.22rem .48rem}.room-note{margin:.45rem 0;color:var(--muted);font-size:.85rem}.encounter-note{font-size:.8rem;margin:.4rem 0}.movement-status{text-align:center;margin:.25rem 0;color:var(--muted);font-size:.82rem}.controls button{min-width:0;font-size:1.2rem;font-weight:700}.dungeon-main .log{margin:.35rem 0;min-height:1.5em;font-size:.9rem}.dungeon-main .scene p{margin:.35rem;text-align:center}
-@media(max-width:680px){body:has(.dungeon-layout){min-height:100svh}.shell:has(.dungeon-layout){width:100%;padding:6px 9px calc(8px + env(safe-area-inset-bottom))}.shell:has(.dungeon-layout)>.topbar{margin:0 0 .35rem;padding:0 0 .35rem;align-items:center}.shell:has(.dungeon-layout) .brand{font-size:.88rem;max-width:none}.shell:has(.dungeon-layout) .top-actions button{min-height:38px}.dungeon-heading{display:none}.dungeon-layout{grid-template-columns:minmax(0,1fr);grid-template-areas:"side" "main";gap:.35rem}.dungeon-side{display:grid;grid-template-columns:minmax(86px,27vw) minmax(0,1fr);align-items:center;gap:.5rem;padding:.4rem;margin:0;border-radius:9px}.dungeon-side h2,.room-note,.encounter-note,.landmark-label{display:none}.dungeon-minimap .map{width:100%;max-width:108px;gap:2px}.map .cell{border-radius:2px}.dungeon-hud .stats{gap:.25rem}.dungeon-hud .pill{font-size:.78rem;line-height:1.3;padding:.2rem .42rem}.dungeon-main{padding:.5rem;margin:0;border-radius:9px}.dungeon-main .scene{min-height:clamp(118px,22svh,158px)}.dungeon-main .scene p{font-size:.9rem}.dungeon-main .log{font-size:.84rem;line-height:1.3;min-height:1.3em}.dungeon-main .controls{width:min(100%,228px);margin:.2rem auto;gap:.2rem}.dungeon-main .controls button{min-height:49px;padding:.25rem;font-size:1.15rem}.dungeon-main .movement-status{font-size:.78rem;margin:.15rem 0}.dungeon-main .dungeon-exits{display:flex;flex-wrap:wrap;gap:.35rem;margin-top:.35rem}.dungeon-main .dungeon-exits button{flex:1 1 auto;min-height:42px;padding:.4rem .55rem;font-size:.85rem}.dungeon-main .actions{grid-template-columns:repeat(2,minmax(0,1fr));gap:.35rem}.dungeon-main .actions button{min-height:48px;font-size:.9rem}.dungeon-main .enemy-panel{margin-top:.35rem;padding:.5rem}.dungeon-main .enemy-panel p{margin:.25rem 0;font-size:.84rem}.dungeon-main .health{height:8px}}
+@media(max-width:680px){body:has(.dungeon-layout){min-height:100svh}.shell:has(.dungeon-layout){width:100%;padding:6px 9px calc(8px + env(safe-area-inset-bottom))}.shell:has(.dungeon-layout)>.topbar{margin:0 0 .35rem;padding:0 0 .35rem;align-items:center}.shell:has(.dungeon-layout) .brand{font-size:.88rem;max-width:none}.shell:has(.dungeon-layout) .top-actions button{min-height:38px}.dungeon-heading{display:none}.dungeon-layout{grid-template-columns:minmax(0,1fr);grid-template-areas:"side" "main";gap:.35rem}.dungeon-side{display:grid;grid-template-columns:minmax(86px,27vw) minmax(0,1fr);align-items:center;gap:.5rem;padding:.4rem;margin:0;border-radius:9px}.dungeon-side h2,.room-note,.encounter-note,.landmark-label{display:none}.dungeon-minimap .map{width:100%;max-width:108px;gap:2px}.map .cell{border-radius:2px}.dungeon-hud .stats{gap:.25rem}.dungeon-hud .pill{font-size:.78rem;line-height:1.3;padding:.2rem .42rem}.dungeon-main{padding:.5rem;margin:0;border-radius:9px}.scene-backdrop{margin:.5rem 0}.dungeon-main .scene{min-height:clamp(118px,22svh,158px)}.dungeon-main .scene p{font-size:.9rem}.dungeon-main .log{font-size:.84rem;line-height:1.3;min-height:1.3em}.dungeon-main .controls{width:min(100%,228px);margin:.2rem auto;gap:.2rem}.dungeon-main .controls button{min-height:49px;padding:.25rem;font-size:1.15rem}.dungeon-main .movement-status{font-size:.78rem;margin:.15rem 0}.dungeon-main .dungeon-exits{display:flex;flex-wrap:wrap;gap:.35rem;margin-top:.35rem}.dungeon-main .dungeon-exits button{flex:1 1 auto;min-height:42px;padding:.4rem .55rem;font-size:.85rem}.dungeon-main .actions{grid-template-columns:repeat(2,minmax(0,1fr));gap:.35rem}.dungeon-main .actions button{min-height:48px;font-size:.9rem}.dungeon-main .enemy-panel{margin-top:.35rem;padding:.5rem}.dungeon-main .enemy-panel p{margin:.25rem 0;font-size:.84rem}.dungeon-main .health{height:8px}}
 @media(max-width:360px){.shell:has(.dungeon-layout) .brand{font-size:.66rem;max-width:calc(100vw - 152px);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.shell:has(.dungeon-layout) .top-actions{gap:.25rem;flex:0 0 auto}.shell:has(.dungeon-layout) .top-actions button{min-height:40px;padding:.35rem .4rem;font-size:.75rem}}
 .randomize-class{width:100%;min-height:48px}.class-preview{border:1px solid var(--line);border-radius:9px;background:#171b19;padding:.7rem .85rem;margin:.55rem 0 .8rem}.class-preview>b{color:var(--gold)}.class-preview p{margin:.3rem 0;font-variant-numeric:tabular-nums}.class-preview small{color:var(--muted)}#create-form label{margin:.65rem 0}
 
 /* Location-aware dungeon scene: the openings are relative to facing, while the map and controls remain absolute. */
-.dungeon-main .scene{position:relative;display:grid;place-items:center;overflow:hidden;min-height:clamp(170px,25vw,260px);border:1px solid #5a5948;border-radius:9px;background:radial-gradient(ellipse at 50% 24%,#9b7540 0,#514431 24%,#282721 61%,#171a19 100%);isolation:isolate}
+.scene-backdrop{margin:.5rem 0}.dungeon-main .scene{position:relative;display:grid;place-items:center;overflow:hidden;min-height:clamp(170px,25vw,260px);border:1px solid #5a5948;border-radius:9px;background:radial-gradient(ellipse at 50% 24%,#9b7540 0,#514431 24%,#282721 61%,#171a19 100%);isolation:isolate}
 .dungeon-main .scene:before,.dungeon-main .scene:after{display:none}
 .scene-view{position:relative;width:min(100%,620px);height:100%;min-height:inherit;overflow:hidden;perspective:650px;background:linear-gradient(#4e4536,#252521 72%,#151918)}
 .scene-ceiling{position:absolute;inset:0 11% 38%;background:linear-gradient(180deg,#38372e,#504535 52%,#5a4b37);clip-path:polygon(16% 0,84% 0,100% 100%,0 100%);opacity:.78}
@@ -35,7 +35,7 @@
   .dungeon-command-bar{position:fixed;left:0;right:0;bottom:0;margin:0;justify-content:space-between;gap:.45rem;padding:8px max(10px,env(safe-area-inset-left,0px)) calc(8px + env(safe-area-inset-bottom,0px));border-top:1px solid #565346;background:linear-gradient(180deg,#171a19f5,#101211fa);backdrop-filter:blur(12px)}
   .dungeon-command-bar .controls{flex:0 1 57vw;width:min(57vw,228px);gap:3px}.dungeon-command-bar .controls button{min-height:50px;padding:.2rem;font-size:1.1rem}.dungeon-exits{flex:1;min-width:82px;max-width:108px}.dungeon-exits button{min-height:42px;font-size:.8rem}
   .combat-controls{grid-template-columns:repeat(2,minmax(0,1fr));padding:8px 12px calc(8px + env(safe-area-inset-bottom,0px))}.combat-controls button{min-height:48px;padding:.35rem;font-size:.87rem}
-  .dungeon-main .scene{min-height:clamp(124px,20svh,158px)}.scene-view{min-height:inherit}.environment-caption{font-size:.86rem}.qa-scene-diagnostics{font-size:.7rem}
+  .scene-backdrop{margin:.5rem 0}.dungeon-main .scene{min-height:clamp(124px,20svh,158px)}.scene-view{min-height:inherit}.environment-caption{font-size:.86rem}.qa-scene-diagnostics{font-size:.7rem}
   .shell:has(.event-panel){padding-bottom:calc(168px + env(safe-area-inset-bottom,0px))}.event-panel .event-choices{position:fixed;z-index:15;left:0;right:0;bottom:0;grid-template-columns:repeat(2,minmax(0,1fr));gap:.4rem;margin:0;padding:8px 10px calc(8px + env(safe-area-inset-bottom,0px));border-top:1px solid #565346;background:#151816f5;backdrop-filter:blur(12px)}.event-choice{min-height:52px;padding:.45rem;font-size:.82rem}.event-choice small{font-size:.72rem}
   .shell:has(.npc-action-bar){padding-bottom:calc(76px + env(safe-area-inset-bottom,0px))}.npc-action-bar{position:fixed;left:0;right:0;bottom:0;margin:0;padding:8px 12px calc(8px + env(safe-area-inset-bottom,0px));border-top:1px solid #565346;background:#151816f5}.npc-action-bar button{width:100%;min-height:50px}
 }
@@ -55,3 +55,51 @@
 .qa-audio-controls button{min-height:42px;padding:.4rem .55rem;font-size:.85rem}
 
 .enemy-threat{display:inline-block;margin:.1rem 0 .45rem;padding:.16rem .55rem;border:1px solid #82734d;border-radius:999px;color:#e5c77f;font-weight:700;letter-spacing:.035em}.enemy-panel .row{margin-bottom:.1rem}.enemy-panel>small{display:block;margin-top:.25rem}
+/* Data-driven room dressing. Geometry stays procedural; these are decorative overlays. */
+.scene-room-label{z-index:8}
+.room-props{position:absolute;inset:0;z-index:2;pointer-events:none}
+.room-prop{position:absolute;display:block;width:17%;height:40%;transform-origin:center bottom;filter:drop-shadow(0 3px 4px #08090999);transform-style:preserve-3d}
+.room-prop svg,.room-prop img{display:block;width:100%;height:100%;overflow:visible}
+.room-prop-zone--far_left{left:18%;top:40%;width:12%;height:27%}
+.room-prop-zone--far_center{left:50%;top:39%;width:13%;height:28%}
+.room-prop-zone--far_right{left:82%;top:40%;width:12%;height:27%}
+.room-prop-zone--mid_left{left:27%;top:54%;width:17%;height:38%}
+.room-prop-zone--mid_right{left:73%;top:54%;width:17%;height:38%}
+.room-prop-zone--foreground_left{left:18%;top:76%;width:25%;height:50%}
+.room-prop-zone--foreground_right{left:82%;top:76%;width:25%;height:50%}
+.room-prop-zone--floor_center{left:50%;top:78%;width:20%;height:43%}
+.room-prop-zone--wall_center{left:50%;top:35%;width:18%;height:37%}
+.room-prop--show-zone{outline:1px dashed #fff5a5;background:#ffe58b22;border-radius:4px}
+.scene--mushroom-room .scene-view{background:linear-gradient(#344336,#27352c 68%,#151918)}
+.scene--mushroom-room .scene-side{background:linear-gradient(90deg,#28342b,#526349 52%,#343a2c)}
+.scene--mushroom-room .scene-floor{background:linear-gradient(180deg,#42533b,#24271e 82%)}
+.scene--flooded-chamber .scene-view{background:linear-gradient(#37474a,#283739 63%,#172021)}
+.scene--flooded-chamber .scene-floor{background:repeating-linear-gradient(174deg,#6d9ba1aa 0 2px,#38575caa 3px 8px,#233a3dcc 9px 17px)}
+.scene--flooded-chamber .scene-light{background:#a9e8e7;opacity:.27}
+.scene--shrine .scene-light{background:#f4c76c;opacity:.5}
+.scene--storage .scene-side,.scene--records .scene-side{background:linear-gradient(90deg,#35312b,#72583c 54%,#484032)}
+.scene--camp .scene-view{background:linear-gradient(#3b403a,#34342c 66%,#181917)}
+.scene--market .scene-light{background:#eca64f;opacity:.42}
+.scene--library .scene-view{background:linear-gradient(#393b3b,#2b2c2b 70%,#181a19)}
+.scene--records .scene-view{background:linear-gradient(#3a3a37,#30302c 70%,#191a18)}
+.scene--spoons .scene-floor{background:radial-gradient(ellipse at 50% 28%,#73766f,#373933 72%,#191a17)}
+.scene--spoons .scene-light{background:#d8e4dc;opacity:.3}
+.scene--ordinary .scene-light{opacity:.16}
+.scene-landmark-object,.scene-event-object,.scene-npc-object{position:absolute;z-index:4;left:50%;top:47%;transform:translate(-50%,-50%);pointer-events:none}
+.scene-landmark-object--giant-stone-face{width:20%;height:33%;border-radius:48% 48% 30% 30%;background:radial-gradient(ellipse at 50% 30%,#a59a83,#676052 65%,#39362e);box-shadow:inset 0 0 0 3px #b3a58a,0 2px 10px #111}
+.scene-landmark-object--giant-stone-face:before{content:"";position:absolute;left:24%;right:24%;top:35%;height:8%;border-top:3px solid #24231e;border-radius:50%}
+.scene-landmark-object--warm-wall{width:5px;height:39%;background:#ff9b32;box-shadow:0 0 8px 5px #ff8a2766,0 0 24px 9px #f8681644}
+.scene-event-object{width:14%;height:35%;border:3px solid #29241c;border-radius:5px;background:linear-gradient(90deg,#77918b,#d5d2ad 18% 82%,#4d645d);box-shadow:0 3px 10px #08090999}
+.scene-event-object:before{content:"";position:absolute;left:16%;right:16%;top:15%;height:31%;border:2px solid #31443b;background:linear-gradient(#d5dfba,#879a7d)}
+.scene-event-object:after{content:attr(data-label);position:absolute;top:106%;left:50%;transform:translateX(-50%);width:max-content;max-width:180px;padding:2px 5px;border-radius:4px;background:#181a18dd;color:#f5e8c6;font:600 clamp(7px,1.6vw,10px)/1.2 system-ui;text-align:center}
+.scene-event-object--suspicious-chest{top:67%;width:20%;height:21%;background:linear-gradient(#b97a42,#694326);border-color:#33251a}
+.scene-event-object--suspicious-chest:before{top:-13%;height:25%;border-color:#53371f;background:#c28b4f}
+.scene-event-object--kobold-bake-sale{top:59%;width:29%;height:18%;background:linear-gradient(#bb8348,#65452b);border-radius:2px}
+.scene-event-object--kobold-bake-sale:before{left:4%;right:4%;top:-40%;height:33%;background:#eedca8;border-color:#4b3b2c}
+.scene-npc-object{width:11%;height:30%;top:58%;border-radius:45% 45% 25% 25%;background:linear-gradient(#d29e65 0 35%,#675246 36%);border:2px solid #201c18}
+.scene-npc-object:before{content:"";position:absolute;left:22%;top:17%;width:12%;height:5%;border-radius:50%;background:#211b16;box-shadow:14px 0 #211b16}
+.enemy-sprite{z-index:6}
+@media(max-width:680px){.room-prop{filter:drop-shadow(0 2px 3px #080909aa)}.scene-event-object:after{max-width:115px}.scene-landmark-object--giant-stone-face{width:24%;height:35%}}
+.scene-backdrop{position:relative;display:grid;place-items:center;overflow:hidden;min-height:clamp(170px,25vw,260px);margin:.5rem 0;border:1px solid #5a5948;border-radius:9px;background:radial-gradient(ellipse at 50% 24%,#9b7540 0,#514431 24%,#282721 61%,#171a19);isolation:isolate}
+.scene-backdrop .scene-view{min-height:inherit}
+@media(max-width:680px){.scene-backdrop{min-height:clamp(124px,20svh,158px)}}

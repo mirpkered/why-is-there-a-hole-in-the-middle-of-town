@@ -61,3 +61,21 @@ Add shop IDs to `shopStock`. Barter offers belong in `trades` with `requires` an
 ## Replay and state
 
 Event resolution, one-time flags, cell visits, room tags, landmarks, and town reactions are persisted. New persisted structures need a save-version migration in `js/state.js`; never discard existing player or exploration progress during migration.
+## Room Art / Prop Workflow
+
+User drawings define the canonical design of room props. Draw individual objects rather than complete perspective scenes; the game places each prop into its procedural room geometry.
+
+1. Draw one prop per page or image, with the full silhouette visible and some space around it.
+2. Photograph or scan the drawing in even light.
+3. Crop it and clean the paper background while retaining the original line character.
+4. Save a transparent **Original Ink** asset that preserves the cleaned linework.
+5. Create a paired **Colored** asset with simple color masked beneath the protected ink layer.
+6. Register a stable prop ID and both asset paths in the room-prop catalog.
+7. Assign compatible room types, placement zones, weights, and a background or foreground layer.
+8. Set a modest display scale and allow horizontal flipping only when the drawing still reads correctly.
+9. Validate placement and readability at 320px and 390px screen widths.
+10. Check both existing Sprite Style modes: Colored and Original Ink.
+
+The first planned prop tests are a mushroom cluster, wooden crate, campfire with kettle, and pile of spoons. Current CSS/SVG props are temporary placement placeholders, not final artwork. Room prop definitions are data-driven in `js/data.js`; the shared prop metadata, stable placement, and placeholder renderer live in `js/room-visuals.js`. Decorations derive their seed from persisted floor geometry and cell coordinates, so revisiting a room does not reroll it and scenery does not consume gameplay RNG. Props are decorative and do not block movement unless a future definition explicitly opts into collision.
+
+For future hand-drawn props, provide paired transparent Colored and Original Ink files. The renderer selects the matching asset through the existing Sprite Style preference; no separate room-art setting is needed.

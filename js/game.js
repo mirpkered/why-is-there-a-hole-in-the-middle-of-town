@@ -1,5 +1,5 @@
 import {freshState,saveState,wallAt,INVENTORY_CAPACITY,EQUIPMENT_SLOTS,createFloorMap,generateFloorMap} from './state.js?v=enemy-depth-20261002';
-import {quests,items,monsters,lootTables,floorEncounterTable,dungeonNpcs,npcEncounterIds,trades,shopStock,rarities,dungeonEvents,roomTypes,enemyVariants} from './data.js?v=enemy-depth-20261002';
+import {quests,items,monsters,lootTables,floorEncounterTable,dungeonNpcs,npcEncounterIds,trades,shopStock,rarities,dungeonEvents,roomTypes,enemyVariants} from './data.js?v=room-visuals-20261002d';
 import {scaleEnemy,threatAssessment} from './enemy-scaling.js?v=enemy-depth-20261002';
 export {threatAssessment};
 export function currentThreatAssessment(){return state.combat&&state.player?threatAssessment(state.combat,{...state.player,fireResistance:equippedEffect('fireResistance'),temporaryDefense:temporaryEffect('defense'),specialAttack:state.combat.monsterId==='kungFuGoose'?equippedEffect('vsGoose'):0}):null}

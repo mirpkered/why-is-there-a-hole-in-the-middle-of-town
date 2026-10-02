@@ -107,16 +107,16 @@ export const floorEncounterTable={
 };
 
 export const roomTypes={
-  'mushroom-room':{id:'mushroom-room',name:'Mushroom Room',weight:14,description:'Pale mushrooms have claimed the damp corners.'},
-  'flooded-chamber':{id:'flooded-chamber',name:'Flooded Chamber',weight:8,description:'A shallow sheet of water covers the stone.'},
-  shrine:{id:'shrine',name:'Shrine',weight:8,description:'Someone left a candle stub and a receipt.'},
-  storage:{id:'storage',name:'Storage Room',weight:13,description:'Crates are stacked with municipal confidence.'},
-  camp:{id:'camp',name:'Abandoned Camp',weight:8,description:'A cold fire ring sits under a dry patch of ceiling.'},
-  market:{id:'market',name:'Kobold Market',weight:5,minDepth:2,description:'A chalk price list is nailed to the wall.'},
-  library:{id:'library',name:'Library',weight:7,minDepth:2,description:'The shelves contain books and one labeled stone.'},
-  records:{id:'records',name:'Municipal Records Room',weight:5,minDepth:2,description:'The forms are sorted by year, then by dampness.'},
-  spoons:{id:'spoons',name:'Room Full of Spoons',weight:2,description:'The floor is covered in spoons.'},
-  ordinary:{id:'ordinary',name:'Stone Passage',weight:30,description:'A plain stone passage continues.'}
+  'mushroom-room':{id:'mushroom-room',name:'Mushroom Room',weight:14,description:'Pale mushrooms cluster along the damp stone edges.',visual:{theme:'damp-organic',propPool:['mushroom-cluster','tall-mushrooms'],floorTreatment:'damp',wallTreatment:'mossy',atmosphere:'green-lantern',density:3,placementRules:['far-left','far-right','mid-left','mid-right','far-center']}},
+  'flooded-chamber':{id:'flooded-chamber',name:'Flooded Chamber',weight:8,description:'A shallow sheet of water covers the stone.',visual:{theme:'shallow-water',propPool:['water-debris','floating-plank'],floorTreatment:'flooded',wallTreatment:'wet-stone',atmosphere:'cool-reflection',density:2,placementRules:['floor-center','foreground-left','foreground-right']}},
+  shrine:{id:'shrine',name:'Shrine',weight:8,description:'A small stone altar holds a candle stub and a receipt.',visual:{theme:'quiet-ritual',propPool:['small-altar','candle'],floorTreatment:'set-stone',wallTreatment:'carved-stone',atmosphere:'warm-candle',density:2,placementRules:['far-center','wall-center','floor-center']}},
+  storage:{id:'storage',name:'Storage Room',weight:13,description:'Crates and barrels are stacked with municipal confidence.',visual:{theme:'municipal-storage',propPool:['wooden-crate','barrel','labeled-box'],floorTreatment:'scuffed',wallTreatment:'stacked-clutter',atmosphere:'dusty',density:4,placementRules:['far-left','far-right','mid-left','mid-right']}},
+  camp:{id:'camp',name:'Abandoned Camp',weight:8,description:'A cold fire ring, kettle, and bedroll suggest someone stayed here.',visual:{theme:'abandoned-camp',propPool:['campfire-kettle','bedroll','small-pack'],floorTreatment:'ash-marked',wallTreatment:'sheltered-stone',atmosphere:'cold-embers',density:3,placementRules:['floor-center','far-left','mid-right']}},
+  market:{id:'market',name:'Kobold Market',weight:5,minDepth:2,description:'An improvised stall, baskets, and a hand-lettered sign fill the chamber.',visual:{theme:'improvised-market',propPool:['market-stall','market-basket','market-sign'],floorTreatment:'busy-stone',wallTreatment:'hung-signs',atmosphere:'lantern-warm',density:4,placementRules:['far-left','far-center','far-right','mid-left','mid-right']}},
+  library:{id:'library',name:'Library',weight:7,minDepth:2,description:'Bookshelves line parts of the chamber; a labeled stone sits among the books.',visual:{theme:'stone-library',propPool:['bookshelf','book-stack','labeled-stone'],floorTreatment:'quiet-stone',wallTreatment:'shelved',atmosphere:'still',density:3,placementRules:['far-left','far-right','wall-center','floor-center']}},
+  records:{id:'records',name:'Municipal Records Room',weight:5,minDepth:2,description:'Filing cabinets, archive boxes, and paper stacks are sorted by dampness.',visual:{theme:'municipal-records',propPool:['filing-cabinet','archive-box','paper-stack'],floorTreatment:'ordered-stone',wallTreatment:'cabinet-wall',atmosphere:'office-quiet',density:4,placementRules:['far-left','far-right','mid-left','mid-right','wall-center']}},
+  spoons:{id:'spoons',name:'Room Full of Spoons',weight:2,description:'Spoons cover the floor in several neatly aligned piles.',visual:{theme:'spoon-room',propPool:['spoon-pile','single-spoon'],floorTreatment:'spoon-covered',wallTreatment:'bare-stone',atmosphere:'metallic-glint',density:4,placementRules:['floor-center','foreground-left','foreground-right','mid-left','mid-right']}},
+  ordinary:{id:'ordinary',name:'Stone Passage',weight:30,description:'A plain stone passage continues, with a little rubble at its edge.',visual:{theme:'ordinary-stone',propPool:['stone-debris'],floorTreatment:'plain',wallTreatment:'plain-stone',atmosphere:'neutral',density:1,placementRules:['far-left','far-right']}}
 };
 
 // Choices and consequences stay in content data. game.js resolves only these small outcome primitives.
