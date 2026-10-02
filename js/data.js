@@ -34,6 +34,11 @@ const attackSets={
   paperMimic:[['snap','Cabinet snap',4,7,.76,'The filing cabinet snaps shut on you.'],['forms','Paperwork avalanche',5,8,.24,'A stack of forms hits like a brick.']]
 };
 for(const [id,m] of Object.entries(monsters)){m.attacks=attackSets[id].map(([attackId,name,minDamage,maxDamage,weight,flavor])=>({id:attackId,name,minDamage,maxDamage,accuracy:.94,weight,flavor,...(id==='fireWorm'&&attackId==='flame-belch'?{effect:'burn',effectChance:.45,effectTurns:2}:{})}));m.sprite={src:`assets/monsters/${m.id}.svg`,scale:1,offsetY:0}}
+// These two user-drawn designs keep their stable IDs for existing saves and quest references.
+monsters.kungFuGoose.name='Kung Fungoose';
+monsters.kungFuGoose.sprite={src:'assets/images/enemies/kung-fungoose.png',scale:1.12,offsetY:-1};
+monsters.rat.name='Deadly Rat';
+monsters.rat.sprite={src:'assets/images/enemies/deadly-rat.png',scale:1.08,offsetY:1};
 
 export const items={
   'rusty-sword':{id:'rusty-sword',name:'Rusty Sword',category:'equipment',slot:'mainHand',rarity:'common',buyValue:12,sellValue:5,modifiers:{attack:2},flavor:'The rust is mostly decorative. Probably.',stackable:false},

@@ -6,6 +6,12 @@ Keep content original, use stable IDs, and put authored definitions in `js/data.
 
 Add a `monsters` entry with `id`, display name, `minDepth`, HP, attack, defense, speed, XP, gold range, rarity, loot-table ID, encounter text, and behavior. Supported behavior fields include `multiStrike`, `evadeChance`, `criticalChance`, `burnChance`, and `burnTurns`. Add the monster to `floorEncounterTable` at its intended depth.
 
+### Hand-drawn enemy sprites
+
+Use one creature per source image, with a strong dark outline, plain background, entire body visible, and modest space around the extremities. Exaggerated poses are welcome; avoid details too small to read on a phone. Portrait and landscape drawings both work.
+
+Processing workflow: photograph or scan the drawing; crop it; remove the background; clean photographic artifacts while retaining the hand-drawn lines; add simple color; export a transparent PNG; attach it through the monster's `sprite` metadata (`src`, optional `scale`, and optional `offsetY`); then check the complete sprite at mobile combat size. Keep source/reference files separate from runtime sprites when retaining them.
+
 ## Equipment and items
 
 Add an `items` entry with `id`, `name`, `category`, `rarity`, `buyValue`, `sellValue`, and optional `slot`, `modifiers`, `effects`, `classes`, `effect`, `questItem`, `stackable`, and `flavor`. Equipment uses Head, Body, Main Hand, Off Hand, Feet, and Accessory slots. Item effects currently support healing and short encounter-counted buffs.
