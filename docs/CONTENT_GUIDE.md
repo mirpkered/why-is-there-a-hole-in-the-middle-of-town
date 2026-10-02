@@ -10,9 +10,9 @@ Add a `monsters` entry with `id`, display name, `minDepth`, HP, attack, defense,
 
 Use one creature per source image, with a strong dark outline, plain background, entire body visible, and modest space around the extremities. Exaggerated poses are welcome; avoid details too small to read on a phone. Portrait and landscape drawings both work.
 
-Processing workflow: photograph or scan the drawing; crop it; remove the background; clean photographic artifacts while retaining the hand-drawn lines; add simple color; export a transparent PNG; attach it through the monster's `sprite` metadata (`src`, optional `scale`, and optional `offsetY`); then check the complete sprite at mobile combat size. Keep source/reference files separate from runtime sprites when retaining them.
+Processing workflow: photograph or scan the drawing; crop it; remove the paper/background and camera artifacts; export a transparent black-ink PNG that preserves the original pen lines; derive a matching colored transparent PNG from that same source; add the pair to the monster's `sprite` metadata (`ink`, `colored`, optional `scale`, and optional `offsetY`); then check both modes at mobile combat size. The global Sprite Style setting selects the variant. Keep source/reference files separate from runtime sprites when retaining them.
 
-Current custom runtime sprites: `assets/images/enemies/kung-fungoose.png`, `deadly-rat.png`, `fire-breathing-earthworm.png`, `killer-rabbit.png`, and `pocket-slime.png`. Their display scale and vertical offset are set per monster in `js/data.js`; all other monsters retain their SVG fallback sprites.
+Current custom runtime sprites use paired `*-ink.png` and `*-colored.png` files for Kung Fungoose, Deadly Rat, Fire-Breathing Earthworm, Killer Rabbit, and Pocket Slime. Their display scale and vertical offset are set per monster in `js/data.js`; all other monsters retain their SVG fallback sprites.
 
 ## Equipment and items
 
