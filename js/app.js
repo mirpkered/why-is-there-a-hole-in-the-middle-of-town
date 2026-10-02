@@ -1,7 +1,7 @@
-import {loadState,hasSave,SAVE_KEY,freshState,EQUIPMENT_SLOTS,wallAt} from './state.js';
-import {state,setState,startGame,STARTING_CLASSES,acceptQuest,enterDungeon,move,attack,defend,useTonic,useItem,collectFind,collectGroundLoot,persist,resolveDungeonEvent,triggerEvent,triggerRandomEvent,revealLandmark,qaSetTemporaryEffect,qaResetEventState,qaSetRoom,temporaryEffect} from './game.js';
-import {equipItem,unequipSlot,buyItem,sellItem,salePrice,compareEquipment,descend,ascend,retreat,retreatChancePercent,storeStock,canTrade,completeTrade,buyNpcStock,closeNpc,talkNpc,qaGiveItem,qaGiveGold,qaSpawnMonster,qaSpawnNpc,qaAdvanceFloor,qaSetStat,qaClearInventory,inventoryUsed,inventoryCapacity,countItem} from './game.js';
-import {quests,items,monsters,dungeonNpcs,trades,shopStock,townNpcs,dungeonEvents,roomTypes} from './data.js';
+import {loadState,hasSave,SAVE_KEY,freshState,EQUIPMENT_SLOTS,wallAt} from './state.js?v=b500b51';
+import {state,setState,startGame,STARTING_CLASSES,acceptQuest,enterDungeon,move,attack,defend,useTonic,useItem,collectFind,collectGroundLoot,persist,resolveDungeonEvent,triggerEvent,triggerRandomEvent,revealLandmark,qaSetTemporaryEffect,qaResetEventState,qaSetRoom,temporaryEffect} from './game.js?v=b500b51';
+import {equipItem,unequipSlot,buyItem,sellItem,salePrice,compareEquipment,descend,ascend,retreat,retreatChancePercent,storeStock,canTrade,completeTrade,buyNpcStock,closeNpc,talkNpc,qaGiveItem,qaGiveGold,qaSpawnMonster,qaSpawnNpc,qaAdvanceFloor,qaSetStat,qaClearInventory,inventoryUsed,inventoryCapacity,countItem} from './game.js?v=b500b51';
+import {quests,items,monsters,dungeonNpcs,trades,shopStock,townNpcs,dungeonEvents,roomTypes} from './data.js?v=b500b51';
 
 const app=document.querySelector('#app'),modal=document.querySelector('#modal-root'),qa=new URLSearchParams(location.search).get('qa')==='1';
 let screen='title',message='The town has posted new notices. The hole remains open.',pendingPurchase=null;
