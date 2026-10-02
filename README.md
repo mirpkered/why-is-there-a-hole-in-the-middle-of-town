@@ -2,7 +2,7 @@
 
 An original, mobile-first, turn-based dungeon crawler by Mirpworks. The town treats the hole as a civic and economic matter. The things below remain dangerous.
 
-**Status:** initial playable vertical slice. **Hosting:** designed for a static GitHub Pages project site; no deployed URL exists yet.
+**Status:** single-player mechanics pass. **Hosting:** static GitHub Pages project site.
 
 ## Run locally
 
@@ -10,16 +10,16 @@ Serve this folder with any static HTTP server and open its address in a browser.
 
 ## Current play loop
 
-New Game → name and class → town → accept posted quests → enter the hole → explore a small grid → fight a dungeon rat → collect a find → climb/retreat → review your town state. The store sells healing tonics, and the inn restores health for a fee. Saves are automatic in browser local storage.
+New Game → name and class → town → accept quests → enter the hole → fight across three floors → find gear and trade goods → trade, buy, or sell → decide whether to descend or retreat. Eight monsters populate the first three floors; named town residents provide quests, shopping, and rest. Dungeon visitors include a barter trader and a lost surveyor with emergency supplies. Saves are automatic in browser local storage.
 
 ## Architecture
 
 - `index.html`: static entry point; all asset paths are relative for project-site hosting.
 - `css/styles.css`: responsive dark stone and civic-paper presentation.
 - `js/app.js`: screen rendering, accessible controls, keyboard input, and QA tools.
-- `js/game.js`: game actions and rule changes.
-- `js/state.js`: authoritative state shape, map helpers, and versioned save access.
-- `js/data.js`: starter item and quest definitions.
+- `js/game.js`: combat, equipment, shops, trades, loot, retreat, floors, and save-backed progression.
+- `js/state.js`: authoritative state shape, map helpers, inventory limits, and versioned save migration.
+- `js/data.js`: monster, gear, quest, NPC, trade, and loot-table definitions.
 - `assets/images/` and `assets/icons/`: source home-screen artwork and resized browser/mobile app icons; `site.webmanifest` defines the install experience.
 - `docs/`: state, architecture, and content conventions.
 
@@ -33,4 +33,4 @@ Append `?qa=1` to the URL to show isolated development controls. QA options do n
 
 ## Deployment
 
-Configure GitHub Pages to publish the repository root from `main` (or use a simple static Pages workflow). All links and assets are relative; there is no client-side URL router. The expected project URL is `https://mirpkered.github.io/why-is-there-a-hole-in-the-middle-of-town/` once the repository is created and Pages enabled.
+The repository publishes the static site through GitHub Pages. All links and assets are relative; there is no client-side URL router. Live URL: https://mirpkered.github.io/why-is-there-a-hole-in-the-middle-of-town/.
