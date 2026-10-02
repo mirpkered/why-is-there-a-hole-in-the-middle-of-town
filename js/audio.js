@@ -4,26 +4,23 @@ const dungeonTracks = [4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21].map(numb
   name: `Recording ${number}`,
   src: new URL(`../assets/audio/music/dungeon/dungeon-${String(number).padStart(2,'0')}.mp3`, import.meta.url).href
 }));
-const transitionMs = 700;
+const trackGain = { battle: 1, dungeon: 1 };
 let battleChannel = null;
 let battleGainNode = null;
 let audioContext = null;
-let audioLevel = 0;
 let enabled = true;
 let volume = 0.28;
 let activeContext = null;
 let activeTrackId = null;
 let qaPlayback = false;
 let combatActive = false;
-let fadeTimer = null;
-let dungeonAdvanceTimer = null;
-let dungeonFadeTimer = null;
-let transitionId = 0;
 let playRequestId = 0;
 let dungeonChannels = null;
 let activeDungeonChannel = 0;
 let dungeonQueue = [];
 let lastDungeonTrackId = null;
+let battlePass = 0;
+let lastBattleTime = 0;
 
 function getAudioContext(){
   if(audioContext)return audioContext;
@@ -42,13 +39,33 @@ function connectElement(element){
   }catch{return null}
 }
 
+function applyGain(element,gainNode,effectiveGain){
+  const level=Math.max(0,Math.min(1,effectiveGain));
+  element.muted=!enabled;
+  element.playbackRate=1;
+  if(gainNode){
+    const param=gainNode.gain,now=audioContext?.currentTime||0;
+    param.cancelScheduledValues(now);
+    param.setValueAtTime(level,now);
+    element.volume=1;
+  }else element.volume=level;
+  return level;
+}
+
+function battleLevel(){return applyGain(battleChannel,battleGainNode,volume*trackGain.battle)}
+
 function ensureBattleChannel(){
   if(battleChannel)return battleChannel;
   if(typeof Audio==='undefined')return null;
-  battleChannel=new Audio(battleTheme);battleChannel.preload='auto';battleChannel.loop=true;battleChannel.volume=0;
+  battleChannel=new Audio(battleTheme);battleChannel.preload='auto';battleChannel.loop=true;
   battleGainNode=connectElement(battleChannel);
-  if(battleGainNode){battleGainNode.gain.value=0;battleChannel.volume=1}
+  battleChannel.addEventListener('timeupdate',()=>{
+    const current=battleChannel?.currentTime||0;
+    if(current+1<lastBattleTime)battlePass++;
+    lastBattleTime=current;
+  });
   battleChannel.addEventListener('ended',()=>{if(!battleChannel?.loop)activeTrackId=null});
+  battleLevel();
   return battleChannel;
 }
 
@@ -56,53 +73,39 @@ function ensureDungeonChannels(){
   if(dungeonChannels)return dungeonChannels;
   if(typeof Audio==='undefined')return null;
   dungeonChannels=[0,1].map(()=>{
-    const audio=new Audio();audio.preload='none';audio.loop=false;audio.volume=0;
-    const gain=connectElement(audio);if(gain){gain.gain.value=0;audio.volume=1}
+    const audio=new Audio();audio.preload='none';audio.loop=false;
+    const gain=connectElement(audio),entry={audio,gain,track:null};
     audio.addEventListener('ended',()=>{
-      const channel=dungeonChannels?.findIndex(entry=>entry.audio===audio);
-      if(channel===activeDungeonChannel&&activeContext==='dungeon')startNextDungeonTrack();
+      const index=dungeonChannels?.findIndex(channel=>channel===entry);
+      if(index===activeDungeonChannel&&activeContext==='dungeon')startNextDungeonTrack();
     });
-    return {audio,gain,level:0,track:null};
+    return entry;
   });
   return dungeonChannels;
 }
 
-function setBattleLevel(value){
-  audioLevel=Math.max(0,Math.min(1,value));
-  if(battleGainNode)battleGainNode.gain.value=audioLevel;
-  else if(battleChannel)battleChannel.volume=audioLevel;
+function dungeonLevel(channel){
+  if(!channel)return 0;
+  const level=applyGain(channel.audio,channel.gain,volume*trackGain.dungeon);
+  return level;
 }
 
-function setDungeonLevel(channel,value){
-  if(!channel)return;
-  channel.level=Math.max(0,Math.min(1,value));
-  if(channel.gain)channel.gain.gain.value=channel.level;
-  else channel.audio.volume=channel.level;
+function pauseBattle(reset=true){
+  if(!battleChannel)return;
+  battleChannel.pause();
+  if(reset){try{battleChannel.currentTime=0}catch{}}
+  battleLevel();
+  lastBattleTime=0;
 }
 
-function fadeBattleTo(target,duration=220,finish){
-  if(!battleChannel){finish?.();return}
-  if(fadeTimer){clearInterval(fadeTimer);fadeTimer=null}
-  const id=++transitionId,start=audioLevel,started=performance.now();
-  fadeTimer=setInterval(()=>{
-    if(id!==transitionId||!battleChannel){clearInterval(fadeTimer);fadeTimer=null;return}
-    const progress=Math.min(1,(performance.now()-started)/duration);
-    setBattleLevel(start+(target-start)*progress);
-    if(progress===1){clearInterval(fadeTimer);fadeTimer=null;finish?.()}
-  },32);
-}
-
-function stopBattle(reset=true){
-  if(fadeTimer){clearInterval(fadeTimer);fadeTimer=null}
-  if(!battleChannel){audioLevel=0;return}
-  const channel=battleChannel;
-  if(channel.paused){setBattleLevel(0);if(reset)channel.currentTime=0;return}
-  fadeBattleTo(0,220,()=>{channel.pause();if(reset)channel.currentTime=0});
-}
-
-function clearDungeonTimers(){
-  if(dungeonAdvanceTimer){clearTimeout(dungeonAdvanceTimer);dungeonAdvanceTimer=null}
-  if(dungeonFadeTimer){clearInterval(dungeonFadeTimer);dungeonFadeTimer=null}
+function stopDungeon(reset=true){
+  if(!dungeonChannels)return;
+  for(const channel of dungeonChannels){
+    channel.audio.pause();
+    if(reset){try{channel.audio.currentTime=0}catch{}}
+    dungeonLevel(channel);
+  }
+  if(reset)activeTrackId=null;
 }
 
 function shuffleTracks(){
@@ -113,125 +116,77 @@ function shuffleTracks(){
   }
 }
 
-function takeNextTrack(){
-  if(!dungeonQueue.length)shuffleTracks();
-  return dungeonQueue.pop();
-}
+function takeNextTrack(){if(!dungeonQueue.length)shuffleTracks();return dungeonQueue.pop()}
 
 function prepareDungeonChannel(channel,track){
   if(!channel||!track)return;
-  channel.track=track;channel.audio.src=track.src;channel.audio.preload='auto';channel.audio.load();
+  channel.track=track;channel.audio.src=track.src;channel.audio.preload='auto';channel.audio.load();dungeonLevel(channel);
 }
 
-function rampDungeonChannels(outgoing,incoming,duration,finish){
-  if(dungeonFadeTimer)clearInterval(dungeonFadeTimer);
-  const outStart=outgoing?.level||0,inStart=incoming?.level||0,started=performance.now();
-  dungeonFadeTimer=setInterval(()=>{
-    const progress=Math.min(1,(performance.now()-started)/duration);
-    setDungeonLevel(outgoing,outStart*(1-progress));
-    setDungeonLevel(incoming,inStart+(volume-inStart)*progress);
-    if(progress>=1){clearInterval(dungeonFadeTimer);dungeonFadeTimer=null;if(outgoing){outgoing.audio.pause();setDungeonLevel(outgoing,0)}finish?.()}
-  },32);
+async function playElement(element){
+  const promises=[element.play()],context=getAudioContext();
+  if(context?.state==='suspended')promises.push(context.resume());
+  await Promise.all(promises);
 }
 
-function scheduleDungeonTransition(channel){
-  if(dungeonAdvanceTimer){clearTimeout(dungeonAdvanceTimer);dungeonAdvanceTimer=null}
-  const duration=channel?.audio.duration;
-  if(!Number.isFinite(duration)||duration<=0)return;
-  const remaining=Math.max(50,(duration-channel.audio.currentTime-transitionMs/1000)*1000);
-  dungeonAdvanceTimer=setTimeout(()=>startNextDungeonTrack(),remaining);
-}
-
-async function startDungeonTrack(track,channel,fadeIn=true){
+async function startDungeonTrack(track,channel){
   if(!channel||!track||!enabled)return false;
   const request=playRequestId;
   prepareDungeonChannel(channel,track);
-  setDungeonLevel(channel,fadeIn?0:volume);
+  dungeonLevel(channel);
   try{
-    const promises=[channel.audio.play()];
-    const context=getAudioContext();if(context?.state==='suspended')promises.push(context.resume());
-    await Promise.all(promises);
-    if(request!==playRequestId||!enabled||activeContext!=='dungeon'){channel.audio.pause();setDungeonLevel(channel,0);return false}
+    await playElement(channel.audio);
+    if(request!==playRequestId||!enabled||activeContext!=='dungeon'){channel.audio.pause();return false}
+    activeDungeonChannel=dungeonChannels.indexOf(channel);
     lastDungeonTrackId=track.id;activeTrackId=track.id;
-    if(fadeIn)rampDungeonChannels(null,channel,450);
-    scheduleDungeonTransition(channel);
-    // Only the current and next clips are prepared, keeping mobile memory use low.
-    const next=takeNextTrack(),other=dungeonChannels[1-activeDungeonChannel];
-    prepareDungeonChannel(other,next);
+    const other=dungeonChannels[1-activeDungeonChannel];
+    prepareDungeonChannel(other,takeNextTrack());
     return true;
   }catch{return false}
 }
 
 async function startNextDungeonTrack(){
   if(!enabled||activeContext!=='dungeon')return;
-  clearDungeonTimers();
   const channels=ensureDungeonChannels();if(!channels)return;
-  const outgoing=channels[activeDungeonChannel],nextIndex=1-activeDungeonChannel,incoming=channels[nextIndex];
+  const nextIndex=1-activeDungeonChannel,incoming=channels[nextIndex];
+  const outgoing=channels[activeDungeonChannel];
   const track=incoming.track||takeNextTrack();
-  const request=playRequestId;
   if(!incoming.track)prepareDungeonChannel(incoming,track);
-  setDungeonLevel(incoming,0);
+  dungeonLevel(incoming);
   try{
-    const promises=[incoming.audio.play()];const context=getAudioContext();if(context?.state==='suspended')promises.push(context.resume());
-    await Promise.all(promises);
-    if(request!==playRequestId||!enabled||activeContext!=='dungeon'){incoming.audio.pause();return}
+    await playElement(incoming.audio);
+    if(!enabled||activeContext!=='dungeon'){incoming.audio.pause();return}
+    outgoing.audio.pause();
     activeDungeonChannel=nextIndex;lastDungeonTrackId=track.id;activeTrackId=track.id;
-    rampDungeonChannels(outgoing,incoming,transitionMs,()=>prepareDungeonChannel(outgoing,takeNextTrack()));
-    scheduleDungeonTransition(incoming);
+    prepareDungeonChannel(outgoing,takeNextTrack());
   }catch{
-    // If a clip could not be started, try the next shuffled clip after a brief gap.
-    dungeonAdvanceTimer=setTimeout(()=>startNextDungeonTrack(),300);
+    window.setTimeout(()=>startNextDungeonTrack(),300);
   }
-}
-
-function pauseDungeonForBattle(){
-  clearDungeonTimers();
-  if(!dungeonChannels)return;
-  if(dungeonFadeTimer)clearInterval(dungeonFadeTimer);
-  const running=dungeonChannels.filter(channel=>!channel.audio.paused),levels=dungeonChannels.map(channel=>channel.level),started=performance.now();
-  if(!running.length){for(const channel of dungeonChannels)setDungeonLevel(channel,0);return}
-  dungeonFadeTimer=setInterval(()=>{
-    const progress=Math.min(1,(performance.now()-started)/220);
-    dungeonChannels.forEach((channel,index)=>setDungeonLevel(channel,levels[index]*(1-progress)));
-    if(progress>=1){clearInterval(dungeonFadeTimer);dungeonFadeTimer=null;for(const channel of running){channel.audio.pause();setDungeonLevel(channel,0)}}
-  },32);
-}
-
-function stopDungeon(reset=true){
-  clearDungeonTimers();
-  if(!dungeonChannels)return;
-  if(dungeonFadeTimer)clearInterval(dungeonFadeTimer);
-  const levels=dungeonChannels.map(channel=>channel.level),started=performance.now();
-  if(dungeonChannels.every(channel=>channel.audio.paused)){
-    for(const channel of dungeonChannels){setDungeonLevel(channel,0);if(reset)channel.audio.currentTime=0}
-    activeTrackId=null;return;
-  }
-  dungeonFadeTimer=setInterval(()=>{
-    const progress=Math.min(1,(performance.now()-started)/220);
-    dungeonChannels.forEach((channel,index)=>setDungeonLevel(channel,levels[index]*(1-progress)));
-    if(progress>=1){clearInterval(dungeonFadeTimer);dungeonFadeTimer=null;for(const channel of dungeonChannels){channel.audio.pause();if(reset)channel.audio.currentTime=0;setDungeonLevel(channel,0)}activeTrackId=null}
-  },32);
 }
 
 async function startBattle(loop=true,userGesture=false){
   const channel=ensureBattleChannel();if(!channel||!enabled)return false;
   channel.loop=loop;
-  if(activeTrackId==='battle'&&!channel.paused){const context=getAudioContext();if(context?.state==='suspended')context.resume().catch(()=>{});fadeBattleTo(volume,140);return true}
+  if(activeTrackId==='battle'&&!channel.paused){const context=getAudioContext();if(context?.state==='suspended')context.resume().catch(()=>{});battleLevel();return true}
   if(!userGesture)return false;
-  const request=++playRequestId;activeTrackId='battle';setBattleLevel(0);
+  const request=++playRequestId;
+  activeTrackId='battle';battlePass=1;lastBattleTime=channel.currentTime||0;battleLevel();
   try{
-    const promises=[channel.play()];const context=getAudioContext();if(context?.state==='suspended')promises.push(context.resume());await Promise.all(promises);
-    if(request!==playRequestId||!enabled||activeContext!=='battle'){stopBattle();return false}
-    fadeBattleTo(volume,500);return true;
+    await playElement(channel);
+    if(request!==playRequestId||!enabled||activeContext!=='battle'){pauseBattle();return false}
+    return true;
   }catch{if(request===playRequestId){activeTrackId=null;channel.pause()}return false}
 }
 
 export function updateMusicPreferences(preferences={}){
   enabled=preferences.musicEnabled!==false;
-  const next=Number(preferences.musicVolume),nextVolume=Number.isFinite(next)?Math.max(0,Math.min(1,next)):volume,volumeChanged=nextVolume!==volume;volume=nextVolume;
+  const next=Number(preferences.musicVolume);
+  volume=Number.isFinite(next)?Math.max(0,Math.min(1,next)):volume;
   if(!enabled)stopMusic();
-  else if(volumeChanged&&battleChannel&&!battleChannel.paused&&activeTrackId==='battle')fadeBattleTo(volume,120);
-  else if(volumeChanged&&dungeonChannels&&activeContext==='dungeon')for(const channel of dungeonChannels)if(!channel.audio.paused)setDungeonLevel(channel,volume);
+  else{
+    if(battleChannel&&!battleChannel.paused)battleLevel();
+    if(dungeonChannels&&activeContext==='dungeon')for(const channel of dungeonChannels)if(!channel.audio.paused)dungeonLevel(channel);
+  }
 }
 
 export function syncMusicContext(context,preferences={},userGesture=false){
@@ -242,48 +197,52 @@ export function syncMusicContext(context,preferences={},userGesture=false){
     if(next==='battle'){combatActive=true;if(!battleChannel||battleChannel.paused)startBattle(true,userGesture)}
     else if(next==='dungeon'){
       combatActive=false;
-      if(battleChannel&&!battleChannel.paused)stopBattle();
+      if(battleChannel&&!battleChannel.paused)pauseBattle();
       const channels=ensureDungeonChannels();
       if(channels&&channels[activeDungeonChannel].audio.paused){
         const current=channels[activeDungeonChannel];
         if(current.track&&current.audio.currentTime>0.08&&current.audio.currentTime<current.audio.duration-0.08){
-          const request=playRequestId;current.audio.play().then(()=>{if(request===playRequestId&&activeContext==='dungeon'){activeTrackId=current.track.id;rampDungeonChannels(null,current,240);scheduleDungeonTransition(current)}}).catch(()=>{});
+          dungeonLevel(current);current.audio.play().then(()=>{if(activeContext==='dungeon')activeTrackId=current.track.id}).catch(()=>{});
         }else if(userGesture)startNextDungeonTrack();
       }
     }
     return;
   }
-  activeContext=next;playRequestId++;clearDungeonTimers();
+  activeContext=next;playRequestId++;
   if(next==='battle'){
-    qaPlayback=false;combatActive=true;pauseDungeonForBattle();startBattle(true,userGesture);
+    qaPlayback=false;combatActive=true;
+    if(dungeonChannels)for(const channel of dungeonChannels){channel.audio.pause();dungeonLevel(channel)}
+    startBattle(true,userGesture);
   }else if(next==='dungeon'){
-    combatActive=false;qaPlayback=false;stopBattle();
+    combatActive=false;qaPlayback=false;pauseBattle();
     const channels=ensureDungeonChannels();if(!channels)return;
     const current=channels[activeDungeonChannel];
     if(current.track&&current.audio.currentTime>0.08&&current.audio.currentTime<current.audio.duration-0.08){
-      current.audio.play().then(()=>{if(activeContext==='dungeon'){activeTrackId=current.track.id;rampDungeonChannels(null,current,360);scheduleDungeonTransition(current)}}).catch(()=>{if(userGesture)startNextDungeonTrack()});
+      dungeonLevel(current);current.audio.play().then(()=>{if(activeContext==='dungeon')activeTrackId=current.track.id}).catch(()=>{if(userGesture)startNextDungeonTrack()});
     }else if(userGesture)startNextDungeonTrack();
   }else{
-    combatActive=false;qaPlayback=false;stopBattle();stopDungeon();activeTrackId=null;
+    combatActive=false;qaPlayback=false;pauseBattle();stopDungeon();activeTrackId=null;
   }
 }
 
 export function playBattleTheme(preferences={},loop=true){
   updateMusicPreferences(preferences);if(!enabled)return false;
-  qaPlayback=true;combatActive=false;activeContext='battle';pauseDungeonForBattle();return startBattle(loop,true);
+  qaPlayback=true;combatActive=false;activeContext='battle';
+  if(dungeonChannels)for(const channel of dungeonChannels){channel.audio.pause();dungeonLevel(channel)}
+  return startBattle(loop,true);
 }
 
 export function playDungeonPool(preferences={}){
   updateMusicPreferences(preferences);if(!enabled)return false;
-  qaPlayback=true;combatActive=false;activeContext='dungeon';stopBattle();
+  qaPlayback=true;combatActive=false;activeContext='dungeon';pauseBattle();
   const channels=ensureDungeonChannels();if(!channels)return false;
   if(dungeonChannels.some(channel=>!channel.audio.paused))return true;
-  activeDungeonChannel=0;dungeonQueue=[];return startDungeonTrack(takeNextTrack(),channels[0],true);
+  activeDungeonChannel=0;dungeonQueue=[];return startDungeonTrack(takeNextTrack(),channels[0]);
 }
 
 export function stopMusic(){
   qaPlayback=false;combatActive=false;activeContext=null;playRequestId++;activeTrackId=null;
-  stopBattle();stopDungeon();
+  pauseBattle();stopDungeon();
 }
 
 export function currentMusicTrack(){
@@ -292,9 +251,25 @@ export function currentMusicTrack(){
   return track?`Dungeon · ${track.name}`:'None';
 }
 
+export function musicPlaybackDiagnostics(){
+  const battleActive=activeTrackId==='battle'&&battleChannel&&!battleChannel.paused;
+  const dungeonActive=dungeonChannels?.[activeDungeonChannel];
+  const configuredGain=battleActive?trackGain.battle:trackGain.dungeon;
+  const playing=!!battleActive||!!(dungeonActive&&!dungeonActive.audio.paused);
+  const effectiveGain=volume*configuredGain;
+  return {track:currentMusicTrack(),masterVolume:volume,configuredTrackGain:configuredGain,effectiveGain:enabled&&playing?effectiveGain:0,pass:battleActive?battlePass:null,playing};
+}
+
 document.addEventListener('visibilitychange',()=>{
   if(document.visibilityState!=='visible'||!enabled)return;
   const context=getAudioContext();if(context?.state==='suspended')context.resume().catch(()=>{});
-  if(activeContext==='battle'&&battleChannel?.paused&&(combatActive||qaPlayback))battleChannel.play().then(()=>fadeBattleTo(volume,240)).catch(()=>{});
-  if(activeContext==='dungeon'&&dungeonChannels){const channel=dungeonChannels[activeDungeonChannel];if(channel.audio.paused&&channel.track&&(combatActive===false||qaPlayback)){channel.audio.play().then(()=>{if(activeContext==='dungeon'){setDungeonLevel(channel,volume);scheduleDungeonTransition(channel)}}).catch(()=>{})}}
+  if(activeContext==='battle'&&battleChannel?.paused&&(combatActive||qaPlayback)){
+    battleLevel();battleChannel.play().catch(()=>{});
+  }
+  if(activeContext==='dungeon'&&dungeonChannels){
+    const channel=dungeonChannels[activeDungeonChannel];
+    if(channel.audio.paused&&channel.track&&(combatActive===false||qaPlayback)){
+      dungeonLevel(channel);channel.audio.play().catch(()=>{});
+    }
+  }
 });
