@@ -11,11 +11,14 @@ The title screen starts a new character or resumes the saved model. The town lin
 - `enemy-scaling.js` builds fixed, saveable encounter snapshots and estimates threat against the current player.
 - `state.js` defines the save key/version, starter state, map helpers, migrations, and serialization.
 - `data.js` contains stable IDs and definitions for quests, monsters, items, NPCs, room types, and weighted dungeon events.
-- `audio.js` owns the single background music channel, its fade transitions, and combat music lifecycle.
+- `progression.js` defines the small class ability kits, local achievements, and the intended future depth bands.
+- `audio.js` owns the single background music channel, context switching, and combat music lifecycle.
 
 ## Persistence
 
 Meaningful actions call `persist()`, which writes one JSON snapshot to local storage. The save carries `saveVersion` and timestamps. Migration logic is centralized in `state.js`; unknown versions are safely declined rather than partially loaded.
+
+Save version 6 adds career counters, achievement unlock timestamps, NPC visit counts, and accessibility preferences. These values are character-local. Ability availability is derived from the player’s class and level, while encounter effects and temporary defenses stay in the active combat snapshot. Defeat recovery keeps the map, inventory, equipped gear, and quest items; it returns the player to town at 1 HP and 0 MP, and deducts 10% of carried gold (rounded up, capped by the current balance).
 
 ## Dungeon
 
@@ -33,6 +36,16 @@ On narrow screens, the dungeon uses a compact HUD with minimap, character status
 
 Quests use stable IDs, source/giver, type, target, count, and reward. Active entries store progress. Items use stable IDs, categories, rarity, prices, quantity rules, equipment modifiers, and optional effects. Content definitions stay separate from player inventory instances. See `docs/CONTENT_GUIDE.md` for event and room conventions.
 
+## Class progression and career
+
+Each class has three abilities at levels 1, 3, and 5. They spend the shared MP pool; Attack, Defend, Item, and Retreat remain available without MP. Fighter gets a small armor defense bonus, Wizard abilities scale from Mind, Rogue has improved loot/escape odds, and Cleric has better shrine recovery and burn protection. Class skill checks receive a small relevant-stat bonus. Abilities are data-driven in `progression.js`; resolution stays in `game.js`.
+
+Quest chains reuse event flags, discoveries, kill progress, inventory requirements, NPC visits, and safe returns. A chain’s next quest ID is posted only after the current step is turned in. Five chains cover the depth markers, very small door, warm wall, survey crew, and duck. New quest progress is derived from saved flags/items where practical. Career counters update at gameplay mutation points; achievements unlock from those milestones and are shown in a compact town screen.
+
+Merchant prices and rewards remain integer gold values. Juniper’s ordinary purchases use the equipped `buyDiscount` effect and sales use `sellBonus`; barter consumes reserved-safe inventory and its stated gold cost. The inn is a modest 5g full refill and rejects a purchase at full HP/MP. Deeper reward multipliers continue to use the existing enemy depth scaler. Current playable floors remain capped at three because multi-floor stair/return routing and generated floor fixtures are authored for that range. Future depth bands are documented in `progression.js` but not opened in gameplay.
+
+Accessibility preferences are saved with the character: Normal/Large text, optional high-contrast map colors, and Reduced Motion. The motion preference reduces transitions and animations; the global `prefers-reduced-motion` media rule provides the same respect when the system preference is active. Settings that change only presentation do not alter map discovery or gameplay state.
+
 ## Audio
 
-The user-performed battle theme at `assets/audio/music/battle-theme.mp3` is the default combat track. Combat starts it from a player action; battle actions reuse the active track, and leaving combat fades it out. One `HTMLAudioElement` and one optional Web Audio gain stage are reused through visibility changes so returning from a suspended mobile tab cannot stack another copy. The gain stage lets the music slider and fades also work where an iOS browser ignores the media element's volume property. Music on/off and volume preferences are stored separately in local storage and copied into character saves when available. Browsers that require a user gesture receive playback only from a game action, Continue, a settings interaction, or the QA music controls. QA mode includes a one-pass test, loop test, and stop control.
+The user-performed battle theme at `assets/audio/music/battle-theme.mp3` is the default combat track. Combat starts it from a player action; battle actions reuse the active track, and leaving combat stops it without an audible ramp. Ordinary dungeon clips play sequentially at their configured gain without crossfading. One `HTMLAudioElement` and one optional Web Audio gain stage are reused through visibility changes so returning from a suspended mobile tab cannot stack another copy. The music slider remains the single user volume source and uses the saved setting multiplied by fixed track gain. Music on/off and volume preferences are stored separately in local storage and copied into character saves when available. Browsers that require a user gesture receive playback only from a game action, Continue, a settings interaction, or the QA music controls. QA mode includes a one-pass test, loop test, and stop control.

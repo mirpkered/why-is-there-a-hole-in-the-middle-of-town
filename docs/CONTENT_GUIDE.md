@@ -61,6 +61,32 @@ Add shop IDs to `shopStock`. Barter offers belong in `trades` with `requires` an
 ## Replay and state
 
 Event resolution, one-time flags, cell visits, room tags, landmarks, and town reactions are persisted. New persisted structures need a save-version migration in `js/state.js`; never discard existing player or exploration progress during migration.
+
+## Class abilities and leveling
+
+Class kits live in `js/progression.js`. Add short ability definitions with a stable ID, unlock level, MP cost, effect kind, and concise description. Resolution belongs in the shared combat code; do not add class-specific meters. Current unlocks are level 1, 3, and 5. Level-up notices report the level, +2 max HP, +1 max MP, +1 Vitality, and any newly unlocked action. Basic Attack, Defend, Item, and Retreat remain usable without MP.
+
+## Quest chains and discovery
+
+Quest definitions may set `chain`, `step`, and `next`. Turn-in posts the next step only after granting the current reward. Use saved landmark IDs, event flags, inventory items, kills, and return actions as objectives. Item turn-ins list `{id, quantity, consume}` explicitly; the last required quantity is reserved from sales and barter. Quest board cards show the giver, objective, reward, chain step, and explicit Available/Active/Ready/Completed status. Current chains are Municipal Depth Markers (2 steps), The Very Small Door (2), The Warm Wall (3), Missing Survey Crew (3), and The Duck (2). Keep repeatable clues on a cooldown when later chain steps need a second interaction.
+
+## Equipment effects and economy
+
+Item effects remain shallow data fields rather than scripts. Current shared effects include defense/retreat/loot bonuses, fire resistance, shop discount/sale bonus, a chance to recover 1 HP after combat, and `duckSense`, which exposes one optional clue while the ring is equipped. A class passive or room-specific rule should live in the common rules path and apply only to its intended action. Nine text-only equipment items were added as sidegrades; their values range from 32g to 58g, and rare drops are deliberately low-weight. The inn costs 5g for one full refill and does not charge when both resources are full. Keep quest rewards useful, shop prices legible, and Strange items distinct rather than uniformly stronger.
+
+## Recurring people, defeat, and local records
+
+NPC visit counts live under `town.npcProgress`. Add concise state-aware dialogue rather than a relationship score. Pip offers a different ledger line at greater depth and a depth-3 trade; Nell remembers a deeper-floor meeting for the survey chain. Town dialogue may react to a few milestones but should not fire after every small action.
+
+Defeat is a rescue, not permadeath: return to town at 1 HP and 0 MP, lose 10% of carried gold (rounded up), retain equipment, quest items, and discoveries, and show a recovery report. Career counters and 15 local achievements are stored in the character save. New counters should be incremented alongside the gameplay mutation they describe; achievement unlocks use stable IDs and should not interrupt combat.
+
+## Future depth bands
+
+The current playable cap remains Floor 3. Future intent is Upper Works (1–3), Old Foundations (4–7), Forgotten Works (8–12), Things Stop Making Sense (13–20), and Deep Hole (21+). Later bands should improve reward choice, event weirdness, variant likelihood, and threat while keeping enemy identity and return risk. These are design bands only until stair generation, persistent fixtures, NPC placement, and multi-floor routing are validated for deeper layouts.
+
+## Accessibility and QA
+
+Presentation preferences are saved in `settings`: Normal/Large text, High-Contrast Automap, and Reduced Motion. High contrast changes discovered map contrast only; it does not reveal geometry. Reduced Motion shortens/disables decorative transitions while retaining state feedback. QA-only controls for class/level, quest steps, achievements, economy estimates, synthetic enemy depths, and map inspection must stay behind `?qa=1`.
 ## Room Art / Prop Workflow
 
 User drawings define the canonical design of room props. Draw individual objects rather than complete perspective scenes; the game places each prop into its procedural room geometry.

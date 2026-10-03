@@ -10,7 +10,9 @@ Serve this folder with any static HTTP server and open its address in a browser.
 
 ## Current play loop
 
-New Game → town → accept quests → explore three floors of combat and strange events → find gear and trade goods → trade, buy, or sell → decide whether to descend or retreat. Seventeen handcrafted events add choices, hazards, treasure, merchants, room identities, and landmarks alongside eight monsters. Named town residents provide services and react to a few discoveries. Saves are automatic in browser local storage.
+New Game → town → accept jobs → explore three floors of combat and strange events → find and equip gear → meet recurring dungeon merchants → decide whether to descend or return. Four starting classes use distinct MP abilities, with new actions at levels 3 and 5. Five short quest chains link landmarks, objects, and recurring characters. Local career statistics and 15 achievements keep a record of each character’s odd decisions. Saves are automatic in browser local storage.
+
+The town also provides a compact quest journal, statistics and achievement screens, shop/inn services, and presentation settings for Large text, high-contrast automapping, and reduced motion. Defeat triggers an Office rescue: the character keeps their gear and discoveries, returns at 1 HP, and loses 10% of carried gold.
 
 ## Architecture
 
@@ -20,6 +22,7 @@ New Game → town → accept quests → explore three floors of combat and stran
 - `js/game.js`: combat, weighted event resolution, temporary effects, equipment, trade, loot, retreat, floors, and save-backed progression.
 - `js/state.js`: authoritative state shape, map helpers, inventory limits, and versioned save migration.
 - `js/data.js`: monster, gear, quest, NPC, trade, loot-table, room, and dungeon-event definitions.
+- `js/progression.js`: class ability kits, local achievements, and future depth-band guidance.
 - `assets/images/` and `assets/icons/`: source home-screen artwork and resized browser/mobile app icons; `site.webmanifest` defines the install experience.
 - `docs/`: state, architecture, and content conventions.
 
@@ -27,7 +30,7 @@ The app has no server API, account, or cloud save. See [ROADMAP.md](ROADMAP.md).
 
 ## Controls
 
-Use the dungeon directional pad to move forward, left, right, or backward in one step; each successful step turns to face its travel direction. W/Up, A/Left, D/Right, and S/Down match those actions on a keyboard. A blocked move says “There's a wall there.” and does not consume a turn or advance encounters.
+Use the dungeon directional pad to move north, east, south, or west one cell at a time; each successful step faces that direction. W/Up, D/Right, S/Down, and A/Left match the compass directions on a keyboard. A blocked move says “There's a wall there.” and does not consume a turn or advance encounters. During combat, open Abilities to see the current class kit. Inventory, Statistics, Achievements, and accessibility preferences are available from town.
 
 Append `?qa=1` to the URL to show isolated development controls. QA options do not appear in ordinary play.
 
