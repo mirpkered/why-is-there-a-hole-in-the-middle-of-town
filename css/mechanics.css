@@ -121,3 +121,5 @@
   .controls-right-handed .combat-controls button[data-action="tonic"]{order:2}
   .controls-right-handed .combat-controls button[data-action="escape"]{order:1}
 }
+
+.combat-item-menu{z-index:19}.combat-item-menu button{min-height:48px}@media(max-width:680px){.combat-item-menu{bottom:calc(76px + env(safe-area-inset-bottom,0px))}.combat-item-menu button{min-height:48px}}

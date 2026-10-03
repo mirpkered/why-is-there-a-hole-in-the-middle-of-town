@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" role="img" aria-label="Unillustrated dungeon creature">
+  <ellipse cx="80" cy="145" rx="48" ry="8" fill="#000" opacity=".5"/>
+  <path d="M24 112 Q16 75 42 45 Q57 26 80 28 Q104 26 119 48 Q143 78 136 112 Q111 137 80 132 Q49 137 24 112Z" fill="#756a55" stroke="#171a18" stroke-width="7"/>
+  <circle cx="58" cy="78" r="8" fill="#f3e9d0"/><circle cx="102" cy="78" r="8" fill="#f3e9d0"/>
+  <circle cx="59" cy="78" r="3.5" fill="#171a18"/><circle cx="103" cy="78" r="3.5" fill="#171a18"/>
+  <path d="M64 105 Q80 114 96 105" fill="none" stroke="#171a18" stroke-width="6" stroke-linecap="round"/>
+  <text x="80" y="22" text-anchor="middle" font-family="sans-serif" font-size="17" font-weight="900" fill="#f3e9d0">?</text>
+</svg>

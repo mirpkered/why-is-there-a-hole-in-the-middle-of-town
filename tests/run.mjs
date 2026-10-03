@@ -17,7 +17,7 @@ const { validateQuestTemplate, questObjectiveTemplates } = await import('../js/q
 const { validWeightedRows, weightedChoice } = await import('../js/random-utils.js?preflight');
 const { applyStatus, tickStatuses } = await import('../js/status-effects.js?preflight');
 const { scaleEnemy } = await import('../js/enemy-scaling.js?preflight');
-const { selectWithHistory, paceEncounterChance, chooseEnemyAttack } = await import('../js/encounter-director.js?preflight');
+const { selectWithHistory, paceEncounterChance, chooseEnemyAttack, monsterFamilies } = await import('../js/encounter-director.js?preflight');
 const game = await import('../js/game.js?preflight');
 
 let checks = 0;
@@ -101,6 +101,7 @@ check('encounter pacing is bounded, repeats remain possible, and AI chooses vali
 check('quest templates accept possible targets and reject impossible ones', () => {
   assert.ok(Object.keys(questObjectiveTemplates).length >= 7);
   assert.deepEqual(validateQuestTemplate({type: 'kill', monsterId: 'rat', quantity: 1}, {monsters, maxPlayableDepth: 3}), []);
+  assert.deepEqual(validateQuestTemplate({type: 'kill', family: 'gas', quantity: 1, minDepth: 3, maxDepth: 3}, {monsters, families: monsterFamilies, maxPlayableDepth: 3}), []);
   assert.deepEqual(validateQuestTemplate({type: 'reach', floor: 3}, {monsters, maxPlayableDepth: 3}), []);
   assert.ok(validateQuestTemplate({type: 'kill', monsterId: 'fire-worm', quantity: 1, maxDepth: 1}, {monsters, maxPlayableDepth: 3}).length);
   assert.ok(validateQuestTemplate({type: 'reach', floor: 10, quantity: 1}, {monsters, maxPlayableDepth: 3}).length);
@@ -127,6 +128,39 @@ check('enemy scaling preserves base values and increases by depth with a spawn s
     assert.ok(deep.encounterLevel > base.encounterLevel);
     assert.ok(deep.attacks.every(a => a.maxDamage >= 0 && a.maxDamage >= a.minDamage));
   }
+});
+
+check('level-based enemy attack pools unlock valid moves and preserve weighted identity', () => {
+  const levels=[1,3,5,8,12];let seed=49271;const random=()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296};
+  for(const monster of Object.values(monsters))for(const level of levels){
+    const instance=scaleEnemy(monster,monster.minDepth,null,level),counts=new Map(instance.attacks.map(attack=>[attack.id,0]));
+    assert.ok(instance.attacks.length>0,`${monster.id} has no eligible attacks at ${level}`);
+    assert.ok(instance.attacks.every(attack=>(attack.unlockLevel||1)<=instance.encounterLevel),`${monster.id} selected a locked attack at ${level}`);
+    assert.ok((monster.attacks||[]).filter(attack=>(attack.unlockLevel||1)>instance.encounterLevel).every(attack=>!instance.attacks.some(open=>open.id===attack.id)));
+    for(let i=0;i<1000;i++){const chosen=chooseEnemyAttack(instance.aiProfile,instance.attacks,{hp:14,maxHp:24},random);assert.ok(chosen);counts.set(chosen.id,counts.get(chosen.id)+1)}
+    for(const attack of instance.attacks)assert.ok(counts.get(attack.id)>0,`${monster.id}/${attack.id} unlocked at ${level} but never selected`);
+  }
+  for(const key of ['heartAttack','porkscrew','rottenApple','pooGas'])assert.ok(monsters[key].attacks.length>=3);
+  assert.ok(scaleEnemy(monsters.heartAttack,2,null,8).attacks.some(a=>a.id==='cardiac-arrest'));
+  assert.ok(scaleEnemy(monsters.rottenApple,2,null,3).attacks.every(a=>a.effect!=='poison'));
+  assert.ok(scaleEnemy(monsters.rottenApple,2,null,4).attacks.some(a=>a.effect==='poison'));
+  const ratEarly=game.qaAttackPoolReport('rat',[1],1000)[0],ratMid=game.qaAttackPoolReport('rat',[5],1000)[0],gasHigh=game.qaAttackPoolReport('poo-gas',[8],1000)[0];
+  const pct=(report,id)=>Number.parseFloat(report.selected[id]);
+  assert.ok(pct(ratEarly,'nibble')>=60&&pct(ratEarly,'nibble')<=73,`rat basic attack weight drifted: ${JSON.stringify(ratEarly.selected)}`);
+  assert.ok(pct(ratMid,'cornered-bite')>=15&&pct(ratMid,'cornered-bite')<=30,`rat mid-level attack weight drifted: ${JSON.stringify(ratMid.selected)}`);
+  assert.ok(pct(gasHigh,'room-clearer')>=5&&pct(gasHigh,'room-clearer')<=20,`Poo Gas signature attack weight drifted: ${JSON.stringify(gasHigh.selected)}`);
+  console.log(`  attack pools: ${Object.keys(monsters).length} monsters × ${levels.length} levels × 1,000 choices; locked moves absent and eligible pools sampled`);
+});
+
+check('Poo Gas resists physical damage and Air Freshener has focused combat behavior', () => {
+  storage.clear();game.setState(freshState());game.startGame('Fresh Air Tester','Fighter');game.qaSpawnMonster('poo-gas',3,null,6);
+  const cloud=game.state.combat,initialHp=cloud.hp,normalAttack=game.state.player.attack-cloud.defense;
+  const result=game.attack();assert.match(result,/passes through most of the cloud/);assert.ok(initialHp-cloud.hp>0&&initialHp-cloud.hp<normalAttack);
+  game.addItem('air-freshener',1);const hpBeforeSpray=cloud.hp;const spray=game.useItem('air-freshener');
+  assert.match(spray,/thins the gas cloud/);assert.ok(cloud.hp<hpBeforeSpray);assert.equal(game.countItem('air-freshener'),0);assert.equal(cloud.physicalResistanceReductionTurns,1);
+  game.setState(freshState());game.startGame('Wrong Target Tester','Fighter');game.qaSpawnMonster('rat',1,null,1);game.addItem('air-freshener',1);
+  const rat=game.state.combat,ratHp=rat.hp,playerHp=game.state.player.hp,unused=game.useItem('air-freshener');
+  assert.match(unused,/no special effect/);assert.equal(rat.hp,ratHp);assert.equal(game.state.player.hp,playerHp);assert.equal(game.countItem('air-freshener'),1);
 });
 
 check('all supported historical save versions migrate sequentially and preserve player progress', () => {

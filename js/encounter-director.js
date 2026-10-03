@@ -1,6 +1,6 @@
 import {weightedChoice,penalizeRecent} from './random-utils.js';
 
-export const monsterFamilies={beast:['rat','killer-rabbit','kung-fu-goose'],kobold:['kobold'],slime:['pocket-slime'],worm:['fire-worm'],undead:['skeleton'],construct:['paper-mimic'],mimic:['paper-mimic'],fire:['fire-worm'],goose:['kung-fu-goose'],rabbit:['killer-rabbit'],humanoid:['kobold','skeleton'],bureaucratic:['paper-mimic']};
+export const monsterFamilies={beast:['rat','killer-rabbit','kung-fu-goose','porkscrew'],kobold:['kobold'],slime:['pocket-slime'],worm:['fire-worm'],undead:['skeleton'],construct:['paper-mimic'],mimic:['paper-mimic'],fire:['fire-worm'],goose:['kung-fu-goose'],rabbit:['killer-rabbit'],humanoid:['kobold','skeleton'],bureaucratic:['paper-mimic'],flying:['heart-attack','poo-gas'],flesh:['heart-attack'],strange:['heart-attack','porkscrew','rotten-apple','poo-gas'],cardiac:['heart-attack'],pig:['porkscrew'],physical:['porkscrew'],plant:['rotten-apple'],food:['rotten-apple'],rotten:['rotten-apple'],poison:['rotten-apple','poo-gas'],gas:['poo-gas'],airborne:['poo-gas']};
 
 export function selectWithHistory(rows,history,idOf,random=Math.random,penalty=.55){
   const adjusted=penalizeRecent(rows,history,idOf,'weight',penalty);

@@ -1,7 +1,8 @@
-import {items,monsters,monsterForId,quests,lootTables,dungeonEvents,roomTypes,dungeonNpcs,trades,floorEncounterTable,shopStock,merchantProfiles} from './data.js?v=major-systems-20261002i';
+import {items,monsters,monsterForId,quests,lootTables,dungeonEvents,roomTypes,dungeonNpcs,trades,floorEncounterTable,shopStock,merchantProfiles} from './data.js?v=enemy-pools-20261003a';
 import {roomProps,ROOM_PROP_ZONES} from './room-visuals.js?v=room-visuals-20261002d';
 import {classAbilities,achievements} from './progression.js?v=major-systems-20261002i';
 import {questObjectiveTemplates} from './quest-templates.js?v=systems-20261002a';
+import {statusEffectDefinitions} from './status-effects.js?v=systems-20261002a';
 
 const slots=new Set(['head','body','mainHand','offHand','feet','accessory']);
 const issue=(severity,code,message)=>({severity,code,message});
@@ -16,7 +17,8 @@ export function validateContent(){
     if(!['aggressive','cautious','evasive','opportunistic','erratic','simple'].includes(monster.aiProfile))push('error','monster-ai',`${key} has an unsupported AI profile.`);
     if(!lootTables[monster.lootTable])push('error','monster-loot',`${key} references missing loot table ${monster.lootTable}.`);
     if(!Number.isFinite(monster.minDepth)||monster.minDepth<1)push('error','monster-depth',`${key} has invalid minimum depth.`);
-    for(const attack of monster.attacks||[]){if(!Number.isFinite(attack.minDamage)||!Number.isFinite(attack.maxDamage)||attack.minDamage<0||attack.maxDamage<attack.minDamage||!Number.isFinite(attack.weight)||attack.weight<0||attack.accuracy!==undefined&&(attack.accuracy<0||attack.accuracy>1))push('error','monster-attack',`${key}/${attack.id} has invalid damage, weight, or accuracy.`);if(attack.tags!==undefined&&(!Array.isArray(attack.tags)||attack.tags.some(tag=>typeof tag!=='string')))push('error','attack-tags',`${key}/${attack.id} has invalid damage tags.`)}
+    if(monster.physicalResistance!==undefined&&(!Number.isFinite(monster.physicalResistance)||monster.physicalResistance<0||monster.physicalResistance>.9))push('error','monster-resistance',`${key} has invalid physical resistance.`);
+    for(const attack of monster.attacks||[]){if(!Number.isFinite(attack.minDamage)||!Number.isFinite(attack.maxDamage)||attack.minDamage<0||attack.maxDamage<attack.minDamage||!Number.isFinite(attack.weight)||attack.weight<=0||attack.accuracy!==undefined&&(attack.accuracy<0||attack.accuracy>1)||attack.unlockLevel!==undefined&&(!Number.isInteger(attack.unlockLevel)||attack.unlockLevel<1)||attack.weightPerLevel!==undefined&&(!Number.isFinite(attack.weightPerLevel)||attack.weightPerLevel<0)||attack.effectChance!==undefined&&(attack.effectChance<0||attack.effectChance>1))push('error','monster-attack',`${key}/${attack.id} has invalid damage, weight, unlock level, or accuracy.`);if(attack.effect&&!statusEffectDefinitions[attack.effect])push('error','attack-effect',`${key}/${attack.id} references unknown status ${attack.effect}.`);if(attack.tags!==undefined&&(!Array.isArray(attack.tags)||attack.tags.some(tag=>typeof tag!=='string')))push('error','attack-tags',`${key}/${attack.id} has invalid damage tags.`)}
     for(const path of [monster.sprite?.src,monster.sprite?.ink,monster.sprite?.colored].filter(Boolean))if(!path.startsWith('assets/'))push('error','sprite-path',`${key} has a non-local sprite path: ${path}.`);
   }
   for(const [table,entries] of Object.entries(lootTables))for(const entry of entries){if(!items[entry.item])push('error','loot-item',`${table} references missing item ${entry.item}.`);if(!Number.isFinite(entry.weight)||entry.weight<=0)push('error','loot-weight',`${table}/${entry.item} has invalid weight.`)}
@@ -25,7 +27,9 @@ export function validateContent(){
     if(!Number.isFinite(item.buyValue)||!Number.isFinite(item.sellValue)||item.buyValue<0||item.sellValue<0||item.sellValue>item.buyValue)push('error','item-price',`${id} has invalid buy/sell values.`);
     if(item.classes&&!Array.isArray(item.classes))push('error','item-classes',`${id} class restrictions must be an array.`);
     if(item.modifiers&&Object.values(item.modifiers).some(value=>!Number.isFinite(value)))push('error','item-modifier',`${id} has a nonnumeric modifier.`);
-    if(item.effect&&!['heal','buff'].includes(item.effect.type))push('error','item-effect',`${id} has an unsupported consumable effect.`);
+    if(item.effect&&!['heal','buff','combat-tool'].includes(item.effect.type))push('error','item-effect',`${id} has an unsupported consumable effect.`);
+    if(item.effect?.type==='combat-tool'&&(!Number.isFinite(item.effect.damage)||item.effect.damage<1||!Array.isArray(item.effect.targetTags)||!item.effect.targetTags.length||item.effect.targetTags.some(tag=>!Object.values(monsters).some(monster=>monster.tags?.includes(tag)))))push('error','item-combat-tool',`${id} has an invalid combat-tool target or damage.`);
+    if(item.eventHooks!==undefined&&(!Array.isArray(item.eventHooks)||item.eventHooks.some(hook=>typeof hook!=='string'||!hook)))push('error','item-event-hook',`${id} has invalid event-use hooks.`);
     if(item.questItem&&(item.sellValue>0||item.category!=='quest'))push('warning','quest-item-economy',`${id} is marked as a quest item but has ordinary sell/category values.`);
   }
   for(const [id,quest] of Object.entries(quests)){
@@ -58,7 +62,7 @@ export function validateContent(){
   }
   for(const [id,trade] of Object.entries(trades)){if(!dungeonNpcs[trade.npcId])push('error','trade-npc',`${id} references missing NPC.`);if(!Number.isFinite(trade.gold)||trade.gold<0)push('error','trade-gold',`${id} has invalid gold cost.`);for(const row of [...(trade.gives||[]),...(trade.requires||[])])if(!items[row.item]||!Number.isInteger(row.quantity)||row.quantity<1)push('error','trade-item',`${id} has invalid item quantity/reference.`)}
   for(const [id,prop] of Object.entries(roomProps)){for(const room of prop.rooms||[])if(!roomIds.includes(room))push('error','prop-room',`${id} is assigned to missing room ${room}.`);for(const zone of prop.zones||[])if(!ROOM_PROP_ZONES.includes(zone))push('error','prop-zone',`${id} uses unknown placement zone ${zone}.`);if((prop.ink&&!prop.colored)||(prop.colored&&!prop.ink))push('warning','prop-pair',`${id} has only one sprite-style asset.`)}
-  for(const [floor,rows] of Object.entries(floorEncounterTable)){if(!Number(rows.length))push('error','encounter-table',`Floor ${floor} has no encounter rows.`);for(const row of rows)if(!monsters[row.id]||!Number.isFinite(row.weight)||row.weight<=0)push('error','encounter-row',`Floor ${floor} has an invalid monster/weight row.`)}
+  for(const [floor,rows] of Object.entries(floorEncounterTable)){if(!Number(rows.length))push('error','encounter-table',`Floor ${floor} has no encounter rows.`);for(const row of rows){if(!monsters[row.id]||!Number.isFinite(row.weight)||row.weight<=0)push('error','encounter-row',`Floor ${floor} has an invalid monster/weight row.`);else if(monsters[row.id].minDepth>Number(floor))push('error','encounter-depth',`Floor ${floor} includes unavailable monster ${row.id}.`)}}
   for(const id of shopStock)if(!items[id])push('error','shop-item',`Store stock references missing item ${id}.`);
   for(const [id,profile] of Object.entries(merchantProfiles))if(!Number.isFinite(profile.buyMultiplier)||profile.buyMultiplier<0||!Array.isArray(profile.likes))push('error','merchant-profile',`${id} has invalid price or preference data.`);
   for(const [id,room] of Object.entries(roomTypes))if(!room.id||!Number.isFinite(room.weight)||room.weight<=0)push('error','room-definition',`${id} has an invalid ID or selection weight.`);
