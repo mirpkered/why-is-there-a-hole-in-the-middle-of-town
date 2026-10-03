@@ -88,6 +88,7 @@ export const items={
   ,'surveyor-lens':{id:'surveyor-lens',name:'Municipal Surveyor’s Lens',category:'equipment',slot:'head',rarity:'rare',buyValue:54,sellValue:21,modifiers:{mind:1,mp:1},effects:{lootBonus:.04},flavor:'Makes distant walls look like someone else’s responsibility.'}
   ,'damp-reading-gloves':{id:'damp-reading-gloves',name:'Gloves of Damp Reading',category:'equipment',slot:'offHand',rarity:'strange',buyValue:40,sellValue:15,modifiers:{mind:1},effects:{fireResistance:1},flavor:'Useful for reading signs that have become inexplicably wet.'}
 };
+export function monsterForId(id){return monsters[id]||Object.values(monsters).find(monster=>monster.id===id)||null}
 
 export const lootTables={
   'rat-drops':[{item:'cave-salt',weight:4},{item:'suspicious-mushroom',weight:2},{item:'bent-spoon',weight:1},{item:'spoon-splint',weight:.18}],
