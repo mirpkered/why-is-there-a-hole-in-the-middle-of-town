@@ -21,6 +21,10 @@ let dungeonQueue = [];
 let lastDungeonTrackId = null;
 let battlePass = 0;
 let lastBattleTime = 0;
+let battlePreparedAt = null;
+let battleStartRequestedAt = null;
+let battleStartLatencyMs = null;
+let battleAudioError = null;
 
 function getAudioContext(){
   if(audioContext)return audioContext;
@@ -65,8 +69,20 @@ function ensureBattleChannel(){
     lastBattleTime=current;
   });
   battleChannel.addEventListener('ended',()=>{if(!battleChannel?.loop)activeTrackId=null});
+  battleChannel.addEventListener('playing',()=>{if(battleStartRequestedAt!==null){battleStartLatencyMs=Math.round(performance.now()-battleStartRequestedAt);battleStartRequestedAt=null}});
+  battleChannel.addEventListener('error',()=>{battleAudioError=battleChannel.error?.message||`audio error ${battleChannel.error?.code||'unknown'}`});
   battleLevel();
   return battleChannel;
+}
+
+export function prepareBattleAudio(){
+  if(typeof Audio==='undefined')return {available:false,ready:false,state:'unsupported'};
+  const channel=ensureBattleChannel();if(!channel)return {available:false,ready:false,state:'unavailable'};
+  if(channel.preload!=='auto')channel.preload='auto';
+  if(channel.readyState===0){try{channel.load();battlePreparedAt=performance.now()}catch(error){console.warn('Battle music preload failed',error)}}
+  const context=getAudioContext();
+  if(context?.state==='suspended')context.resume().catch(()=>{});
+  return {available:true,ready:channel.readyState>=2,state:channel.readyState,context:context?.state||'media-element'};
 }
 
 function ensureDungeonChannels(){
@@ -171,11 +187,13 @@ async function startBattle(loop=true,userGesture=false){
   if(!userGesture)return false;
   const request=++playRequestId;
   activeTrackId='battle';battlePass=1;lastBattleTime=channel.currentTime||0;battleLevel();
+  battleStartRequestedAt=performance.now();battleStartLatencyMs=null;
   try{
     await playElement(channel);
+    if(battleStartRequestedAt!==null){battleStartLatencyMs=Math.round(performance.now()-battleStartRequestedAt);battleStartRequestedAt=null}
     if(request!==playRequestId||!enabled||activeContext!=='battle'){pauseBattle();return false}
     return true;
-  }catch{if(request===playRequestId){activeTrackId=null;channel.pause()}return false}
+  }catch(error){battleAudioError=error?.message||'playback unavailable';if(typeof console!=='undefined')console.warn('Battle music could not start; combat continues',error);if(request===playRequestId){activeTrackId=null;channel.pause()}return false}
 }
 
 export function updateMusicPreferences(preferences={}){
@@ -257,7 +275,7 @@ export function musicPlaybackDiagnostics(){
   const configuredGain=battleActive?trackGain.battle:trackGain.dungeon;
   const playing=!!battleActive||!!(dungeonActive&&!dungeonActive.audio.paused);
   const effectiveGain=volume*configuredGain;
-  return {track:currentMusicTrack(),masterVolume:volume,configuredTrackGain:configuredGain,effectiveGain:enabled&&playing?effectiveGain:0,pass:battleActive?battlePass:null,playing};
+  return {track:currentMusicTrack(),masterVolume:volume,configuredTrackGain:configuredGain,effectiveGain:enabled&&playing?effectiveGain:0,pass:battleActive?battlePass:null,playing,battleAudioReadyState:battleChannel?.readyState??0,battleAudioPrepared:!!battlePreparedAt,battleStartLatencyMs,battleAudioError};
 }
 
 document.addEventListener('visibilitychange',()=>{

@@ -180,11 +180,27 @@ check('missing optional save containers are repaired without losing core progres
   assert.ok(Array.isArray(restored.dungeon.explored)); assert.ok(restored.dungeon.visited && restored.town.shop && restored.town.flags);
 });
 
+check('10,000 independent stat rolls per class cover legal ranges without violations', () => {
+  const expectedStats=['str','agi','mind','vit'];
+  for(const cls of Object.keys(game.STARTING_STAT_RANGES)){
+    const ranges=game.STARTING_STAT_RANGES[cls],seen=Object.fromEntries(expectedStats.map(stat=>[stat,new Set()])),sums=Object.fromEntries(expectedStats.map(stat=>[stat,0]));
+    for(let i=0;i<10000;i++){const roll=game.rollStartingStats(cls);for(const stat of expectedStats){const [min,max]=ranges[stat];assert.ok(roll[stat]>=min&&roll[stat]<=max,`${cls}.${stat} out of range: ${roll[stat]}`);seen[stat].add(roll[stat]);sums[stat]+=roll[stat]}}
+    for(const stat of expectedStats){const [min,max]=ranges[stat];assert.equal(Math.min(...seen[stat]),min);assert.equal(Math.max(...seen[stat]),max);assert.equal(seen[stat].size,max-min+1,`${cls}.${stat} missed a legal value`)}
+    assert.deepEqual(game.rollStartingStats(cls,()=>0),Object.fromEntries(expectedStats.map(stat=>[stat,ranges[stat][0]])));
+    assert.deepEqual(game.rollStartingStats(cls,()=>.999999),Object.fromEntries(expectedStats.map(stat=>[stat,ranges[stat][1]])));
+    console.log(`  ${cls}: ${expectedStats.map(stat=>`${stat} ${Math.min(...seen[stat])}–${Math.max(...seen[stat])}, avg ${(sums[stat]/10000).toFixed(2)}`).join('; ')}`)
+  }
+});
+
 check('new character full-resource initialization and key game flows remain callable', () => {
   for (const cls of Object.keys(game.STARTING_CLASSES)) {
-    game.setState(freshState()); game.startGame('Tester', cls);
+    const stats=game.rollStartingStats(cls);game.setState(freshState()); game.startGame('Tester', cls,stats);
+    assert.deepEqual([game.state.player.baseStr,game.state.player.baseAgi,game.state.player.baseMind,game.state.player.baseVit],[stats.str,stats.agi,stats.mind,stats.vit]);
     assert.equal(game.state.player.hp, game.state.player.maxHp, cls);
     assert.equal(game.state.player.mp, game.state.player.maxMp, cls);
+    const resources=game.deriveStartingResources(cls,stats);
+    assert.equal(game.state.player.maxHp,resources.hp+2,'Patched Coat HP modifier included after derived maximum');
+    assert.equal(game.state.player.maxMp,resources.mp);
     game.enterDungeon(); const start = [game.state.dungeon.x, game.state.dungeon.y, game.state.player.turns];
     game.move('left');
     if (game.state.dungeon.x !== start[0]) assert.equal(game.state.player.turns, start[2] + 1);
