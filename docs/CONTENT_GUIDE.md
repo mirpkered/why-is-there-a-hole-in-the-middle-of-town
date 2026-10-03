@@ -58,6 +58,16 @@ Express hazards through choices and outcomes so a meaningful risk has a warning,
 
 Add shop IDs to `shopStock`. Barter offers belong in `trades` with `requires` and `gives` arrays of `{item, quantity}` and a gold amount. Dungeon visitors live in `dungeonNpcs`; seeded placement uses `npcEncounterIds`. Town service dialogue belongs in `townNpcs`.
 
+Monsters may define `tags` from shared creature/family categories and an `aiProfile` (`aggressive`, `cautious`, `evasive`, `opportunistic`, `erratic`, or `simple`). These are inputs to encounter targeting and lightweight attack weighting, not custom per-monster scripts. Attacks may carry tags such as `physical` or `fire`. Add status behavior through `status-effects.js`; current stack policy refreshes duration and keeps the stronger magnitude, with damage effects ticking only at the declared combat turn boundary.
+
+## Shops, quest templates, and validation
+
+Juniper’s core essentials are guaranteed. Three additional items rotate on a successful expedition return; the selected IDs are saved and are generated from the run seed plus a saved rotation counter. Add merchant pricing/preference data to `merchantProfiles`; avoid putting required progression behind a random stock roll. Quest-objective templates are definitions only: validate every candidate against registered monsters/items/rooms/events/NPCs/trades and the currently playable depth before a future generator uses it. Current generated quests are intentionally disabled.
+
+Notable non-stackable gear can keep a small `provenance` object on its inventory entry (`sourceType`, `sourceName`, `acquiredFloor`). Stackable goods stay aggregated and do not retain per-unit histories. New town milestones should be stable event-driven flags under `town.flags`.
+
+Run `node tests/run.mjs` to validate content references and runtime assets. Add authored IDs before referencing them; fix critical validation failures before deployment. Current baseline reports zero errors and zero warnings. The Pages workflow runs this check before uploading the static site.
+
 ## Replay and state
 
 Event resolution, one-time flags, cell visits, room tags, landmarks, and town reactions are persisted. New persisted structures need a save-version migration in `js/state.js`; never discard existing player or exploration progress during migration.

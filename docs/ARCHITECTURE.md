@@ -9,14 +9,15 @@ The title screen starts a new character or resumes the saved model. The town lin
 - `app.js` owns screen templates, event delegation, keyboard controls, and QA-only actions.
 - `game.js` owns character creation, quest progression, movement, combat, event resolution, items, and rewards.
 - `enemy-scaling.js` builds fixed, saveable encounter snapshots and estimates threat against the current player.
-- `state.js` defines the save key/version, starter state, map helpers, migrations, and serialization.
+- `state.js` defines the save key/version, starter state, map helpers, sequential migrations, save validation, backup recovery, and serialization.
 - `data.js` contains stable IDs and definitions for quests, monsters, items, NPCs, room types, and weighted dungeon events.
 - `progression.js` defines the small class ability kits, local achievements, and the intended future depth bands.
+- `random-utils.js`, `encounter-director.js`, `status-effects.js`, `quest-templates.js`, and `content-validation.js` provide shared selection, encounter history/pacing, reusable combat status definitions, safe objective-template validation, and content checks.
 - `audio.js` owns the single background music channel, context switching, and combat music lifecycle.
 
 ## Persistence
 
-Meaningful actions call `persist()`, which writes one JSON snapshot to local storage. The save carries `saveVersion` and timestamps. Migration logic is centralized in `state.js`; unknown versions are safely declined rather than partially loaded.
+Meaningful actions call `persist()`, which writes one JSON snapshot to local storage and keeps the previous valid primary as a fallback. Loading validates required structures, repairs missing optional containers, preserves an invalid primary in a recovery slot, and tries the backup. Migration logic is sequential and centralized in `state.js`; unknown versions are safely declined rather than partially loaded. `node tests/run.mjs` exercises migrations, round trips, active combat, settings, map persistence, and backup recovery.
 
 Save version 6 adds career counters, achievement unlock timestamps, NPC visit counts, and accessibility preferences. These values are character-local. Ability availability is derived from the player’s class and level, while encounter effects and temporary defenses stay in the active combat snapshot. Defeat recovery keeps the map, inventory, equipped gear, and quest items; it returns the player to town at 1 HP and 0 MP, and deducts 10% of carried gold (rounded up, capped by the current balance).
 
@@ -45,6 +46,14 @@ Quest chains reuse event flags, discoveries, kill progress, inventory requiremen
 Merchant prices and rewards remain integer gold values. Juniper’s ordinary purchases use the equipped `buyDiscount` effect and sales use `sellBonus`; barter consumes reserved-safe inventory and its stated gold cost. The inn is a modest 5g full refill and rejects a purchase at full HP/MP. Deeper reward multipliers continue to use the existing enemy depth scaler. Current playable floors remain capped at three because multi-floor stair/return routing and generated floor fixtures are authored for that range. Future depth bands are documented in `progression.js` but not opened in gameplay.
 
 Accessibility preferences are saved with the character: Normal/Large text, optional high-contrast map colors, and Reduced Motion. The motion preference reduces transitions and animations; the global `prefers-reduced-motion` media rule provides the same respect when the system preference is active. Settings that change only presentation do not alter map discovery or gameplay state.
+
+The 11×11 dungeon generator uses an immutable per-floor seed and its own local PRNG, so generating/revisiting floors does not consume the mutable gameplay RNG. The no-dependency preflight validates 1,000 seeds at each playable depth, map bounds/connectivity/stairs, deterministic output, and runtime asset paths. Current metrics span 52–66 walkable cells and 9–38 steps between stairs across the tested layouts.
+
+Monster definitions carry family tags and a lightweight AI profile. The encounter director applies soft penalties to the three most recent matching IDs, while allowing repeats; it also nudges encounter odds after quiet streaks and eases them after consecutive encounters. A spawn-time combat snapshot retains AI profile, family tags, scaled attacks, variant, and AI turn state. Status definitions use refresh-duration/keep-stronger-magnitude stacking; damage-over-time ticks only at the explicit player-turn-end hook, so reloads do not advance duration.
+
+The store guarantees tonic, basic weapon, and basic armor stock. Three rotating items are selected deterministically from the run seed and saved rotation counter; successful return to town is the restock trigger. Merchant profiles provide per-merchant price multipliers and preference metadata. Meaningful gameplay mutations emit small internal hooks for future statistics/quest integrations. Town milestones are event-driven flags. Quest objective templates are validation-only foundations; no live procedural quest generation uses them.
+
+Notable non-stackable equipment can keep acquisition source/floor provenance on its inventory instance. Common stackable items remain aggregate stacks. `tests/run.mjs` is the deployment preflight for content references, local app/audio assets, save migrations/recovery, procedural maps, weighted encounter/loot selection, status behavior, and basic game flows. QA reports content validation counts and a compact current-state summary.
 
 ## Audio
 

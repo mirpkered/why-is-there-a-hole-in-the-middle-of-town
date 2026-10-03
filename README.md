@@ -28,6 +28,10 @@ The town also provides a compact quest journal, statistics and achievement scree
 
 The app has no server API, account, or cloud save. See [ROADMAP.md](ROADMAP.md). The named canonical roadmap was not included in the supplied project files; its absence is recorded there.
 
+## Development preflight
+
+Run `node tests/run.mjs` before publishing. It validates content and local asset references, checks save migrations and backup recovery, stress-generates 3,000 deterministic floors, samples encounter/loot selection across five depth bands, and exercises status, shop, save/load, and new-character flows. GitHub Pages runs the same bounded preflight before deployment.
+
 ## Controls
 
 Use the dungeon directional pad to move north, east, south, or west one cell at a time; each successful step faces that direction. W/Up, D/Right, S/Down, and A/Left match the compass directions on a keyboard. A blocked move says “There's a wall there.” and does not consume a turn or advance encounters. During combat, open Abilities to see the current class kit. Inventory, Statistics, Achievements, and accessibility preferences are available from town.
