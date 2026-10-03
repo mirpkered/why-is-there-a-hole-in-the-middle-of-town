@@ -107,3 +107,17 @@
 @media(max-width:680px){.scene-backdrop{min-height:clamp(124px,20svh,158px)}}
 @media(max-width:680px){.shell.text-large .topbar{flex-wrap:wrap;gap:.5rem}.shell.text-large .brand{max-width:100%}.shell.text-large .top-actions{width:100%;justify-content:flex-end;flex-wrap:wrap}}
 .achievement-toast{position:relative;margin:.6rem 0;padding:.65rem .8rem;border:1px solid #d7b66d;border-radius:10px;background:#332b1b;color:#f5e6bd;font-weight:700}
+@media(max-width:680px){
+  .controls-right-handed .exploration-controls{flex-direction:row-reverse}
+  .exploration-controls .dungeon-exits button{min-height:44px}
+  .combat-controls button[data-action="attack"]{order:1}
+  .combat-controls button[data-action="abilities"]{order:2}
+  .combat-controls button[data-action="defend"]{order:3}
+  .combat-controls button[data-action="tonic"]{order:4}
+  .combat-controls button[data-action="escape"]{order:5}
+  .controls-right-handed .combat-controls button[data-action="attack"]{order:4}
+  .controls-right-handed .combat-controls button[data-action="abilities"]{order:5}
+  .controls-right-handed .combat-controls button[data-action="defend"]{order:3}
+  .controls-right-handed .combat-controls button[data-action="tonic"]{order:2}
+  .controls-right-handed .combat-controls button[data-action="escape"]{order:1}
+}
