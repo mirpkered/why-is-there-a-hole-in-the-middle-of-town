@@ -1,0 +1,69 @@
+import {items,monsters,monsterForId,quests,lootTables,dungeonEvents,roomTypes,dungeonNpcs,trades,floorEncounterTable,shopStock,merchantProfiles} from './data.js?v=major-systems-20261002i';
+import {roomProps,ROOM_PROP_ZONES} from './room-visuals.js?v=room-visuals-20261002d';
+import {classAbilities,achievements} from './progression.js?v=major-systems-20261002i';
+import {questObjectiveTemplates} from './quest-templates.js?v=systems-20261002a';
+
+const slots=new Set(['head','body','mainHand','offHand','feet','accessory']);
+const issue=(severity,code,message)=>({severity,code,message});
+const duplicates=values=>values.filter((value,index)=>values.indexOf(value)!==index);
+
+export function validateContent(){
+  const errors=[],warnings=[],push=(severity,code,message)=>(severity==='error'?errors:warnings).push(issue(severity,code,message));
+  const itemIds=Object.keys(items),monsterRows=Object.entries(monsters),eventIds=Object.keys(dungeonEvents),roomIds=Object.values(roomTypes).map(r=>r.id),npcIds=Object.keys(dungeonNpcs);
+  for(const [kind,ids] of [['item',itemIds],['monster',monsterRows.map(([,m])=>m.id)],['quest',Object.keys(quests)],['event',eventIds],['room',roomIds],['NPC',npcIds]])for(const id of duplicates(ids))push('error','duplicate-id',`Duplicate ${kind} ID: ${id}.`);
+  for(const [key,monster] of monsterRows){
+    if(!Array.isArray(monster.tags)||!monster.tags.length)push('error','monster-tags',`${key} has no family tags.`);
+    if(!['aggressive','cautious','evasive','opportunistic','erratic','simple'].includes(monster.aiProfile))push('error','monster-ai',`${key} has an unsupported AI profile.`);
+    if(!lootTables[monster.lootTable])push('error','monster-loot',`${key} references missing loot table ${monster.lootTable}.`);
+    if(!Number.isFinite(monster.minDepth)||monster.minDepth<1)push('error','monster-depth',`${key} has invalid minimum depth.`);
+    for(const attack of monster.attacks||[]){if(!Number.isFinite(attack.minDamage)||!Number.isFinite(attack.maxDamage)||attack.minDamage<0||attack.maxDamage<attack.minDamage||!Number.isFinite(attack.weight)||attack.weight<0||attack.accuracy!==undefined&&(attack.accuracy<0||attack.accuracy>1))push('error','monster-attack',`${key}/${attack.id} has invalid damage, weight, or accuracy.`);if(attack.tags!==undefined&&(!Array.isArray(attack.tags)||attack.tags.some(tag=>typeof tag!=='string')))push('error','attack-tags',`${key}/${attack.id} has invalid damage tags.`)}
+    for(const path of [monster.sprite?.src,monster.sprite?.ink,monster.sprite?.colored].filter(Boolean))if(!path.startsWith('assets/'))push('error','sprite-path',`${key} has a non-local sprite path: ${path}.`);
+  }
+  for(const [table,entries] of Object.entries(lootTables))for(const entry of entries){if(!items[entry.item])push('error','loot-item',`${table} references missing item ${entry.item}.`);if(!Number.isFinite(entry.weight)||entry.weight<=0)push('error','loot-weight',`${table}/${entry.item} has invalid weight.`)}
+  for(const [id,item] of Object.entries(items)){
+    if(item.slot&&!slots.has(item.slot))push('error','item-slot',`${id} uses invalid equipment slot ${item.slot}.`);
+    if(!Number.isFinite(item.buyValue)||!Number.isFinite(item.sellValue)||item.buyValue<0||item.sellValue<0||item.sellValue>item.buyValue)push('error','item-price',`${id} has invalid buy/sell values.`);
+    if(item.classes&&!Array.isArray(item.classes))push('error','item-classes',`${id} class restrictions must be an array.`);
+    if(item.modifiers&&Object.values(item.modifiers).some(value=>!Number.isFinite(value)))push('error','item-modifier',`${id} has a nonnumeric modifier.`);
+    if(item.effect&&!['heal','buff'].includes(item.effect.type))push('error','item-effect',`${id} has an unsupported consumable effect.`);
+    if(item.questItem&&(item.sellValue>0||item.category!=='quest'))push('warning','quest-item-economy',`${id} is marked as a quest item but has ordinary sell/category values.`);
+  }
+  for(const [id,quest] of Object.entries(quests)){
+    if(!Number.isFinite(quest.reward?.gold)||quest.reward.gold<0||!Number.isFinite(quest.reward?.xp)||quest.reward.xp<0)push('error','quest-reward',`${id} has an invalid reward.`);
+    if(quest.next&&!quests[quest.next])push('error','quest-next',`${id} follows missing quest ${quest.next}.`);
+    for(const item of quest.turnInItems||[])if(!items[item.id]||!Number.isInteger(item.quantity)||item.quantity<1)push('error','quest-item',`${id} has an invalid turn-in item.`);
+    if(quest.type==='kill'&&quest.target!=='any'&&!monsterForId(quest.target))push('error','quest-monster',`${id} targets unknown monster ${quest.target}.`);
+    if(quest.type==='discover'&&!eventIds.includes(quest.target)&&!['warm-wall','giant-stone-face'].includes(quest.target))push('warning','quest-discovery',`${id} discovery target ${quest.target} is not a registered event or landmark.`);
+  }
+  const inspectOutcome=(eventId,outcome)=>{
+    if(!outcome||typeof outcome!=='object')return;
+    if(!['message','gold','item','removeItem','heal','damage','effect','flag','townReaction','unlockQuest','questProgress','discover','room','encounter','random','skillCheck'].includes(outcome.type))push('error','event-outcome',`${eventId} has unsupported outcome type ${outcome.type}.`);
+    if(outcome.type==='item'||outcome.type==='removeItem'){if(!items[outcome.item])push('error','event-item',`${eventId} references missing item ${outcome.item}.`)}
+    if(outcome.type==='encounter'&&!monsterForId(outcome.monster))push('error','event-monster',`${eventId} references missing monster ${outcome.monster}.`);
+    if(outcome.type==='room'&&!roomIds.includes(outcome.room))push('error','event-room',`${eventId} references missing room ${outcome.room}.`);
+    if(outcome.type==='unlockQuest'&&!quests[outcome.quest])push('error','event-quest',`${eventId} unlocks missing quest ${outcome.quest}.`);
+    if(outcome.type==='random')for(const row of outcome.outcomes||[])for(const nested of row.outcomes||[])inspectOutcome(eventId,nested);
+    if(outcome.type==='skillCheck')for(const branch of [outcome.success,outcome.failure])for(const nested of branch||[])inspectOutcome(eventId,nested);
+    if(outcome.type==='gold'&&!Number.isFinite(outcome.amount))push('error','event-gold',`${eventId} has an invalid gold outcome.`);
+  };
+  for(const [id,event] of Object.entries(dungeonEvents)){
+    if(!Number.isFinite(event.weight)||event.weight<=0||!Number.isFinite(event.minDepth||1)||(event.maxDepth!==undefined&&event.maxDepth<(event.minDepth||1)))push('error','event-range',`${id} has an invalid weight or depth range.`);
+    if(!Array.isArray(event.choices)||!event.choices.length)push('error','event-choices',`${id} has no available choices.`);
+    for(const choice of event.choices||[]){if(!choice.id||!Array.isArray(choice.outcomes))push('error','event-choice',`${id} has a malformed choice.`);for(const outcome of choice.outcomes||[])inspectOutcome(id,outcome)}
+  }
+  for(const [id,npc] of Object.entries(dungeonNpcs)){
+    for(const tradeId of npc.tradeIds||[])if(!trades[tradeId])push('error','npc-trade',`${id} references missing trade ${tradeId}.`);
+    for(const itemId of npc.stock||[])if(!items[itemId])push('error','npc-stock',`${id} offers missing item ${itemId}.`);
+    if(npc.priceMultiplier!==undefined&&(!Number.isFinite(npc.priceMultiplier)||npc.priceMultiplier<0))push('error','npc-price',`${id} has an invalid price multiplier.`);
+  }
+  for(const [id,trade] of Object.entries(trades)){if(!dungeonNpcs[trade.npcId])push('error','trade-npc',`${id} references missing NPC.`);if(!Number.isFinite(trade.gold)||trade.gold<0)push('error','trade-gold',`${id} has invalid gold cost.`);for(const row of [...(trade.gives||[]),...(trade.requires||[])])if(!items[row.item]||!Number.isInteger(row.quantity)||row.quantity<1)push('error','trade-item',`${id} has invalid item quantity/reference.`)}
+  for(const [id,prop] of Object.entries(roomProps)){for(const room of prop.rooms||[])if(!roomIds.includes(room))push('error','prop-room',`${id} is assigned to missing room ${room}.`);for(const zone of prop.zones||[])if(!ROOM_PROP_ZONES.includes(zone))push('error','prop-zone',`${id} uses unknown placement zone ${zone}.`);if((prop.ink&&!prop.colored)||(prop.colored&&!prop.ink))push('warning','prop-pair',`${id} has only one sprite-style asset.`)}
+  for(const [floor,rows] of Object.entries(floorEncounterTable)){if(!Number(rows.length))push('error','encounter-table',`Floor ${floor} has no encounter rows.`);for(const row of rows)if(!monsters[row.id]||!Number.isFinite(row.weight)||row.weight<=0)push('error','encounter-row',`Floor ${floor} has an invalid monster/weight row.`)}
+  for(const id of shopStock)if(!items[id])push('error','shop-item',`Store stock references missing item ${id}.`);
+  for(const [id,profile] of Object.entries(merchantProfiles))if(!Number.isFinite(profile.buyMultiplier)||profile.buyMultiplier<0||!Array.isArray(profile.likes))push('error','merchant-profile',`${id} has invalid price or preference data.`);
+  for(const [id,room] of Object.entries(roomTypes))if(!room.id||!Number.isFinite(room.weight)||room.weight<=0)push('error','room-definition',`${id} has an invalid ID or selection weight.`);
+  for(const [cls,abilities] of Object.entries(classAbilities))for(const ability of abilities)if(!ability.id||!Number.isInteger(ability.level)||ability.level<1||!Number.isFinite(ability.cost)||ability.cost<0)push('error','ability',`${cls} has an invalid ability.`);
+  for(const achievement of achievements)if(!achievement.id||!achievement.name)push('error','achievement',`Achievement definition is incomplete.`);
+  if(Object.keys(questObjectiveTemplates).length<7)push('error','quest-template',`Quest objective template set is incomplete.`);
+  return {errors,warnings,errorCount:errors.length,warningCount:warnings.length};
+}

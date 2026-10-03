@@ -31,6 +31,8 @@ export const monsters={
   skeleton:{id:'skeleton',name:'Skeleton on Break',baseTier:3,depthEvolution:{damagePerLevel:.2,attackWeightPerLevel:.05},minDepth:2,hp:18,attack:6,defense:2,speed:2,xp:16,gold:[4,10],rarity:'common',lootTable:'skeleton-drops',encounterText:'A skeleton checks a pocket watch. It has no pockets.',behavior:{type:'plain',description:'A sturdy, ordinary fighter.'}},
   paperMimic:{id:'paper-mimic',name:'Permit-Office Mimic',baseTier:4,depthEvolution:{damagePerLevel:.22,attackWeightPerLevel:.045},minDepth:3,hp:25,attack:7,defense:3,speed:2,xp:26,gold:[8,16],rarity:'rare',lootTable:'mimic-drops',encounterText:'The filing cabinet has too many teeth.',behavior:{type:'critical',criticalChance:.15,description:'Heavy strikes from a convincing cabinet.'}}
 };
+const monsterMetadata={rat:{tags:['beast'],aiProfile:'aggressive'},kobold:{tags:['kobold','humanoid'],aiProfile:'cautious'},killerRabbit:{tags:['beast','rabbit'],aiProfile:'aggressive'},kungFuGoose:{tags:['beast','goose'],aiProfile:'evasive'},pocketSlime:{tags:['slime'],aiProfile:'simple'},fireWorm:{tags:['worm','fire'],aiProfile:'aggressive'},skeleton:{tags:['undead','humanoid'],aiProfile:'simple'},paperMimic:{tags:['construct','mimic','bureaucratic-horror'],aiProfile:'opportunistic'}};
+for(const [key,metadata] of Object.entries(monsterMetadata)){monsters[key].tags=metadata.tags;monsters[key].aiProfile=metadata.aiProfile}
 
 export const enemyVariants=[{id:'large',name:'Large',levelBonus:1,hpMultiplier:1.24,attackBonus:0,defenseBonus:1,attackWeightMultiplier:1.08,xpMultiplier:1.18,goldMultiplier:1.15,lootBonus:.04,spawnChance:.027},{id:'veteran',name:'Veteran',levelBonus:1,hpMultiplier:1.12,attackBonus:1,defenseBonus:0,attackWeightMultiplier:1.15,xpMultiplier:1.2,goldMultiplier:1.2,lootBonus:.05,spawnChance:.025},{id:'very-angry',name:'Very Angry',levelBonus:2,hpMultiplier:1.08,attackBonus:1,defenseBonus:0,attackWeightMultiplier:1.3,xpMultiplier:1.25,goldMultiplier:1.18,lootBonus:.04,spawnChance:.013}];
 
@@ -44,7 +46,7 @@ const attackSets={
   skeleton:[['rattle','Rattling swipe',3,6,.72,'The skeleton swipes with a loose bone.'],['clipboard','Clipboard smack',4,7,.28,'A clipboard appears from nowhere.']],
   paperMimic:[['snap','Cabinet snap',4,7,.76,'The filing cabinet snaps shut on you.'],['forms','Paperwork avalanche',5,8,.24,'A stack of forms hits like a brick.']]
 };
-for(const [id,m] of Object.entries(monsters)){m.attacks=attackSets[id].map(([attackId,name,minDamage,maxDamage,weight,flavor])=>({id:attackId,name,minDamage,maxDamage,accuracy:.94,weight,flavor,...(id==='fireWorm'&&attackId==='flame-belch'?{effect:'burn',effectChance:.45,effectTurns:2}:{})}));m.sprite={src:`assets/monsters/${m.id}.svg`,scale:1,offsetY:0}}
+for(const [id,m] of Object.entries(monsters)){m.attacks=attackSets[id].map(([attackId,name,minDamage,maxDamage,weight,flavor])=>({id:attackId,name,minDamage,maxDamage,accuracy:.94,weight,flavor,tags:id==='fireWorm'&&attackId==='flame-belch'?['fire']:['physical'],...(id==='fireWorm'&&attackId==='flame-belch'?{effect:'burn',effectChance:.45,effectTurns:2}:{})}));m.sprite={src:`assets/monsters/${m.id}.svg`,scale:1,offsetY:0}}
 // These two user-drawn designs keep their stable IDs for existing saves and quest references.
 monsters.kungFuGoose.name='Kung Fungoose';
 monsters.kungFuGoose.sprite={ink:'assets/images/enemies/kung-fungoose-ink.png',colored:'assets/images/enemies/kung-fungoose-colored.png',scale:1.12,offsetY:-1};
@@ -119,6 +121,7 @@ export const trades={
 };
 
 export const shopStock=['healing-tonic','rusty-sword','wooden-shield','leather-armor','reinforced-boots','apprentice-staff','goose-proof-helmet','fireproof-trousers','unnecessary-grip-gloves','surveyor-lens'];
+export const merchantProfiles={juniper:{id:'juniper',buyMultiplier:1,likes:['ordinary-goods'],tradeBonus:0},'kobold-trader':{id:'kobold-trader',buyMultiplier:1,likes:['trade-good','strange'],tradeBonus:.05},'lost-surveyor':{id:'lost-surveyor',buyMultiplier:2,likes:['emergency-supplies'],tradeBonus:0}};
 export const npcEncounterIds=['kobold-trader','lost-surveyor'];
 export const floorEncounterTable={
   1:[{id:'rat',weight:3},{id:'kobold',weight:2},{id:'killerRabbit',weight:2},{id:'kungFuGoose',weight:2},{id:'pocketSlime',weight:3}],
