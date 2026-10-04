@@ -70,6 +70,7 @@
 .room-prop-zone--foreground_left{left:18%;top:76%;width:25%;height:50%}
 .room-prop-zone--foreground_right{left:82%;top:76%;width:25%;height:50%}
 .room-prop-zone--floor_center{left:50%;top:78%;width:20%;height:43%}
+.room-prop--campfire.room-prop-zone--floor_center{width:34%;height:43%}
 .room-prop-zone--wall_center{left:50%;top:35%;width:18%;height:37%}
 .room-prop--show-zone{outline:1px dashed #fff5a5;background:#ffe58b22;border-radius:4px}
 .scene--mushroom-room .scene-view{background:linear-gradient(#344336,#27352c 68%,#151918)}
