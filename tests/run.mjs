@@ -12,6 +12,7 @@ globalThis.localStorage = {
 const { SAVE_KEY, SAVE_BACKUP_KEY, SAVE_RECOVERY_KEY, SAVE_VERSION, freshState, generateFloorMap, validateFloorMap, analyzeFloorMap, saveState, loadState } = await import('../js/state.js?preflight');
 const { items, monsters, lootTables, floorEncounterTable, innEvents, shopStock } = await import('../js/data.js?preflight');
 const { makeMarketCycle, currentSellValue, simulateMarkets, simulateInnEvents } = await import('../js/town-economy.js?preflight');
+const { generateAbsurdName, inspectNameGenerator, MAX_NAME_LENGTH } = await import('../js/name-generator.js?preflight');
 const { roomProps: props } = await import('../js/room-visuals.js?preflight');
 const { validateContent } = await import('../js/content-validation.js?preflight');
 const { validateQuestTemplate, questObjectiveTemplates } = await import('../js/quest-templates.js?preflight');
@@ -225,6 +226,17 @@ check('10,000 independent stat rolls per class cover legal ranges without violat
     assert.deepEqual(game.rollStartingStats(cls,()=>.999999),Object.fromEntries(expectedStats.map(stat=>[stat,ranges[stat][1]])));
     console.log(`  ${cls}: ${expectedStats.map(stat=>`${stat} ${Math.min(...seen[stat])}–${Math.max(...seen[stat])}, avg ${(sums[stat]/10000).toFixed(2)}`).join('; ')}`)
   }
+});
+
+check('absurd character names stay usable and vary across 10,000 generated names', () => {
+  const report=inspectNameGenerator(10000);
+  assert.equal(report.generated,10000); assert.equal(report.invalidCount,0);
+  assert.ok(report.lengths.min>0&&report.lengths.max<=MAX_NAME_LENGTH);
+  assert.ok(report.unique>3000,`name pool repeated too heavily: ${report.unique} unique`);
+  assert.ok(report.ordinaryCount>0,'ordinary names should occur sometimes');
+  assert.ok(Object.keys(report.categories).length>=4,'several name patterns should be represented');
+  assert.equal(generateAbsurdName(()=>0).category,'ordinary');
+  console.log(`  names: ${report.unique} unique; ${report.ordinaryCount} ordinary; categories ${Object.keys(report.categories).join(', ')}; length ${report.lengths.min}–${report.lengths.max}`);
 });
 
 check('new character full-resource initialization and key game flows remain callable', () => {

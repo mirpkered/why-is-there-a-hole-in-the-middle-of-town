@@ -44,3 +44,5 @@ The repository publishes the static site through GitHub Pages. All links and ass
 
 
 Town is a compact destination hub. Juniper's guaranteed essentials sit beside four seeded rotating items; selling eligible dungeon goods uses bounded, saved market demand. Sal's 5g full rest can rarely produce a modest temporary benefit, including Well Rested combat XP for three victories. These town systems are covered by the deployment preflight and save migration tests.
+
+Town services now share a sticky compact resource/navigation bar. The store uses separate Buy and Sell modes, while character creation opens with a ready-to-start name, class, and stat roll; its name pools are in js/name-generator.js.
