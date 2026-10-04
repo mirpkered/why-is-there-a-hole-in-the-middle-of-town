@@ -117,3 +117,10 @@ User drawings define the canonical design of room props. Draw individual objects
 The first planned prop tests are a mushroom cluster, wooden crate, campfire with kettle, and pile of spoons. Current CSS/SVG props are temporary placement placeholders, not final artwork. Room prop definitions are data-driven in `js/data.js`; the shared prop metadata, stable placement, and placeholder renderer live in `js/room-visuals.js`. Decorations derive their seed from persisted floor geometry and cell coordinates, so revisiting a room does not reroll it and scenery does not consume gameplay RNG. Props are decorative and do not block movement unless a future definition explicitly opts into collision.
 
 For future hand-drawn props, provide paired transparent Colored and Original Ink files. The renderer selects the matching asset through the existing Sprite Style preference; no separate room-art setting is needed.
+
+
+## Town art, market goods, and Inn events
+
+Town cards are responsive CSS components with stable art-slot IDs: the-hole, general-store, inn, quest-board, and character. User drawings are the canonical location designs. Add paired files as assets/images/town/<slot>-ink.png and assets/images/town/<slot>-colored.png; use them as emblems or small location illustrations inside the card's flexible art area, never as fixed-size card frames. Keep the scene's outline and proportions intact, remove the paper, and check both Sprite Style modes at 320px and 390px.
+
+Market goods are identified by category trade-good or junk; only these use persistent demand multipliers. Keep the listed sellValue as the base, since provenance does not change market price. The market cycle derives its stock and demand from the run seed plus cycle number, persists under town.shop, and advances once after a successful expedition return. innEvents in js/data.js describes weighted rest outcomes. Effects use the xp-bonus, temporary, or flavor forms and are checked by the content validator.

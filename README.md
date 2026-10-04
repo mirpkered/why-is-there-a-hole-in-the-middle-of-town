@@ -41,3 +41,6 @@ Append `?qa=1` to the URL to show isolated development controls. QA options do n
 ## Deployment
 
 The repository publishes the static site through GitHub Pages. All links and assets are relative; there is no client-side URL router. Live URL: https://mirpkered.github.io/why-is-there-a-hole-in-the-middle-of-town/.
+
+
+Town is a compact destination hub. Juniper's guaranteed essentials sit beside four seeded rotating items; selling eligible dungeon goods uses bounded, saved market demand. Sal's 5g full rest can rarely produce a modest temporary benefit, including Well Rested combat XP for three victories. These town systems are covered by the deployment preflight and save migration tests.

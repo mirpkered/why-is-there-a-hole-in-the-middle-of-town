@@ -10,7 +10,8 @@ globalThis.localStorage = {
 };
 
 const { SAVE_KEY, SAVE_BACKUP_KEY, SAVE_RECOVERY_KEY, SAVE_VERSION, freshState, generateFloorMap, validateFloorMap, analyzeFloorMap, saveState, loadState } = await import('../js/state.js?preflight');
-const { items, monsters, lootTables, floorEncounterTable } = await import('../js/data.js?preflight');
+const { items, monsters, lootTables, floorEncounterTable, innEvents, shopStock } = await import('../js/data.js?preflight');
+const { makeMarketCycle, currentSellValue, simulateMarkets, simulateInnEvents } = await import('../js/town-economy.js?preflight');
 const { roomProps: props } = await import('../js/room-visuals.js?preflight');
 const { validateContent } = await import('../js/content-validation.js?preflight');
 const { validateQuestTemplate, questObjectiveTemplates } = await import('../js/quest-templates.js?preflight');
@@ -244,10 +245,11 @@ check('new character full-resource initialization and key game flows remain call
   const before = game.storeStock().map(item => item.id); game.persist(); const reloaded = loadState();
   game.setState(reloaded); assert.deepEqual(game.storeStock().map(item => item.id), before);
   assert.ok(['healing-tonic', 'rusty-sword', 'leather-armor'].every(id => before.includes(id)));
-  const rotation = game.state.town.shop.rotation; game.returnTown(); assert.equal(game.state.town.shop.rotation, rotation + 1);
+  const rotation = game.state.town.shop.rotation; game.enterDungeon(); game.returnTown(); assert.equal(game.state.town.shop.rotation, rotation + 1);
+  game.returnTown(); assert.equal(game.state.town.shop.rotation, rotation + 1, 'town visits cannot advance the market');
   assert.ok(['healing-tonic', 'rusty-sword', 'leather-armor'].every(id => game.storeStock().some(item => item.id === id)));
   for (let i = 0; i < 30; i++) {
-    game.returnTown(); const stock = game.storeStock().map(item => item.id);
+    game.enterDungeon(); game.returnTown(); const stock = game.storeStock().map(item => item.id);
     assert.equal(new Set(stock).size, stock.length); assert.ok(['healing-tonic', 'rusty-sword', 'leather-armor'].every(id => stock.includes(id)));
     for (const id of stock) assert.ok(game.buyPrice(id) >= 1);
   }
@@ -266,6 +268,69 @@ check('notable gear provenance persists while ordinary stackables remain aggrega
   assert.ok(game.addItem('cave-salt', 1, source)); assert.equal(game.state.inventory.find(entry => entry.id === 'cave-salt').provenance, undefined);
   game.persist(); assert.deepEqual(loadState().inventory.find(entry => entry.id === 'goose-proof-helmet').provenance, source);
   unsubscribe();
+});
+
+
+check('town market cycles persist stock and bounded sell demand without buyback profit', () => {
+  const first = makeMarketCycle(99123, 7, shopStock, items), same = makeMarketCycle(99123, 7, shopStock, items);
+  assert.deepEqual(first, same, 'same seed and cycle must restore identical stock/prices');
+  assert.equal(first.rotatingIds.length, 4);
+  const sim = simulateMarkets({ runs: 1000, seed: 7721, stockIds: shopStock, items });
+  assert.ok(Object.values(sim.appearances).every(count => count > 0), 'all rotating items should appear');
+  assert.ok(sim.demandCounts.low > 0 && sim.demandCounts.normal > 0 && sim.demandCounts.high > 0);
+  assert.ok(sim.everyCycleChangesSomeStock);
+  assert.ok(sim.coreStockAlwaysPresent);
+  assert.ok(sim.minSell >= 1 && sim.maxSell > sim.minSell);
+  for (const item of Object.values(items).filter(item => item.sellValue > 0 && item.buyValue > 0)) {
+    for (const state of ['low','normal','high']) {
+      const market = { demand: { [item.id]: { state, multiplier: {low:.82,normal:1,high:1.2}[state] } } };
+      const current = currentSellValue(item, market, .2, Math.max(1, Math.floor(item.buyValue * .92)));
+      assert.ok(current <= Math.max(1, Math.floor(item.buyValue * .92)), `${item.id} resale must not exceed its discounted purchase price`);
+    }
+  }
+  game.setState(freshState()); game.startGame('Market Tester','Fighter');
+  const stockBefore = game.storeStock().map(item => item.id), demandBefore = structuredClone(game.marketState().demand);
+  game.persist(); game.setState(loadState());
+  assert.deepEqual(game.storeStock().map(item => item.id), stockBefore);
+  assert.deepEqual(game.marketState().demand, demandBefore);
+  const cycle = game.marketState().cycle;
+  game.enterDungeon(); game.returnTown();
+  assert.equal(game.marketState().cycle, cycle + 1);
+  for (let i=0;i<1000;i++) game.qaRestockMarket();
+  const thousand = game.qaMarketSimulation(1000);
+  assert.ok(thousand.coreStockAlwaysPresent && thousand.everyCycleChangesSomeStock);
+});
+
+check('inn events require a paid partial rest; Well Rested boosts and consumes combat XP charges', () => {
+  const sim = simulateInnEvents(innEvents, 10000);
+  assert.ok(sim.observedRate > .23 && sim.observedRate < .27, `unexpected event rate ${sim.observedRate}`);
+  assert.equal(sim.fullRestEvents, 0);
+  assert.ok(Object.values(sim.counts).every(count => count > 0));
+
+  game.setState(freshState()); game.startGame('Inn Tester','Fighter');
+  const originalGold = game.state.town.gold;
+  game.qaSetWellRestedBattles(2);
+  const full = game.restAtInn('well-rested');
+  assert.equal(full.ok,false); assert.match(full.message,/fully rested/i);
+  assert.equal(game.state.town.gold,originalGold); assert.equal(game.state.town.innEffects.wellRestedBattles,2);
+
+  game.state.player.hp--;
+  const rested = game.restAtInn('well-rested');
+  assert.equal(rested.ok,true); assert.equal(game.state.town.gold,originalGold-5);
+  assert.equal(game.state.player.hp,game.state.player.maxHp); assert.equal(game.state.town.innEffects.wellRestedBattles,3);
+  game.state.player.attack=100; game.qaSpawnMonster('rat',1,null,1); game.state.combat.hp=1;
+  const result=game.attack();
+  assert.match(result,/defeated/i); assert.equal(game.state.town.innEffects.wellRestedBattles,2);
+
+  game.state.player.hp--; game.qaForceInnEvent('good-breakfast');
+  const defense=game.state.player.temporaryEffects.defense;
+  game.state.player.hp--; game.qaForceInnEvent('good-breakfast');
+  assert.equal(game.state.player.temporaryEffects.defense.value,defense.value);
+  assert.equal(game.state.player.temporaryEffects.defense.remaining,2);
+  game.persist(); game.setState(loadState());
+  assert.equal(game.state.town.innEffects.wellRestedBattles,2);
+  assert.equal(game.state.player.temporaryEffects.defense.remaining,2);
+  game.qaClearInnEffects();
 });
 
 check('100 generated three-floor maps route safely to town and interrupted returns stay on-route', () => {

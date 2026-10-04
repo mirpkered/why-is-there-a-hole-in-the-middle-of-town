@@ -21,3 +21,8 @@ The save loader repairs absent optional containers and rejects an invalid curren
 Enemy abilities are definitions keyed by class and unlock level in `js/progression.js`; they use the existing MP value and do not need per-save cooldown state. The combat save snapshot retains enemy values; level and experience remain on the player. Defeat records store the lost gold, floor, and retained equipped gear until the recovery notice is acknowledged. Career records and achievements are local to this save and have no server counterpart.
 
 Character creation rolls each starting attribute independently from the selected class's range. HP and MP are derived from class baselines and the rolled Vitality/Mind modifiers, then starting equipment is applied before current HP/MP are filled to their maxima. The chosen base attributes and final resources are saved in the existing player fields; the latest save version does not change for this feature.
+
+
+### Town market and Inn additions
+
+Save version 8 adds town.shop.cycle, marketSeed, rotating stock IDs, demand states/multipliers, and cycle flavor, plus town.innEffects for Well Rested XP charges, fractional XP carry, and temporary Inn effect keys. Version 7 and earlier characters migrate sequentially; current stock/demand are initialized deterministically and do not reroll on reload. A successful expedition return advances the market once. Inn rest benefits persist across reloads and decrement on their documented battle/encounter completion rules.
