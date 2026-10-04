@@ -80,6 +80,7 @@ monsters.fireWorm.sprite={ink:'assets/images/enemies/fire-breathing-earthworm-in
 monsters.killerRabbit.sprite={ink:'assets/images/enemies/killer-rabbit-ink.png',colored:'assets/images/enemies/killer-rabbit-colored.png',scale:1.08,offsetY:0};
 monsters.pocketSlime.sprite={ink:'assets/images/enemies/pocket-slime-ink.png',colored:'assets/images/enemies/pocket-slime-colored.png',scale:1.12,offsetY:-2};
 for(const key of ['heartAttack','porkscrew','rottenApple','pooGas'])monsters[key].sprite.src='assets/monsters/fallback.svg';
+monsters.pooGas.sprite={src:'assets/monsters/fallback.svg',ink:'assets/images/enemies/poo-gas-ink.png',colored:'assets/images/enemies/poo-gas-colored.png',scale:1.08,offsetY:0};
 
 export const items={
   'rusty-sword':{id:'rusty-sword',name:'Rusty Sword',category:'equipment',slot:'mainHand',rarity:'common',buyValue:12,sellValue:5,modifiers:{attack:2},flavor:'The rust is mostly decorative. Probably.',stackable:false},
