@@ -15,12 +15,13 @@ const { makeMarketCycle, currentSellValue, simulateMarkets, simulateInnEvents } 
 const { generateAbsurdName, inspectNameGenerator, MAX_NAME_LENGTH } = await import('../js/name-generator.js?preflight');
 const { roomProps: props } = await import('../js/room-visuals.js?preflight');
 const { validateContent } = await import('../js/content-validation.js?preflight');
+const { achievements } = await import('../js/progression.js?preflight');
 const { validateQuestTemplate, questObjectiveTemplates } = await import('../js/quest-templates.js?preflight');
 const { validWeightedRows, weightedChoice } = await import('../js/random-utils.js?preflight');
 const { applyStatus, tickStatuses } = await import('../js/status-effects.js?preflight');
 const { LOCATION_MUSIC_POOLS, LOCATION_MUSIC_CONTEXTS, chooseLocationTrack, validateLocationMusic } = await import('../js/location-music.js?v=location-music-20261004a');
 const { scaleEnemy } = await import('../js/enemy-scaling.js?preflight');
-const { selectWithHistory, paceEncounterChance, chooseEnemyAttack, monsterFamilies } = await import('../js/encounter-director.js?preflight');
+const { selectWithHistory, paceEncounterChance, chooseEncounterCategory, chooseEnemyAttack, monsterFamilies } = await import('../js/encounter-director.js?preflight');
 const game = await import('../js/game.js?preflight');
 
 let checks = 0;
@@ -372,6 +373,52 @@ check('location music pools accept empty lists and select one-shot tracks withou
   assert.equal(validateLocationMusic(pools).errorCount,0);
   assert.equal(validateLocationMusic({...Object.fromEntries(LOCATION_MUSIC_CONTEXTS.map(context=>[context,[]])),inn:[{...pools.inn[0],loop:true}]}).errorCount,1);
 });
+check('new content chains, existing-item readiness, trade history, and Inn rewards resolve cleanly',()=>{
+  storage.clear();game.setState(freshState());game.startGame('Spoon Auditor','Fighter');
+  game.state.dungeon.currentEventId='room-of-spoons';assert.ok(game.resolveDungeonEvent('room-of-spoons','count').ok);
+  assert.equal(game.acceptQuest('spoon-confirmation'),true);assert.equal(game.questStatus('spoon-confirmation').status,'ready');
+  assert.ok(game.turnInQuest('spoon-confirmation').ok);game.addItem('bent-spoon',1);assert.equal(game.acceptQuest('spoon-sample'),true);assert.equal(game.questStatus('spoon-sample').status,'ready');
+  assert.ok(game.turnInQuest('spoon-sample').ok);game.addItem('bent-spoon',1);assert.equal(game.acceptQuest('spoon-certification'),true);assert.equal(game.questStatus('spoon-certification').status,'ready');
+  assert.ok(game.turnInQuest('spoon-certification').ok);assert.equal(game.countItem('official-spoon'),1);assert.ok(game.state.achievements.unlocked['spoon-certified']);
+
+  game.setState(freshState());game.startGame('Odor Clerk','Wizard');game.state.dungeon.currentEventId='odor-survey';assert.ok(game.resolveDungeonEvent('odor-survey','collect').ok);
+  assert.equal(game.countItem('condensed-stink'),1);assert.equal(game.acceptQuest('air-quality-sample'),true);assert.equal(game.questStatus('air-quality-sample').status,'ready');
+  assert.ok(game.turnInQuest('air-quality-sample').ok);assert.ok(game.state.quests.available.includes('air-quality-followup'));
+
+  game.setState(freshState());game.startGame('Pip Customer','Rogue');assert.match(game.talkNpc('kobold-trader'),/ledger|floor/i);assert.equal(game.acceptQuest('pip-inventory'),true);
+  game.addItem('suspicious-mushroom',3);game.addItem('goose-feather',1);game.state.town.gold=30;
+  assert.equal(game.completeTrade('mushroom-goose-deal').ok,true);assert.equal(game.questStatus('pip-inventory').status,'ready');assert.ok(game.turnInQuest('pip-inventory').ok);
+  assert.ok(game.state.quests.available.includes('pip-tail'));game.addItem('curly-tail',1);assert.equal(game.acceptQuest('pip-tail'),true);assert.equal(game.questStatus('pip-tail').status,'ready');
+
+  game.setState(freshState());game.startGame('Inn Event Tester','Cleric');game.state.player.hp--;const gold=game.state.town.gold;const rest=game.restAtInn('bed-coin');
+  assert.equal(rest.ok,true);assert.equal(game.state.town.gold,gold-4);assert.equal(game.state.career.innEventsTriggered,1);
+  game.state.player.hp--;const snack=game.restAtInn('mystery-snack');assert.equal(snack.ok,true);assert.ok(game.countItem('healing-tonic')>=3);
+});
+
+check('tag-focused equipment, item interactions, and combat narration stay concise',()=>{
+  game.setState(freshState());game.startGame('Apple Tester','Fighter');game.qaGiveItem('suspicious-apple-corer',1);game.equipItem('suspicious-apple-corer');game.qaSpawnMonster('rotten-apple',2,null,5);game.state.combat.hp=100;
+  const hp=game.state.combat.hp,result=game.attack();assert.ok(hp-game.state.combat.hp>=game.state.player.attack+2);assert.match(result,/hit/i);
+  const attack=monsters.rat.attacks.find(row=>row.id==='nibble');assert.ok(attack.flavors.length>=2);assert.ok(Object.values(monsters).every(monster=>monster.attacks.every(row=>row.flavors?.length>=2)));
+  assert.ok(['air-quality-concern','apple-a-day','heart-health','pork-problem','spoon-certified'].every(id=>achievements.some(row=>row.id===id)));
+});
+
+check('expanded Inn event pool samples correctly across 10,000 eligible-rest attempts',()=>{
+  const report=simulateInnEvents(innEvents,10000);assert.equal(report.fullRestEvents,0);assert.ok(report.observedRate>.22&&report.observedRate<.28,`Inn event chance drifted: ${report.observedRate}`);
+  assert.equal(Object.keys(report.counts).length,Object.keys(innEvents).length);assert.ok(Object.values(report.counts).every(count=>count>0));
+  console.log(`  Inn events: ${report.eventCount}/${report.legitimateRests} eligible rests (${(report.observedRate*100).toFixed(1)}%); all ${Object.keys(report.counts).length} events appeared`);
+});
+
+check('10,000 encounter decisions per representative depth and 10,000 weighted loot rolls per depth stay varied',()=>{
+  let seed=739391;const random=()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296};const encounterReport={},lootReport={};
+  for(const floor of [1,3,5,10]){const categories={combat:0,event:0,quiet:0,npc:0},monstersSeen=new Map(),history=[];let emptySteps=0,streak=0,repeat=0,previous='';const rows=(floorEncounterTable[floor]||floorEncounterTable[3]).filter(row=>monsters[row.id]?.minDepth<=floor);
+    for(let i=0;i<10000;i++){const chance=paceEncounterChance({combat:floor===1?.13:.19,event:floor===1?.09:.13,emptySteps,encounterStreak:streak});if(random()<.035){categories.npc++;emptySteps=0;streak++}else{const category=chooseEncounterCategory(chance,random);categories[category]++;if(category==='combat'){const selected=selectWithHistory(rows,history,row=>monsters[row.id].id,random,.55);const id=selected.id;if(id===previous)repeat++;previous=id;monstersSeen.set(id,(monstersSeen.get(id)||0)+1);history.push({type:'monster',id:monsters[id].id});if(history.length>12)history.shift();emptySteps=0;streak++}else if(category==='event'){emptySteps=0;streak++}else{emptySteps++;streak=0}}}
+    const repeatRate=repeat/Math.max(1,categories.combat);assert.ok(categories.combat>600&&categories.event>400&&categories.quiet>1500&&categories.npc>100,`starved depth ${floor}: ${JSON.stringify(categories)}`);assert.ok(repeatRate<.25,`rapid monster repeats too common at ${floor}: ${repeatRate}`);encounterReport[floor]={categories:Object.fromEntries(Object.entries(categories).map(([k,v])=>[k,`${(100*v/10000).toFixed(1)}%`])),monsterImmediateRepeat:`${(repeatRate*100).toFixed(1)}%`,top:[...monstersSeen].sort((a,b)=>b[1]-a[1]).slice(0,3).map(([id,n])=>`${monsters[id].name} ${n}`)};
+    const rarityCounts={common:0,uncommon:0,rare:0,strange:0},itemCounts=new Map();for(let i=0;i<10000;i++){const row=selectWithHistory(rows,[],entry=>monsters[entry.id].id,random,.55),monster=monsters[row.id],table=lootTables[monster.lootTable]||[],rarityMultiplier=Math.min(2,1+(floor-1)*.06),adjusted=table.map(entry=>{const rarity=items[entry.item]?.rarity||'common',factor=( {common:62,uncommon:25,rare:10,strange:3}[rarity]||62)/62;return {...entry,rarity,weight:entry.weight*factor*(rarity==='rare'||rarity==='strange'?rarityMultiplier:1)}}),drop=weightedChoice(adjusted,random);if(drop){rarityCounts[drop.rarity]++;itemCounts.set(drop.item,(itemCounts.get(drop.item)||0)+1)}}
+    assert.ok(rarityCounts.strange<1200,`Strange loot too common at ${floor}`);assert.ok(Math.max(...itemCounts.values())<7000,`one item dominates drops at ${floor}`);lootReport[floor]={rarity:Object.fromEntries(Object.entries(rarityCounts).map(([k,v])=>[k,`${(100*v/10000).toFixed(1)}%`])),top:[...itemCounts].sort((a,b)=>b[1]-a[1]).slice(0,3).map(([id,n])=>`${items[id].name} ${n}`)};
+  }
+  console.log(`  encounter decisions: ${JSON.stringify(encounterReport)}`);console.log(`  loot samples: ${JSON.stringify(lootReport)}`);
+});
+
 check('equipment slot availability uses the canonical slot and current class rules',()=>{
   const slots=Object.values(game.state.equipment);game.setState(freshState());game.startGame('Gear Tester','Fighter');
   for(const slot of Object.keys(game.state.equipment)){

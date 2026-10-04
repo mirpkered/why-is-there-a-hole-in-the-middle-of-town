@@ -1,6 +1,6 @@
-import {items,monsters,monsterForId,quests,lootTables,dungeonEvents,roomTypes,dungeonNpcs,trades,floorEncounterTable,shopStock,merchantProfiles,innEvents} from './data.js?v=town-overhaul-20261003d';
+import {items,monsters,monsterForId,quests,lootTables,dungeonEvents,roomTypes,dungeonNpcs,trades,floorEncounterTable,shopStock,merchantProfiles,innEvents} from './data.js?v=content-expansion-20261005a';
 import {roomProps,ROOM_PROP_ZONES} from './room-visuals.js?v=room-visuals-20261002d';
-import {classAbilities,achievements} from './progression.js?v=major-systems-20261002i';
+import {classAbilities,achievements,depthBands} from './progression.js?v=content-expansion-20261005a';
 import {questObjectiveTemplates} from './quest-templates.js?v=systems-20261002a';
 import {statusEffectDefinitions} from './status-effects.js?v=systems-20261002a';
 import {validateLocationMusic} from './location-music.js?v=location-music-20261004a';
@@ -28,6 +28,7 @@ export function validateContent(){
     if(!Number.isFinite(item.buyValue)||!Number.isFinite(item.sellValue)||item.buyValue<0||item.sellValue<0||item.sellValue>item.buyValue)push('error','item-price',`${id} has invalid buy/sell values.`);
     if(item.classes&&!Array.isArray(item.classes))push('error','item-classes',`${id} class restrictions must be an array.`);
     if(item.modifiers&&Object.values(item.modifiers).some(value=>!Number.isFinite(value)))push('error','item-modifier',`${id} has a nonnumeric modifier.`);
+    if(item.effects?.vsTags&&Object.entries(item.effects.vsTags).some(([tag,value])=>typeof tag!=='string'||!Number.isFinite(value)||value<0))push('error','item-tag-effect',`${id} has an invalid tag damage bonus.`);
     if(item.effect&&!['heal','buff','combat-tool'].includes(item.effect.type))push('error','item-effect',`${id} has an unsupported consumable effect.`);
     if(item.effect?.type==='combat-tool'&&(!Number.isFinite(item.effect.damage)||item.effect.damage<1||!Array.isArray(item.effect.targetTags)||!item.effect.targetTags.length||item.effect.targetTags.some(tag=>!Object.values(monsters).some(monster=>monster.tags?.includes(tag)))))push('error','item-combat-tool',`${id} has an invalid combat-tool target or damage.`);
     if(item.eventHooks!==undefined&&(!Array.isArray(item.eventHooks)||item.eventHooks.some(hook=>typeof hook!=='string'||!hook)))push('error','item-event-hook',`${id} has invalid event-use hooks.`);
@@ -35,7 +36,9 @@ export function validateContent(){
   }
   for(const [id,quest] of Object.entries(quests)){
     if(!Number.isFinite(quest.reward?.gold)||quest.reward.gold<0||!Number.isFinite(quest.reward?.xp)||quest.reward.xp<0)push('error','quest-reward',`${id} has an invalid reward.`);
+    if(quest.reward?.item&&!items[quest.reward.item])push('error','quest-reward-item',`${id} rewards missing item ${quest.reward.item}.`);
     if(quest.next&&!quests[quest.next])push('error','quest-next',`${id} follows missing quest ${quest.next}.`);
+    if(quest.type==='trade'&&!trades[quest.target])push('error','quest-trade',`${id} targets missing trade ${quest.target}.`);
     for(const item of quest.turnInItems||[])if(!items[item.id]||!Number.isInteger(item.quantity)||item.quantity<1)push('error','quest-item',`${id} has an invalid turn-in item.`);
     if(quest.type==='kill'&&quest.target!=='any'&&!monsterForId(quest.target))push('error','quest-monster',`${id} targets unknown monster ${quest.target}.`);
     if(quest.type==='discover'&&!eventIds.includes(quest.target)&&!['warm-wall','giant-stone-face'].includes(quest.target))push('warning','quest-discovery',`${id} discovery target ${quest.target} is not a registered event or landmark.`);
@@ -54,7 +57,7 @@ export function validateContent(){
   for(const [id,event] of Object.entries(dungeonEvents)){
     if(!Number.isFinite(event.weight)||event.weight<=0||!Number.isFinite(event.minDepth||1)||(event.maxDepth!==undefined&&event.maxDepth<(event.minDepth||1)))push('error','event-range',`${id} has an invalid weight or depth range.`);
     if(!Array.isArray(event.choices)||!event.choices.length)push('error','event-choices',`${id} has no available choices.`);
-    for(const choice of event.choices||[]){if(!choice.id||!Array.isArray(choice.outcomes))push('error','event-choice',`${id} has a malformed choice.`);for(const outcome of choice.outcomes||[])inspectOutcome(id,outcome)}
+    for(const choice of event.choices||[]){if(!choice.id||!Array.isArray(choice.outcomes))push('error','event-choice',`${id} has a malformed choice.`);if(choice.requiresItem&&!items[choice.requiresItem.item])push('error','event-requirement',`${id}/${choice.id} requires missing item ${choice.requiresItem.item}.`);if(choice.requiresQuest&&!quests[choice.requiresQuest])push('error','event-requirement',`${id}/${choice.id} requires missing quest ${choice.requiresQuest}.`);for(const outcome of choice.outcomes||[])inspectOutcome(id,outcome)}
   }
   for(const [id,npc] of Object.entries(dungeonNpcs)){
     for(const tradeId of npc.tradeIds||[])if(!trades[tradeId])push('error','npc-trade',`${id} references missing trade ${tradeId}.`);
@@ -65,11 +68,12 @@ export function validateContent(){
   for(const [id,prop] of Object.entries(roomProps)){for(const room of prop.rooms||[])if(!roomIds.includes(room))push('error','prop-room',`${id} is assigned to missing room ${room}.`);for(const zone of prop.zones||[])if(!ROOM_PROP_ZONES.includes(zone))push('error','prop-zone',`${id} uses unknown placement zone ${zone}.`);if((prop.ink&&!prop.colored)||(prop.colored&&!prop.ink))push('warning','prop-pair',`${id} has only one sprite-style asset.`)}
   for(const [floor,rows] of Object.entries(floorEncounterTable)){if(!Number(rows.length))push('error','encounter-table',`Floor ${floor} has no encounter rows.`);for(const row of rows){if(!monsters[row.id]||!Number.isFinite(row.weight)||row.weight<=0)push('error','encounter-row',`Floor ${floor} has an invalid monster/weight row.`);else if(monsters[row.id].minDepth>Number(floor))push('error','encounter-depth',`Floor ${floor} includes unavailable monster ${row.id}.`)}}
   for(const id of shopStock)if(!items[id])push('error','shop-item',`Store stock references missing item ${id}.`);
-  for(const [id,event] of Object.entries(innEvents)){if(!Number.isFinite(event.weight)||event.weight<=0||!event.effect)push('error','inn-event',`${id} has invalid event weight/effect.`);else if(event.effect.type==='xp-bonus'&&(!Number.isFinite(event.effect.percent)||event.effect.percent<=0||event.effect.percent>30||!Number.isInteger(event.effect.battles)||event.effect.battles<1))push('error','inn-xp-effect',`${id} has invalid XP benefit.`);else if(event.effect.type==='temporary'&&(!Number.isFinite(event.effect.value)||!Number.isInteger(event.effect.encounters)||event.effect.encounters<1))push('error','inn-temporary-effect',`${id} has invalid temporary benefit.`);else if(!['xp-bonus','temporary','flavor'].includes(event.effect.type))push('error','inn-effect-type',`${id} uses an unsupported effect.`)}
+  for(const [id,event] of Object.entries(innEvents)){if(!Number.isFinite(event.weight)||event.weight<=0||!event.effect)push('error','inn-event',`${id} has invalid event weight/effect.`);else if(event.effect.type==='xp-bonus'&&(!Number.isFinite(event.effect.percent)||event.effect.percent<=0||event.effect.percent>30||!Number.isInteger(event.effect.battles)||event.effect.battles<1))push('error','inn-xp-effect',`${id} has invalid XP benefit.`);else if(event.effect.type==='temporary'&&(!Number.isFinite(event.effect.value)||!Number.isInteger(event.effect.encounters)||event.effect.encounters<1))push('error','inn-temporary-effect',`${id} has invalid temporary benefit.`);else if(event.effect.type==='item'&&!items[event.effect.item])push('error','inn-item-effect',`${id} rewards missing item ${event.effect.item}.`);else if(!['xp-bonus','temporary','flavor','item','gold'].includes(event.effect.type))push('error','inn-effect-type',`${id} uses an unsupported effect.`)}
   for(const [id,profile] of Object.entries(merchantProfiles))if(!Number.isFinite(profile.buyMultiplier)||profile.buyMultiplier<0||!Array.isArray(profile.likes))push('error','merchant-profile',`${id} has invalid price or preference data.`);
   for(const [id,room] of Object.entries(roomTypes))if(!room.id||!Number.isFinite(room.weight)||room.weight<=0)push('error','room-definition',`${id} has an invalid ID or selection weight.`);
   for(const [cls,abilities] of Object.entries(classAbilities))for(const ability of abilities)if(!ability.id||!Number.isInteger(ability.level)||ability.level<1||!Number.isFinite(ability.cost)||ability.cost<0)push('error','ability',`${cls} has an invalid ability.`);
   for(const achievement of achievements)if(!achievement.id||!achievement.name)push('error','achievement',`Achievement definition is incomplete.`);
+  for(const band of depthBands)if(!band.range||!band.name||!Number.isFinite(band.content?.rareLootMultiplier)||!Number.isFinite(band.content?.eventWeirdness))push('error','depth-band',`Depth band ${band.name||'(unnamed)'} has incomplete content weighting.`);
   if(Object.keys(questObjectiveTemplates).length<7)push('error','quest-template',`Quest objective template set is incomplete.`);
   for(const error of validateLocationMusic().errors)push('error','location-music',error);
   return {errors,warnings,errorCount:errors.length,warningCount:warnings.length};

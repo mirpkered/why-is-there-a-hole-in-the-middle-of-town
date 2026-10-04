@@ -37,13 +37,18 @@ export const achievements=[
   ['duck-report','Waterfowl Witness','Encounter the duck.'],
   ['spoon-collection','Soup Logistics','Collect five spoons.'],
   ['mushroom-collection','Fungus Among Us','Collect five mushrooms.'],
-  ['wealthy-on-paper','Liquid Assets','Hold 100 gold at once.']
+  ['wealthy-on-paper','Liquid Assets','Hold 100 gold at once.'],
+  ['air-quality-concern','Air Quality Concern','Defeat a Poo Gas.'],
+  ['apple-a-day','An Apple a Day','Defeat three Rotten Apples.'],
+  ['heart-health','Heart Health','Defeat Heart-Attack.'],
+  ['pork-problem','Pork Problem','Defeat Porkscrew.'],
+  ['spoon-certified','Spoon Certified','Acquire the Officially Sanctioned Spoon.']
 ].map(([id,name,description])=>({id,name,description}));
 
 export const depthBands=[
-  {range:'1–3',name:'Upper Works',monster:'Current roster; restrained scaling',loot:'Common and occasional Uncommon',events:'Introductions and municipal oddities'},
-  {range:'4–7',name:'Old Foundations',monster:'Veterans and more special attacks',loot:'Uncommon becomes routine; rare tools appear',events:'More environmental risk and recurring visitors'},
-  {range:'8–12',name:'Forgotten Works',monster:'Established creatures with deeper variants',loot:'Rare finds improve; Strange stays a sidegrade',events:'Landmarks and unusual room combinations'},
-  {range:'13–20',name:'Things Stop Making Sense',monster:'Higher threat with scaling soft caps',loot:'More choice, not only larger numbers',events:'Stranger civic and spatial anomalies'},
-  {range:'21+',name:'Deep Hole',monster:'Diminishing stat growth; attack identity matters',loot:'Specialized gear and contextual tools',events:'High weirdness; return decisions stay relevant'}
+  {range:'1–3',name:'Upper Works',monster:'Familiar creatures, early Porkscrew and Rotten Apple; Poo Gas remains uncommon',loot:'Common materials, occasional Uncommon tools; Strange remains rare',events:'Municipal surveys, spoons, camp and first impossible objects',content:{npc:'Pip and Nell at normal rates',rooms:'Ordinary stone with occasional named rooms',rareLootMultiplier:1,eventWeirdness:1}},
+  {range:'4–7',name:'Old Foundations',monster:'More Heart-Attacks, trained variants and status attacks',loot:'Uncommon equipment appears more often; gas counters may be stocked',events:'More environmental risk and recurring visitor follow-ups',content:{npc:'More Pip/Nell appearances',rooms:'Storage, flooded and records rooms weighted upward',rareLootMultiplier:1.15,eventWeirdness:1.15}},
+  {range:'8–12',name:'Forgotten Works',monster:'Established families gain deeper attack pools; gas and mimic remain notable',loot:'Rare tools become plausible; Strange items remain sidegrades',events:'Landmarks and unusual room combinations',content:{npc:'Unusual traders are less scarce',rooms:'Library, shrine, market and spoon rooms weighted upward',rareLootMultiplier:1.3,eventWeirdness:1.3}},
+  {range:'13–20',name:'Things Stop Making Sense',monster:'Higher threat with soft-capped stats and richer attack selection',loot:'More specialized choices rather than only larger numbers',events:'Civic and spatial anomalies carry more state hooks',content:{npc:'Rare visits, better emergency stock',rooms:'Nonordinary rooms favored; ordinary passages remain possible',rareLootMultiplier:1.45,eventWeirdness:1.5}},
+  {range:'21+',name:'Deep Hole',monster:'Diminishing stat growth; attack identity and status pressure matter',loot:'Specialized gear and contextual tools; Strange is not strictly stronger',events:'High weirdness; return decisions stay relevant',content:{npc:'Rare encounters',rooms:'Impossible combinations are more likely',rareLootMultiplier:1.6,eventWeirdness:1.7}}
 ];

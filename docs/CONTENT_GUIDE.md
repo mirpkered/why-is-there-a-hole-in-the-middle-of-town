@@ -8,6 +8,36 @@ Add a `monsters` entry with `id`, display name, `minDepth`, HP, attack, defense,
 
 Attack definitions support `unlockLevel` (defaults to 1), `weightPerLevel`, `minDamage`, `maxDamage`, `accuracy`, optional `effect` / `effectChance` / duration and magnitude, tags, flavor, and `multiStrike`. `scaleEnemy()` filters locked moves once at spawn, snapshots the eligible list, and applies bounded depth damage/weight/effect adjustments. Keep at least one ordinary attack unlocked at all levels. Level bands are open-ended: typical special unlocks sit around levels 4–8, while level 12 and beyond continue using the same weight formula. Unlocking a move does not add an extra damage multiplier. Use `qaAttackPoolReport()` to inspect eligible/locked moves and sample AI-weighted selection.
 
+## Content expansion notes
+
+The recent content expansion is registered in `js/data.js` and `js/progression.js`; it does not require custom art. Monster fallback sprites remain the presentation default until user drawings are supplied.
+
+### Quest chains
+
+The added chains are **Too Many Spoons**, **Air Quality Report**, **The Apple Problem**, **Heart Condition**, and **Pip’s Inventory Problem**. The Very Small Door chain now has a third response stage and remains unresolved. Stages use the existing `next` field, event flags, inventory-derived turn-in requirements, encounter kills, and completed-trade history. Retrieval objectives reserve and consume required quantities on turn-in. Materials collected before accepting a stage count immediately. Pip’s trade stage reads prior completed trades so the player does not have to repeat a deal.
+
+To add another chain, use stable quest IDs with `chain`, `step`, `type`, `target`, `count`, `reward`, and optional `next` / `turnInItems`. Unlock stages from event outcomes or NPC encounters. Check that objectives are possible at their intended playable depth, then run `node tests/run.mjs` for missing references and progression regression checks.
+
+### Weird equipment and interactions
+
+The expansion adds eleven art-independent equipment pieces: Municipal Knee Pads, Helmet of Questionable Aerodynamics, Socks of Unearned Confidence, Officially Sanctioned Spoon, Emergency Poncho, Boots That Know Better, Pocket Receipt Printer, Half a Shield, Extremely Suspicious Apple Corer, Anti-Goose Whistle, and Pork Unspiraler. Prefer reusable effects such as `vsTags`, `vsGoose`, `hazardReduction`, `statusResistance`, retreat, and market modifiers over item-specific UI logic. Tag bonuses use the shared physical attack path. Counter-items help but are never required to win.
+
+Optional examples include Air Freshener at an odor sample point, the Apple Corer at an apple anomaly, the Anti-Goose Whistle near the duck, the Pork Unspiraler at a spiral scuff, the Official Spoon at the small door/spoon room, and the Pocket Receipt Printer at a municipal notice. Event choices use `requiresItem` and do not consume equipment.
+
+### Inn events and depth content
+
+Inn events use `xp-bonus`, `temporary`, `item`, `gold`, or `flavor` effects. The existing paid partial-rest event chance remains 25%; a full-rest attempt does not roll. A repeated temporary effect refreshes to the stronger value and longer duration rather than stacking.
+
+`depthBands` in `js/progression.js` records future room, NPC, event-weirdness, and rare-loot direction. It is guidance and validation metadata and does not unlock additional floors. Current playable encounters still use `floorEncounterTable`; current scaling formulas remain authoritative.
+
+### Dialogue and combat copy
+
+Town and dungeon NPC responses use concise state checks and small line pools in `js/app.js`. Keep lines short for mobile. Attack definitions may include a `flavors` array; combat selects a line from encounter-turn state, so narration variety does not consume gameplay RNG. Add copy variations without changing damage, attack weights, or status probabilities.
+
+### Achievements and statistics
+
+The expansion achievements are local and reward-free: Air Quality Concern, An Apple a Day, Heart Health, Pork Problem, and Spoon Certified. Notable counters use the existing `bumpCareer` helper; optional missing fields initialize naturally for older saves.
+
 Enemy progression is data-driven. Give each monster a `baseTier` and optional `depthEvolution` fields (`damagePerLevel`, `attackWeightPerLevel`, `maxWeightFactor`, `effectChancePerLevel`). An encounter's internal level is `baseTier + (floor - 1) + variant level bonus`; `minDepth` controls availability, not its baseline tier. HP gains 12% of base HP per level step for the first ten steps, then 6% per step. Damage adds a small integer increment from the monster's `damagePerLevel`; defense adds one every three steps. XP gains 16% per step through ten, then 8%; gold gains 10% through ten, then 5%. Rare/strange loot weighting gets a modest capped depth and variant bonus while using the monster's existing loot table. These soft caps keep future deep floors from growing without bound.
 
 Current base tiers are: Deadly Rat and Pocket Slime 1; Kobold Toll-Taker, Killer Rabbit, Kung Fungoose, Porkscrew, and Rotten Apple 2; Fire-Breathing Earthworm, Skeleton on Break, and Heart-Attack 3; Permit-Office Mimic and Poo Gas 4. Porkscrew, Rotten Apple, and Heart-Attack start at depth 2; Poo Gas starts at depth 3. Encounter tables retain low weights for the new entries so they do not dominate. The three uncommon variants are `Large`, `Veteran`, and `Very Angry`, with a combined 6.5% spawn chance. Their level, HP, damage, defense, rewards, loot, and attack-weight adjustments live in `enemyVariants`. `scaleEnemy()` creates one persisted combat snapshot at spawn; combat, rewards, and reloads use that snapshot rather than re-rolling. Keep each monster's low-level role intact with its own tier and optional evolution rates. Enemy threat is a relative estimate: expected weighted attack damage (including hit chance, critical/status effects, enemy speed and multi-strikes) after player defense is compared with the turns each combatant needs to defeat the other, adjusted for current HP and a small level edge. It is a guide, not a guaranteed outcome. The score is `player turns to defeat enemy / enemy turns to defeat player`, adjusted for current-health fraction and a small level edge. Labels use score bands: below 0.32 Manageable, 0.32–0.72 Dangerous, 0.72–1.15 Severe, 1.15–1.8 Terrifying, and 1.8 or above Absolutely Not. Settings offer Descriptive (default), Numeric, or Hidden display; only QA shows full calculations.

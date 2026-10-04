@@ -4,7 +4,7 @@ export const SAVE_RECOVERY_KEY=`${SAVE_KEY}-recovery-copy`;
 export const SAVE_VERSION=8;
 export const INVENTORY_CAPACITY=16;
 export const EQUIPMENT_SLOTS=['head','body','mainHand','offHand','feet','accessory'];
-import {monsters,monsterForId} from './data.js?v=town-overhaul-20261003d';
+import {monsters,monsterForId} from './data.js?v=content-expansion-20261005a';
 import {scaleEnemy} from './enemy-scaling.js?v=enemy-depth-20261002';
 
 // Legacy v3 saves used this fixed 7x7 floor. Keep that geometry when migrating
