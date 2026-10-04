@@ -18,6 +18,7 @@ const { validateContent } = await import('../js/content-validation.js?preflight'
 const { validateQuestTemplate, questObjectiveTemplates } = await import('../js/quest-templates.js?preflight');
 const { validWeightedRows, weightedChoice } = await import('../js/random-utils.js?preflight');
 const { applyStatus, tickStatuses } = await import('../js/status-effects.js?preflight');
+const { LOCATION_MUSIC_POOLS, LOCATION_MUSIC_CONTEXTS, chooseLocationTrack, validateLocationMusic } = await import('../js/location-music.js?v=location-music-20261004a');
 const { scaleEnemy } = await import('../js/enemy-scaling.js?preflight');
 const { selectWithHistory, paceEncounterChance, chooseEnemyAttack, monsterFamilies } = await import('../js/encounter-director.js?preflight');
 const game = await import('../js/game.js?preflight');
@@ -43,6 +44,7 @@ check('all registered local runtime assets exist', () => {
   const audioText = readFileSync(resolve('js/audio.js'), 'utf8');
   for (const match of audioText.matchAll(/(?:src|path):\s*['"](assets\/[^'"]+)['"]/g)) refs.push(match[1]);
   for (let number = 4; number <= 21; number++) refs.push(`assets/audio/music/dungeon/dungeon-${String(number).padStart(2, '0')}.mp3`);
+  for (const track of Object.values(LOCATION_MUSIC_POOLS).flat()) refs.push(track.src);
   for (const path of new Set(refs.filter(Boolean))) assert.ok(existsSync(resolve(path)), `Missing asset: ${path}`);
 });
 
@@ -361,5 +363,47 @@ check('100 generated three-floor maps route safely to town and interrupted retur
   }
   assert.equal(interrupted, 20);
 });
+
+
+check('location music pools accept empty lists and select one-shot tracks without immediate repeats',()=>{
+  assert.deepEqual(validateLocationMusic().poolCounts,Object.fromEntries(LOCATION_MUSIC_CONTEXTS.map(context=>[context,0])));
+  const pools={...Object.fromEntries(LOCATION_MUSIC_CONTEXTS.map(context=>[context,[]])),inn:[{id:'inn-a',pool:'inn',src:'assets/audio/music/inn/a.mp3',gain:.4,loop:false},{id:'inn-b',pool:'inn',src:'assets/audio/music/inn/b.mp3',gain:.4,loop:false}]};
+  assert.equal(chooseLocationTrack('inn','inn-a',pools,()=>0).id,'inn-b');
+  assert.equal(validateLocationMusic(pools).errorCount,0);
+  assert.equal(validateLocationMusic({...Object.fromEntries(LOCATION_MUSIC_CONTEXTS.map(context=>[context,[]])),inn:[{...pools.inn[0],loop:true}]}).errorCount,1);
+});
+check('equipment slot availability uses the canonical slot and current class rules',()=>{
+  const slots=Object.values(game.state.equipment);game.setState(freshState());game.startGame('Gear Tester','Fighter');
+  for(const slot of Object.keys(game.state.equipment)){
+    const item=Object.values(items).find(candidate=>candidate.slot===slot&&(!candidate.classes||candidate.classes.includes(game.state.player.class)));
+    assert.ok(item,`fixture missing compatible gear for ${slot}`);const before=game.countItem(item.id);game.qaGiveItem(item.id,1);
+    assert.equal(game.canEquipItem(item.id,slot),true);assert.equal(game.canEquipItem(item.id,'not-a-slot'),false);
+    const result=game.equipItem(item.id);assert.equal(result.ok,true);assert.equal(game.state.equipment[slot],item.id);
+    assert.equal(game.countItem(item.id),before+1);
+  }
+  assert.equal(slots.length,Object.keys(game.state.equipment).length);
+});
+await (async()=>{
+  const previousDocument=globalThis.document,PreviousAudio=globalThis.Audio,audios=[];
+  class MockAudio{
+    constructor(src=''){audios.push(this);this.src=src;this.listeners={};this.preload='none';this.loop=false;this.volume=1;this.muted=false;this.playbackRate=1;this.paused=true;this.currentTime=0;this.duration=1;this.readyState=0;this.playCount=0;this.ended=false;this.error=null}
+    addEventListener(name,fn){(this.listeners[name]??=[]).push(fn)} dispatch(name){for(const fn of this.listeners[name]||[])fn()} load(){this.readyState=4} pause(){this.paused=true} play(){this.playCount++;this.paused=false;this.ended=false;return Promise.resolve()}
+  }
+  globalThis.document={baseURI:'https://game.test/',visibilityState:'visible',addEventListener(){}};globalThis.Audio=MockAudio;
+  try{
+    const {syncMusicContext,stopMusic,musicPlaybackDiagnostics,updateMusicPreferences}=await import('../js/audio.js?v=location-music-20261004a');
+    const pool=LOCATION_MUSIC_POOLS.inn;pool.push({id:'test-inn-a',name:'Test Inn A',pool:'inn',src:'assets/audio/music/inn/test-a.mp3',gain:.5,loop:false},{id:'test-inn-b',name:'Test Inn B',pool:'inn',src:'assets/audio/music/inn/test-b.mp3',gain:.5,loop:false});
+    updateMusicPreferences({musicEnabled:true,musicVolume:.4});await syncMusicContext('inn',{musicEnabled:true,musicVolume:.4},true);
+    const firstTrack=musicPlaybackDiagnostics().selectedLocationTrack;assert.ok(['test-inn-a','test-inn-b'].includes(firstTrack));assert.equal(musicPlaybackDiagnostics().loop,false);assert.equal(musicPlaybackDiagnostics().effectiveGain,.2);
+    const channel=audios.at(-1);const firstPlayCount=channel.playCount;
+    await syncMusicContext('inn',{musicEnabled:true,musicVolume:.4},true);assert.equal(channel.playCount,firstPlayCount);assert.equal(musicPlaybackDiagnostics().playing,true);
+    // Ending a one-shot service track must not trigger another play on the same visit.
+    channel.paused=true;channel.ended=true;channel.dispatch('ended');await syncMusicContext('inn',{musicEnabled:true,musicVolume:.4},true);assert.equal(channel.playCount,firstPlayCount);assert.equal(musicPlaybackDiagnostics().playbackState,'ended');
+    await syncMusicContext('town',{musicEnabled:true,musicVolume:.4},true);assert.equal(musicPlaybackDiagnostics().playing,false);
+    await syncMusicContext('inn',{musicEnabled:true,musicVolume:.4},true);assert.notEqual(musicPlaybackDiagnostics().selectedLocationTrack,firstTrack);assert.ok(channel.playCount>firstPlayCount);
+    updateMusicPreferences({musicEnabled:false,musicVolume:.4});assert.equal(musicPlaybackDiagnostics().playing,false);
+    stopMusic();pool.splice(0,2);
+  }finally{globalThis.document=previousDocument;globalThis.Audio=PreviousAudio}
+})();checks++;console.log('✓ location audio plays a service recording once, stays silent when ended, and cleans up on exit');
 
 console.log(`Preflight passed: ${checks} check groups.`);

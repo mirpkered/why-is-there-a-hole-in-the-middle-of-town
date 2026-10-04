@@ -128,3 +128,19 @@ Market goods are identified by category trade-good or junk; only these use persi
 ## Town service UI and character names
 
 Town services use a persistent Town/resource bar and compact mode tabs where lists would otherwise stack. Store Buy and Sell are mutually exclusive views; concise rows open shared item inspection for full details. Character creation starts with a fresh procedural name, class, and independent class-range stat roll. Randomize Character rerolls all three, manual class selection preserves the edited name and rolls stats, and Reroll Stats leaves name and class unchanged. Names combine several first-name, surname, title, and initial pools with occasional ordinary-name results; keep the maximum at 24 characters and run the name-generator QA sample when editing pools.
+
+
+## Location music drop-in workflow
+
+Service music is registered in `js/location-music.js` under one of six pools: `inn`, `store`, `questBoard`, `statistics`, `achievements`, or `character`. Empty pools are intentional and silent. Location tracks play once per visit (`loop: false`); the manager chooses by weight, avoids the immediately previous track when alternatives exist, and leaves the service silent after playback ends. Character, Gear, Pack, and their slot-selection subviews share one Character visit. Buy/Sell and quest-board tabs also remain within their location. Leaving stops an unfinished location track. Music Off prevents playback, and enabling music partway through a visit waits until the next entry.
+
+| User says | Register in |
+| --- | --- |
+| “Here is an Inn track.” | `inn` |
+| “Here is a shop/store track.” | `store` |
+| “Here is a Quest Board track.” | `questBoard` |
+| “Here is a stats track.” | `statistics` |
+| “Here is an achievements track.” | `achievements` |
+| “Here is a character/gear/inventory track.” | `character` |
+
+For another track in an existing location, retain the previous entry and add a new stable ID such as `inn-002`. Keep raw recordings outside the runtime bundle, inspect and trim silence, gently clean noise/clicks, normalize near the existing soundtrack standard (about -16 LUFS integrated and no higher than -1 dBTP), then export the established compact MP3 runtime format under `assets/audio/music/<location>/`. Add metadata `{ id, name, pool, src, gain, weight, loop: false, enabled: true }` to the chosen pool. Validate the asset path and one-shot behavior in `?qa=1`; no audio-engine changes should be needed. Location music uses its own selection history and never consumes gameplay RNG.

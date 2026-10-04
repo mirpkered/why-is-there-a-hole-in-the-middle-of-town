@@ -3,6 +3,7 @@ import {roomProps,ROOM_PROP_ZONES} from './room-visuals.js?v=room-visuals-202610
 import {classAbilities,achievements} from './progression.js?v=major-systems-20261002i';
 import {questObjectiveTemplates} from './quest-templates.js?v=systems-20261002a';
 import {statusEffectDefinitions} from './status-effects.js?v=systems-20261002a';
+import {validateLocationMusic} from './location-music.js?v=location-music-20261004a';
 
 const slots=new Set(['head','body','mainHand','offHand','feet','accessory']);
 const issue=(severity,code,message)=>({severity,code,message});
@@ -70,5 +71,6 @@ export function validateContent(){
   for(const [cls,abilities] of Object.entries(classAbilities))for(const ability of abilities)if(!ability.id||!Number.isInteger(ability.level)||ability.level<1||!Number.isFinite(ability.cost)||ability.cost<0)push('error','ability',`${cls} has an invalid ability.`);
   for(const achievement of achievements)if(!achievement.id||!achievement.name)push('error','achievement',`Achievement definition is incomplete.`);
   if(Object.keys(questObjectiveTemplates).length<7)push('error','quest-template',`Quest objective template set is incomplete.`);
+  for(const error of validateLocationMusic().errors)push('error','location-music',error);
   return {errors,warnings,errorCount:errors.length,warningCount:warnings.length};
 }

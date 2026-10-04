@@ -1,3 +1,4 @@
+import {LOCATION_MUSIC_POOLS,LOCATION_MUSIC_CONTEXTS,chooseLocationTrack} from './location-music.js?v=location-music-20261004a';
 const battleTheme = new URL('../assets/audio/music/battle-theme.mp3', import.meta.url).href;
 const dungeonTracks = [4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21].map(number => ({
   id: `recording-${number}`,
@@ -16,6 +17,10 @@ let qaPlayback = false;
 let combatActive = false;
 let playRequestId = 0;
 let dungeonChannels = null;
+let locationChannel = null;
+let locationTrack = null;
+let locationAttempted = false;
+const lastLocationTrackByPool = new Map();
 let activeDungeonChannel = 0;
 let dungeonQueue = [];
 let lastDungeonTrackId = null;
@@ -98,6 +103,43 @@ function ensureDungeonChannels(){
     return entry;
   });
   return dungeonChannels;
+}
+
+function ensureLocationChannel(){
+  if(locationChannel)return locationChannel;
+  if(typeof Audio==='undefined')return null;
+  locationChannel=new Audio();locationChannel.preload='none';locationChannel.loop=false;
+  locationChannel.addEventListener('ended',()=>{if(locationTrack&&activeContext===locationTrack.pool){activeTrackId=null}});
+  locationChannel.addEventListener('error',()=>{if(locationTrack&&activeContext===locationTrack.pool){console.warn(`Location music failed to load: ${locationTrack.id}`,locationChannel.error||'audio error')}});
+  return locationChannel;
+}
+
+function locationLevel(){
+  if(!locationChannel||!locationTrack)return 0;
+  return applyGain(locationChannel,null,volume*locationTrack.gain);
+}
+
+function stopLocation(clearTrack=true){
+  if(locationChannel){locationChannel.pause();try{locationChannel.currentTime=0}catch{}locationLevel()}
+  activeTrackId=null;
+  if(clearTrack)locationTrack=null;
+}
+
+async function startLocationTrack(context,track=null,allowFallback=true){
+  if(!enabled||!LOCATION_MUSIC_CONTEXTS.includes(context))return false;
+  locationAttempted=true;
+  const chosen=track||chooseLocationTrack(context,lastLocationTrackByPool.get(context));
+  if(!chosen)return false;
+  const channel=ensureLocationChannel();
+  if(!channel)return false;
+  const request=playRequestId;
+  locationTrack=chosen;channel.loop=false;channel.src=new URL(chosen.src,document.baseURI).href;channel.preload=chosen.preloadPriority==='low'?'metadata':'auto';
+  locationLevel();channel.load();locationLevel();
+  try{
+    await playElement(channel);
+    if(request!==playRequestId||!enabled||activeContext!==context||locationTrack?.id!==chosen.id){channel.pause();return false}
+    activeTrackId=chosen.id;lastLocationTrackByPool.set(context,chosen.id);return true;
+  }catch(error){channel.pause();activeTrackId=null;console.warn(`Location music could not start (${chosen.id}); the service remains available.`,error);if(allowFallback){const alternative=chooseLocationTrack(context,chosen.id);if(alternative&&alternative.id!==chosen.id)return startLocationTrack(context,alternative,false)}return false}
 }
 
 function dungeonLevel(channel){
@@ -200,17 +242,18 @@ export function updateMusicPreferences(preferences={}){
   enabled=preferences.musicEnabled!==false;
   const next=Number(preferences.musicVolume);
   volume=Number.isFinite(next)?Math.max(0,Math.min(1,next)):volume;
-  if(!enabled)stopMusic();
+  if(!enabled){const context=activeContext,track=locationTrack,attempted=locationAttempted;stopMusic();activeContext=context;locationTrack=track;locationAttempted=attempted}
   else{
     if(battleChannel&&!battleChannel.paused)battleLevel();
     if(dungeonChannels&&activeContext==='dungeon')for(const channel of dungeonChannels)if(!channel.audio.paused)dungeonLevel(channel);
+    if(locationChannel&&!locationChannel.paused)locationLevel();
   }
 }
 
 export function syncMusicContext(context,preferences={},userGesture=false){
   updateMusicPreferences(preferences);
-  if(!enabled){activeContext=null;return}
-  const next=['dungeon','battle'].includes(context)?context:null;
+  const next=['dungeon','battle'].includes(context)||LOCATION_MUSIC_CONTEXTS.includes(context)?context:null;
+  if(!enabled){if(next!==activeContext){playRequestId++;pauseBattle();stopDungeon();stopLocation();activeContext=next;locationAttempted=LOCATION_MUSIC_CONTEXTS.includes(next)}return}
   if(next===activeContext){
     if(next==='battle'){combatActive=true;if(!battleChannel||battleChannel.paused)startBattle(true,userGesture)}
     else if(next==='dungeon'){
@@ -223,24 +266,36 @@ export function syncMusicContext(context,preferences={},userGesture=false){
           dungeonLevel(current);current.audio.play().then(()=>{if(activeContext==='dungeon')activeTrackId=current.track.id}).catch(()=>{});
         }else if(userGesture)startNextDungeonTrack();
       }
-    }
+    }else if(LOCATION_MUSIC_CONTEXTS.includes(next)&&!locationAttempted&&userGesture)startLocationTrack(next);
     return;
   }
   activeContext=next;playRequestId++;
   if(next==='battle'){
     qaPlayback=false;combatActive=true;
     if(dungeonChannels)for(const channel of dungeonChannels){channel.audio.pause();dungeonLevel(channel)}
+    stopLocation();
     startBattle(true,userGesture);
   }else if(next==='dungeon'){
-    combatActive=false;qaPlayback=false;pauseBattle();
+    combatActive=false;qaPlayback=false;pauseBattle();stopLocation();
     const channels=ensureDungeonChannels();if(!channels)return;
     const current=channels[activeDungeonChannel];
     if(current.track&&current.audio.currentTime>0.08&&current.audio.currentTime<current.audio.duration-0.08){
       dungeonLevel(current);current.audio.play().then(()=>{if(activeContext==='dungeon')activeTrackId=current.track.id}).catch(()=>{if(userGesture)startNextDungeonTrack()});
     }else if(userGesture)startNextDungeonTrack();
+  }else if(LOCATION_MUSIC_CONTEXTS.includes(next)){
+    combatActive=false;qaPlayback=false;pauseBattle();stopDungeon();stopLocation();locationAttempted=false;
+    if(userGesture)startLocationTrack(next);
   }else{
-    combatActive=false;qaPlayback=false;pauseBattle();stopDungeon();activeTrackId=null;
+    combatActive=false;qaPlayback=false;pauseBattle();stopDungeon();stopLocation();activeTrackId=null;locationAttempted=false;
   }
+}
+
+export function playLocationTrack(trackId,preferences={}){
+  updateMusicPreferences(preferences);if(!enabled)return false;
+  for(const pool of LOCATION_MUSIC_CONTEXTS){const track=LOCATION_MUSIC_POOLS[pool].find(entry=>entry.id===trackId&&entry.enabled!==false);if(!track)continue;
+    playRequestId++;qaPlayback=true;combatActive=false;activeContext=pool;pauseBattle();stopDungeon();stopLocation();locationAttempted=false;return startLocationTrack(pool,track,false);
+  }
+  return false;
 }
 
 export function playBattleTheme(preferences={},loop=true){
@@ -259,23 +314,26 @@ export function playDungeonPool(preferences={}){
 }
 
 export function stopMusic(){
-  qaPlayback=false;combatActive=false;activeContext=null;playRequestId++;activeTrackId=null;
-  pauseBattle();stopDungeon();
+  qaPlayback=false;combatActive=false;activeContext=null;playRequestId++;activeTrackId=null;locationAttempted=false;
+  pauseBattle();stopDungeon();stopLocation();
 }
 
 export function currentMusicTrack(){
   if(activeTrackId==='battle')return 'Battle Theme';
   const track=dungeonTracks.find(entry=>entry.id===activeTrackId);
-  return track?`Dungeon · ${track.name}`:'None';
+  if(track)return `Dungeon · ${track.name}`;
+  if(locationTrack)return `${locationTrack.pool} · ${locationTrack.name||locationTrack.id}`;
+  return 'None';
 }
 
 export function musicPlaybackDiagnostics(){
   const battleActive=activeTrackId==='battle'&&battleChannel&&!battleChannel.paused;
   const dungeonActive=dungeonChannels?.[activeDungeonChannel];
-  const configuredGain=battleActive?trackGain.battle:trackGain.dungeon;
-  const playing=!!battleActive||!!(dungeonActive&&!dungeonActive.audio.paused);
+  const locationActive=!!(locationChannel&&!locationChannel.paused&&locationTrack);
+  const configuredGain=battleActive?trackGain.battle:locationTrack?.gain??trackGain.dungeon;
+  const playing=!!battleActive||!!(dungeonActive&&!dungeonActive.audio.paused)||locationActive;
   const effectiveGain=volume*configuredGain;
-  return {track:currentMusicTrack(),masterVolume:volume,configuredTrackGain:configuredGain,effectiveGain:enabled&&playing?effectiveGain:0,pass:battleActive?battlePass:null,playing,battleAudioReadyState:battleChannel?.readyState??0,battleAudioPrepared:!!battlePreparedAt,battleStartLatencyMs,battleAudioError};
+  return {track:currentMusicTrack(),context:activeContext,pool:locationTrack?.pool||null,selectedLocationTrack:locationTrack?.id||null,previousLocationTrack:locationTrack?lastLocationTrackByPool.get(locationTrack.pool)||null:null,loop:locationTrack?!!locationChannel?.loop:battleActive?!!battleChannel?.loop:!!dungeonActive?.audio.loop,locationAttempted,masterVolume:volume,configuredTrackGain:configuredGain,effectiveGain:enabled&&playing?effectiveGain:0,playing,playbackState:locationTrack?(locationActive?'playing':locationChannel?.ended?'ended':'stopped'):playing?'playing':'idle',pass:battleActive?battlePass:null,battleAudioReadyState:battleChannel?.readyState??0,battleAudioPrepared:!!battlePreparedAt,battleStartLatencyMs,battleAudioError};
 }
 
 document.addEventListener('visibilitychange',()=>{
@@ -289,5 +347,8 @@ document.addEventListener('visibilitychange',()=>{
     if(channel.audio.paused&&channel.track&&(combatActive===false||qaPlayback)){
       dungeonLevel(channel);channel.audio.play().catch(()=>{});
     }
+  }
+  if(LOCATION_MUSIC_CONTEXTS.includes(activeContext)&&locationTrack&&locationChannel?.paused&&locationChannel.currentTime>0.08&&locationChannel.currentTime<(locationChannel.duration-0.08)){
+    locationLevel();locationChannel.play().then(()=>{if(activeContext===locationTrack.pool)activeTrackId=locationTrack.id}).catch(error=>console.warn(`Location music could not resume (${locationTrack.id}).`,error));
   }
 });
