@@ -14,6 +14,7 @@ const { items, monsters, lootTables, floorEncounterTable, innEvents, shopStock }
 const { makeMarketCycle, currentSellValue, simulateMarkets, simulateInnEvents } = await import('../js/town-economy.js?preflight');
 const { generateAbsurdName, inspectNameGenerator, MAX_NAME_LENGTH } = await import('../js/name-generator.js?preflight');
 const { roomProps: props } = await import('../js/room-visuals.js?preflight');
+const { TOWN_ART_ASSETS } = await import('../js/town-art.js?preflight');
 const { validateContent } = await import('../js/content-validation.js?preflight');
 const { achievements } = await import('../js/progression.js?preflight');
 const { validateQuestTemplate, questObjectiveTemplates } = await import('../js/quest-templates.js?preflight');
@@ -37,6 +38,7 @@ check('all registered local runtime assets exist', () => {
   const refs = [];
   for (const monster of Object.values(monsters)) refs.push(monster.sprite?.src, monster.sprite?.ink, monster.sprite?.colored);
   for (const prop of Object.values(props)) refs.push(prop.ink, prop.colored);
+  for (const assets of Object.values(TOWN_ART_ASSETS)) refs.push(assets.ink, assets.colored);
   for (const path of ['assets/icons/favicon-16.png', 'assets/icons/favicon-32.png', 'assets/icons/apple-touch-icon.png', 'assets/icons/icon-192.png', 'assets/icons/icon-512.png']) refs.push(path);
   const manifest = JSON.parse(readFileSync(resolve('site.webmanifest'), 'utf8'));
   for (const icon of manifest.icons || []) refs.push(icon.src);
