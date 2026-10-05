@@ -12,8 +12,15 @@ The project is static HTML, CSS, and native browser ES modules. GitHub Pages pub
 - `data.js`: stable definitions for monsters, attacks, items, quests, NPCs, trades, events, rooms, encounter tables, and Inn events.
 - `progression.js`: class abilities, achievements, and future depth-band metadata.
 - `enemy-scaling.js`, `encounter-director.js`, and `status-effects.js`: spawn snapshots/threat estimates, weighted encounter and attack choices, and shared status timing/stacking.
-- `room-visuals.js`: deterministic room-prop selection, compatibility, placement zones, layers, paired asset rendering, and placeholders.
-- `town-art.js`: paired Ink/Colored destination-art registry. Town tiles and service layout stay CSS-driven.
+- `room-visuals.js`: deterministic room-prop selection, compatibility, placement zones, layers, paired asset rendering, and CSS placeholders.
+- `scene-backgrounds.js`: separate room and battle background registries, stable per-cell variant selection, and CSS fallback metadata. Room visual selection derives from the saved map/floor/cell/type and never consumes gameplay RNG.
+- `art-assets.js`: shared Ink/Colored/fallback resolver and path/pair validation. Optional art metadata is supported for enemies, props, Town, items, NPC portraits, and interactive objects.
+- `town-art.js`: paired Ink/Colored destination-art registry with slot labels and size hints. Town layout remains CSS-driven.
+- `ui/town.js`: stable Town destination metadata and the shared art-led tile renderer; routes/actions and labels are declared once.
+- `interactive-art.js`: optional event and landmark art registry, keyed by kind and stable content ID.
+- `screen-presentation.js`: shared parent, music-context, header, and Town-return policies. The app retains markup and action ownership; this metadata keeps shared policies consistent.
+- `audio-catalog.js`, `audio-sources.js`, and `location-music.js`: playback path catalog, source/master provenance, and one-shot location pools.
+- `tools/art-report.mjs` and `tools/audio-report.mjs`: generated registration inventories, freshness-checked by preflight.
 - `town-economy.js`: deterministic market cycles, bounded buyback demand, and simulation helpers.
 - `quest-templates.js` and `content-validation.js`: validation-only quest templates and reusable content/quest-graph checks. Live quests remain authored data.
 - `audio.js`, `audio-session.js`, and `location-music.js`: one shared music manager, iOS ambient-session feature detection, and one-shot location pools.
@@ -28,11 +35,11 @@ The current save version is 8. See [GAME_STATE.md](GAME_STATE.md) for top-level 
 
 New runs create three deterministic 11×11 floors from per-floor seeds using a local generator stream. Geometry is persisted by floor. Floor 1–3 is the current play cap, not a restriction of the map data format. Version 3 legacy saves retain their old 7×7 maps. Movement checks dimensions as well as wall cells. Return routing uses saved stairs on each floor.
 
-Room assignment and decoration derive from saved cell/room data. `room-visuals.js` selects compatible props from a stable room seed; that stream does not advance gameplay RNG. To add image-based rooms later, add an optional exploration background by room ID and an independent battle background mapping. Missing backgrounds should keep the current CSS atmosphere. Props remain separate layered objects, and battle scenes intentionally omit exploration props.
+Room assignment and decoration derive from saved cell/room data. `room-visuals.js` selects compatible props from a stable room seed. `scene-backgrounds.js` selects optional image variants independently for exploration and battle from the same stable room identity with separate seed salts. Empty variants use the current CSS scene; if a registered image fails to load, the CSS scene remains visible underneath. Room props and interactive overlays are exploration layers; combat uses a dedicated battle layer and omits those props.
 
 ## Content and systems
 
-Definitions are data; a combat instance receives scaled attacks, HP, defense, tags, variant, AI profile, and rewards once at spawn and saves that snapshot. Current monsters have open-ended level-based attack eligibility and weights. Content validation checks IDs/references/ranges and quest follow-up graph structure. Loot, market, encounter, and audio-selection random streams remain separate from floor geometry and room dressing.
+Definitions are data; a combat instance receives scaled attacks, HP, defense, tags, variant, AI profile, and rewards once at spawn and saves that snapshot. Current monsters have open-ended level-based attack eligibility and weights. Content validation checks IDs/references/ranges, registered art metadata/background variants, audio pools, and quest follow-up graph structure. Loot, market, encounter, and audio-selection random streams remain separate from floor geometry and room dressing.
 
 Equipment rules use the canonical six slots in `state.js`; `game.js` performs compatibility, inventory, equip/unequip, and effect resolution. Town screens provide slot-driven gear selection without adding UI state to saves. Quest turn-in reserves required inventory amounts. The market is seeded by run and cycle, persists current demand/stock, and advances once on a successful expedition return.
 
@@ -44,7 +51,7 @@ The manager requests the `ambient` `navigator.audioSession` type when available 
 
 ## QA and validation
 
-Append `?qa=1` for local game diagnostics, content validation, save details, market/Inn controls, attack inspection, audio diagnostics, and map controls. The regular preflight is:
+Append `?qa=1` for local game diagnostics, content validation, save details, market/Inn controls, attack inspection, audio diagnostics, screen-transition/render timings, and map controls. The generated art/audio inventories describe actual registered assets; refresh them with the two report commands in the README. The regular preflight is:
 
 ```sh
 node tests/run.mjs

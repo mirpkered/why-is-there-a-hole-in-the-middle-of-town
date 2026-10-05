@@ -33,3 +33,9 @@ export const TOWN_ART_ASSETS={
     colored:'assets/images/town/character-button-colored.png'
   }
 };
+for(const [id,entry] of Object.entries(TOWN_ART_ASSETS))Object.defineProperties(entry,{
+  id:{value:id,enumerable:false},
+  accessibilityLabel:{value:({ 'the-hole':'The Hole',inn:'The Inn','general-store':'General Store','quest-board':'Quest Board',statistics:'Statistics',achievements:'Achievements',settings:'Settings',character:'Character' })[id]||id,enumerable:false},
+  sizeClass:{value:id==='the-hole'?'featured':'standard',enumerable:false},
+  fallback:{value:'text',enumerable:false}
+});

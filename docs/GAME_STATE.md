@@ -46,3 +46,7 @@ An enemy is scaled once when combat begins. The saved snapshot prevents reloads 
 Validation rejects unsupported save versions, invalid current-map geometry/coordinates, malformed inventory rows, and unknown/invalid active combat. Missing optional containers are repaired to safe defaults. A corrupt main save is copied aside and the backup is tried. Unknown versions are left unaccepted; the game offers a clean new-game path without silently replacing the recoverable raw text.
 
 A representative synthetic long-play snapshot containing all item definitions, three explored floors, event history, quest progress, achievements, and an active fight serialized to about **25 KB** in the maintenance audit. A fresh state was about **3.5 KB**. These are fixtures, not a formal maximum; browser storage quota failures remain handled by the save API.
+
+## Presentation registries
+
+Content presentation registries are not part of the save. Room-background variants are selected from existing floor geometry, coordinates, and room ID with a deterministic visual seed; no asset path or variant choice is persisted. Town, prop, enemy, item, NPC, and interactive-object art metadata is also definition-only. This pass does not change save version 8 or require migration.

@@ -1,11 +1,8 @@
 import {LOCATION_MUSIC_POOLS,LOCATION_MUSIC_CONTEXTS,chooseLocationTrack} from './location-music.js?v=statistics-music-20261005a';
 import {configureAmbientAudioSession,audioSessionDiagnostics} from './audio-session.js?v=ambient-audio-20261005a';
-const battleTheme = new URL('../assets/audio/music/battle-theme.mp3', import.meta.url).href;
-const dungeonTracks = [4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21].map(number => ({
-  id: `recording-${number}`,
-  name: `Recording ${number}`,
-  src: new URL(`../assets/audio/music/dungeon/dungeon-${String(number).padStart(2,'0')}.mp3`, import.meta.url).href
-}));
+import {BATTLE_THEME,DUNGEON_TRACKS} from './audio-catalog.js?v=content-scale-20261006a';
+const battleTheme=new URL(`../${BATTLE_THEME}`,import.meta.url).href;
+const dungeonTracks=DUNGEON_TRACKS.map(track=>({...track,src:new URL(`../${track.src}`,import.meta.url).href}));
 const trackGain = { battle: 1, dungeon: 1 };
 let battleChannel = null;
 let battleGainNode = null;

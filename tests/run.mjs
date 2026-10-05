@@ -12,17 +12,23 @@ globalThis.localStorage = {
 };
 
 const { SAVE_KEY, SAVE_BACKUP_KEY, SAVE_RECOVERY_KEY, SAVE_VERSION, freshState, generateFloorMap, validateFloorMap, analyzeFloorMap, saveState, loadState, loadStateDetailed } = await import('../js/state.js?preflight');
-const { items, monsters, lootTables, floorEncounterTable, innEvents, shopStock, roomTypes, dungeonEvents } = await import('../js/data.js?preflight');
+const { items, monsters, lootTables, floorEncounterTable, innEvents, shopStock, roomTypes, dungeonEvents, townNpcs, dungeonNpcs } = await import('../js/data.js?preflight');
 const { makeMarketCycle, currentSellValue, simulateMarkets, simulateInnEvents } = await import('../js/town-economy.js?preflight');
 const { generateAbsurdName, inspectNameGenerator, MAX_NAME_LENGTH } = await import('../js/name-generator.js?preflight');
 const { roomProps: props, createRoomDecoration, roomPropMarkup } = await import('../js/room-visuals.js?preflight');
 const { TOWN_ART_ASSETS } = await import('../js/town-art.js?preflight');
+const {resolveArtVariant,validateArtEntries}=await import('../js/art-assets.js?preflight');
+const {ROOM_BACKGROUND_REGISTRY,BATTLE_BACKGROUND_REGISTRY,backgroundForRoom,backgroundLayerMarkup,selectBackgroundVariant,validateBackgroundRegistry}=await import('../js/scene-backgrounds.js?preflight');
+const {INTERACTIVE_OBJECT_ART}=await import('../js/interactive-art.js?preflight');
+const {SCREEN_PRESENTATION}=await import('../js/screen-presentation.js?preflight');
+const {TOWN_DESTINATIONS,renderTownDestinations}=await import('../js/ui/town.js?preflight');
 const { validateContent, validateQuestGraph } = await import('../js/content-validation.js?preflight');
 const { achievements } = await import('../js/progression.js?preflight');
 const { validateQuestTemplate, questObjectiveTemplates } = await import('../js/quest-templates.js?preflight');
 const { validWeightedRows, weightedChoice } = await import('../js/random-utils.js?preflight');
 const { applyStatus, tickStatuses } = await import('../js/status-effects.js?preflight');
 const { LOCATION_MUSIC_POOLS, LOCATION_MUSIC_CONTEXTS, chooseLocationTrack, validateLocationMusic } = await import('../js/location-music.js?v=statistics-music-20261005a');
+const {BATTLE_THEME,DUNGEON_TRACKS}=await import('../js/audio-catalog.js?preflight');
 const { configureAmbientAudioSession, audioSessionDiagnostics } = await import('../js/audio-session.js?preflight');
 const { scaleEnemy } = await import('../js/enemy-scaling.js?preflight');
 const { selectWithHistory, paceEncounterChance, chooseEncounterCategory, chooseEnemyAttack, monsterFamilies } = await import('../js/encounter-director.js?preflight');
@@ -32,7 +38,8 @@ let checks = 0;
 function check(name, fn) { fn(); checks++; console.log(`✓ ${name}`); }
 
 check('all runtime JavaScript modules pass Node syntax validation',()=>{
-  for(const file of readdirSync(resolve('js')).filter(name=>name.endsWith('.js'))){const result=spawnSync(process.execPath,['--check',resolve('js',file)],{encoding:'utf8'});assert.equal(result.status,0,`${file}: ${result.stderr||result.stdout}`)}
+  const sources=dir=>readdirSync(dir,{withFileTypes:true}).flatMap(entry=>entry.isDirectory()?sources(resolve(dir,entry.name)):[resolve(dir,entry.name)]);
+  for(const file of [...sources(resolve('js')).filter(path=>path.endsWith('.js')),...['tools/art-report.mjs','tools/audio-report.mjs'].map(path=>resolve(path))]){const result=spawnSync(process.execPath,['--check',file],{encoding:'utf8'});assert.equal(result.status,0,`${file}: ${result.stderr||result.stdout}`)}
 });
 
 function inspectTransparentPng(path) {
@@ -57,6 +64,10 @@ check('all registered local runtime assets exist', () => {
   for (const monster of Object.values(monsters)) refs.push(monster.sprite?.src, monster.sprite?.ink, monster.sprite?.colored);
   for (const prop of Object.values(props)) refs.push(prop.ink, prop.colored);
   for (const assets of Object.values(TOWN_ART_ASSETS)) refs.push(assets.ink, assets.colored);
+  for(const item of Object.values(items))refs.push(item.art?.ink,item.art?.colored);
+  for(const registry of [ROOM_BACKGROUND_REGISTRY,BATTLE_BACKGROUND_REGISTRY])for(const entry of Object.values(registry))for(const variant of entry.variants||[])refs.push(variant.path);
+  for(const entry of Object.values(INTERACTIVE_OBJECT_ART))refs.push(entry.ink,entry.colored);
+  for(const npc of [...Object.values(townNpcs),...Object.values(dungeonNpcs)])refs.push(npc.art?.ink,npc.art?.colored);
   for (const path of ['assets/icons/favicon-16.png', 'assets/icons/favicon-32.png', 'assets/icons/apple-touch-icon.png', 'assets/icons/icon-192.png', 'assets/icons/icon-512.png']) refs.push(path);
   const manifest = JSON.parse(readFileSync(resolve('site.webmanifest'), 'utf8'));
   for (const icon of manifest.icons || []) refs.push(icon.src);
@@ -64,9 +75,64 @@ check('all registered local runtime assets exist', () => {
   for (const file of ['css/styles.css', 'css/mechanics.css']) for (const match of readFileSync(resolve(file), 'utf8').matchAll(/url\(['"]?(assets\/[^)'"?#]+)/g)) refs.push(match[1]);
   const audioText = readFileSync(resolve('js/audio.js'), 'utf8');
   for (const match of audioText.matchAll(/(?:src|path):\s*['"](assets\/[^'"]+)['"]/g)) refs.push(match[1]);
-  for (let number = 4; number <= 21; number++) refs.push(`assets/audio/music/dungeon/dungeon-${String(number).padStart(2, '0')}.mp3`);
+  refs.push(BATTLE_THEME,...DUNGEON_TRACKS.map(track=>track.src));
   for (const track of Object.values(LOCATION_MUSIC_POOLS).flat()) refs.push(track.src);
   for (const path of new Set(refs.filter(Boolean))) assert.ok(existsSync(resolve(path)), `Missing asset: ${path}`);
+});
+
+check('background registries support empty, single, weighted, stable variants and CSS fallback',()=>{
+  assert.equal(Object.keys(ROOM_BACKGROUND_REGISTRY).length,Object.keys(roomTypes).length);
+  assert.equal(Object.keys(BATTLE_BACKGROUND_REGISTRY).length,Object.keys(roomTypes).length+1);
+  assert.equal(selectBackgroundVariant({variants:[]},42),null);
+  const one={id:'one',path:'assets/images/rooms/one.webp'};
+  assert.equal(selectBackgroundVariant({variants:[one]},123),one);
+  const weighted={variants:[{id:'a',path:'assets/images/rooms/a.webp',weight:1},{id:'b',path:'assets/images/rooms/b.webp',weight:2}]};
+  assert.equal(selectBackgroundVariant(weighted,987),selectBackgroundVariant(weighted,987));
+  const map={width:11,height:11,walls:[[0,0]],upStairs:[1,1],downStairs:[9,9]};
+  assert.deepEqual(backgroundForRoom({roomType:'ordinary',map,floor:2,x:4,y:5}),backgroundForRoom({roomType:'ordinary',map,floor:2,x:4,y:5}));
+  assert.equal(backgroundForRoom({roomType:'ordinary',map,floor:2,x:4,y:5}).fallback,'css');
+  assert.equal(backgroundForRoom({roomType:'ordinary',map,floor:2,x:4,y:5,kind:'battle'}).fallback,'battle-css');
+  const battleRegistry={default:{id:'default',variants:[{id:'generic',path:'assets/images/rooms/battle.webp'}]},ordinary:{id:'ordinary',variants:[]}};
+  assert.equal(backgroundForRoom({roomType:'ordinary',map,floor:2,x:4,y:5,kind:'battle',registry:battleRegistry}).variant.id,'generic');
+  assert.equal(backgroundLayerMarkup({variant:null}),'');
+  assert.match(backgroundLayerMarkup({roomType:'ordinary',variant:{id:'room',path:'assets/images/rooms/room.webp',focal:'left center',mobileFocal:'bad'}}),/--scene-focal:left center/);
+  assert.match(backgroundLayerMarkup({roomType:'ordinary',variant:{id:'room',path:'assets/images/rooms/room.webp',mobileFocal:'bad'}}),/--scene-mobile-focal:50% 50%/);
+  assert.equal(validateBackgroundRegistry({ordinary:{id:'ordinary',variants:[],fallback:'css'}},['ordinary']).valid,true);
+  assert.equal(validateBackgroundRegistry({ordinary:{id:'ordinary',variants:[{id:'bad',path:'https://example.invalid/bg.webp'}]}},['ordinary']).valid,false);
+});
+
+check('exploration and combat render distinct background and prop layers',()=>{
+  const source=readFileSync(resolve('js/app.js'),'utf8'),css=readFileSync(resolve('css/mechanics.css'),'utf8');
+  const battle=source.match(/const scene=combat\?`([\s\S]*?)`:`<div class="scene/s)?.[1]||'';
+  assert.match(battle,/battle-scene--\$\{esc\(room\?\.id/);
+  assert.match(battle,/\$\{sceneFocus\}/);
+  assert.doesNotMatch(battle,/room-props|landmarkOverlay|npcLayer/);
+  assert.match(source,/propMarkup=combat\?'':roomPropMarkup/);
+  assert.match(source,/kind:combat\?'battle':'exploration'/);
+  assert.match(css,/\.scene-view--image \.scene-ceiling[^}]*opacity:\.2/);
+  assert.match(css,/\.battle-scene--image:before\{opacity:\.18\}/);
+});
+
+check('shared art resolver handles Colored, Ink, alternate style and fallback',()=>{
+  const pair={ink:'assets/ink.png',colored:'assets/color.png'};
+  assert.equal(resolveArtVariant(pair,'colored').src,pair.colored);
+  assert.equal(resolveArtVariant(pair,'ink').src,pair.ink);
+  assert.equal(resolveArtVariant({ink:pair.ink},'colored').src,pair.ink);
+  assert.equal(resolveArtVariant({},'colored','assets/fallback.svg').src,'assets/fallback.svg');
+  assert.equal(resolveArtVariant({},'colored').src,null);
+  assert.equal(validateArtEntries({a:{id:'same'},b:{id:'same'}}).valid,false);
+  assert.equal(validateArtEntries({x:{ink:'../outside.png',colored:'assets/color.png'}}).valid,false);
+  assert.equal(validateArtEntries({optional:{}}).valid,true);
+  assert.ok(Object.values(INTERACTIVE_OBJECT_ART).some(entry=>entry.kind==='landmark'));
+  assert.equal(SCREEN_PRESENTATION.store.parent,'town');
+  assert.equal(SCREEN_PRESENTATION.character.townBack,true);
+});
+
+check('generated art and audio inventories are current and valid',()=>{
+  for(const script of ['tools/art-report.mjs','tools/audio-report.mjs']){
+    const result=spawnSync(process.execPath,[script,'--check'],{encoding:'utf8'});
+    assert.equal(result.status,0,`${script}: ${result.stderr||result.stdout}`);
+  }
 });
 
 check('shared municipal background and masthead use the local doodle sheet and responsive styles',()=>{
@@ -593,20 +659,23 @@ check('town button art has transparent cropped bounds and no rectangular image b
   assert.match(css,/\.town-hub \.location--art-destination\.location-hole:active|\.town-hub \.location--art-destination:active/,'art buttons should retain a pressed-state response');
   assert.match(css,/\.town-hub \.location--art-destination\.location-hole:focus-visible\{outline:/,'Hole should keep keyboard-visible focus treatment');
   assert.match(css,/\.town-hub \.location--art-destination:focus-visible\{[^}]*outline/);
-  assert.match(appSource,/assets\[style\].*town-office-skin-20261005a/);
+  assert.match(appSource,/resolveArtVariant\(assets,style\)/,'Town art should share the unified Ink/Colored resolver');
   const townBranch=appSource.match(/if\(screen==='town'\).*?if\(screen==='quests'\)/s)?.[0]||'';
   assert.ok(townBranch,'Town hub render branch should be present');
-  for(const [target,name,slot] of [['dungeon','Enter the Hole','the-hole'],['store','General Store','general-store'],['inn','The Inn','inn'],['quests','Quest Board','quest-board'],['statistics','Statistics','statistics'],['character','Character','character'],['achievements','Achievements','achievements']])assert.match(townBranch,new RegExp(`data-art-slot="${slot}" data-go="${target}" aria-label="${name}"`),`${name} art button should keep its accessible name and navigation`);
-  assert.match(townBranch,/data-art-slot="settings" data-action="settings" aria-label="Settings"/,'Settings art button should keep its accessible name and action');
-  assert.match(townBranch,/<span class="town-destination-label town-destination-label--featured"><b>ENTER THE HOLE<\/b><small>Deepest: Floor/,'Hole should pair the prominent drawing with clear title and floor progress');
-  assert.match(townBranch,/<button class="location location-hole location--art-destination" data-art-slot="the-hole" data-go="dungeon" aria-label="Enter the Hole">\$\{townArtMarkup\('the-hole'/,'Hole drawing should remain inside its full-tile dungeon navigation button');
-  assert.match(appSource,/const assets=TOWN_ART_ASSETS\[slot\],style=state\.settings\?\.spriteStyle==='ink'\?'ink':'colored'/,'Hole should follow existing Ink/Colored style selection');
+  assert.match(townBranch,/renderTownDestinations\(\{artMarkup:townArtMarkup/,'Town destinations are rendered from the shared registry');
+  const townMarkup=renderTownDestinations({artMarkup:(slot,fallback)=>`<art data-slot="${slot}">${fallback}</art>`,deepestFloor:3});
+  assert.equal(TOWN_DESTINATIONS.length,8);
+  for(const [target,name,slot] of [['dungeon','Enter the Hole','the-hole'],['store','General Store','general-store'],['inn','The Inn','inn'],['quests','Quest Board','quest-board'],['statistics','Statistics','statistics'],['character','Character','character'],['achievements','Achievements','achievements']])assert.match(townMarkup,new RegExp(`data-art-slot="${slot}" data-go="${target}" aria-label="${name}"`),`${name} art button should keep its accessible name and navigation`);
+  assert.match(townMarkup,/data-art-slot="settings" data-action="settings" aria-label="Settings"/,'Settings art button should keep its accessible name and action');
+  assert.match(townMarkup,/<span class="town-destination-label town-destination-label--featured"><b>ENTER THE HOLE<\/b><small>Deepest: Floor 3/,'Hole should pair the prominent drawing with clear title and floor progress');
+  assert.match(townMarkup,/<button class="location location-hole location--art-destination" data-art-slot="the-hole" data-go="dungeon" aria-label="Enter the Hole">\<art/,'Hole drawing should remain inside its full-tile dungeon navigation button');
+  assert.match(appSource,/function townArtMarkup\(slot,fallback,service=false\)/,'Town artwork keeps its single shared renderer');
   assert.match(appSource,/image\.parentElement\.classList\.add\('is-missing-art'\)/,'Missing Town art should fall back without losing navigation');
-  assert.doesNotMatch(townBranch,/Market cycle \$\{|HP \$\{state\.player\.hp|new notices|ready to turn in/,'art-led Town destinations should omit redundant status lines');
+  assert.doesNotMatch(townMarkup,/Market cycle|HP \d|new notices|ready to turn in/,'art-led Town destinations should omit redundant status lines');
 });
 
 check('all Town art buttons have visible labels and the featured Hole keeps floor progress',()=>{
-  const appSource=readFileSync(resolve('js/app.js'),'utf8'),css=readFileSync(resolve('css/mechanics.css'),'utf8');for(const label of ['ENTER THE HOLE','GENERAL STORE','THE INN','QUEST BOARD','CHARACTER','STATISTICS','SETTINGS','ACHIEVEMENTS'])assert.ok(appSource.includes(`>${label}</span>`)||appSource.includes(`>${label}</b>`),`missing visible Town label: ${label}`);assert.match(appSource,/Deepest: Floor \$\{state\.dungeon\.deepestFloor\|\|1\}/);assert.match(css,/town-hub \.location--art-destination::before\{[^}]*#fff9e8/);assert.match(css,/town-destination-label\{position:absolute/);assert.match(css,/town-art-image--ink/)
+  const appSource=readFileSync(resolve('js/app.js'),'utf8'),css=readFileSync(resolve('css/mechanics.css'),'utf8'),townMarkup=renderTownDestinations({artMarkup:()=>'<art>',deepestFloor:2});for(const label of ['ENTER THE HOLE','GENERAL STORE','THE INN','QUEST BOARD','CHARACTER','STATISTICS','SETTINGS','ACHIEVEMENTS'])assert.ok(townMarkup.includes(`>${label}</span>`)||townMarkup.includes(`>${label}</b>`),`missing visible Town label: ${label}`);assert.match(townMarkup,/Deepest: Floor 2/);assert.match(appSource,/renderTownDestinations/);assert.match(css,/town-hub \.location--art-destination::before\{[^}]*#fff9e8/);assert.match(css,/town-destination-label\{position:absolute/);assert.match(css,/town-art-image--ink/)
 });
 
 check('ambient audio session uses feature detection and never selects playback mode', () => {

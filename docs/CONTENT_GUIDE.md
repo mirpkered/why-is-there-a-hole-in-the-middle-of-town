@@ -26,13 +26,13 @@ Town and dungeon NPC identity/dialogue currently lives in `js/app.js`; dungeon m
 
 The playable cap is Floor 3. `floorEncounterTable` and event rows are authoritative for current availability; `depthBands` documents future direction only. The generator stores per-floor geometry and uses its own seeded random stream. Room type is saved on a cell. `createRoomDecoration()` derives a stable decoration seed from geometry, floor/cell, room ID, and optional QA variation; decoration randomness does not consume combat/game RNG.
 
-Each `roomProps` entry declares stable ID, placeholder, compatible rooms, zones, layer, weight, count, scale, and optional paired assets. Add artwork without changing selection rules. `roomPropMarkup()` chooses Original Ink or Colored through the existing Sprite Style setting. Exploration room backgrounds and battle backgrounds are separate presentation layers; future authored backgrounds can be registered by room ID with CSS fallback retained.
+Each `roomProps` entry declares stable ID, placeholder, compatible rooms, zones, layer, weight, count, scale, CSS fallback, and optional paired assets. Add artwork without changing selection rules. `roomPropMarkup()` uses the shared art resolver for Original Ink/Colored. Exploration and battle backgrounds are separate registries in `scene-backgrounds.js`; register variants by room ID with `id`, local `path`, optional positive `weight`, focal positions, and overlay hint. Empty variants or a missing image retain the CSS scene. Background choice is stable for a given saved floor/cell/type and does not advance gameplay RNG.
 
 ## Hand-drawn art
 
 Preserve user source art under `assets/source/` and put processed runtime pairs under `assets/images/`. Use transparent PNGs with modest padding, keeping the original black linework intact. Colored variants use flat fill below the protected ink. Register stable local asset paths in monster metadata, `roomProps`, or `js/town-art.js`. Town destination buttons remain flexible CSS controls; illustrations do not define card dimensions. Sprite Style selects Ink or Colored for enemies, town art, and props where a pair exists. Room props use `roomProps.rooms` and their room’s `visual.propPool`; paired artwork replaces the existing placeholder automatically.
 
-Do not use raw scans/source photos in runtime markup. See [Art Backlog](ART_BACKLOG.md) for current coverage and missing drawings.
+Do not use raw scans/source photos in runtime markup. See [Art Backlog](ART_BACKLOG.md) for generated coverage and missing drawings. Items may declare optional `art: { ink, colored, scale }`; NPCs may declare the same metadata. Event and landmark IDs use `interactive-art.js`. Missing optional art stays on the existing text/CSS treatment.
 
 The shared UI backdrop uses a low-contrast local SVG doodle tile (`assets/images/ui/municipal-doodles.svg`) beneath the dark gradients and content panels. The shared `.topbar` is styled as a hand-made municipal signboard; keep its text and controls legible at narrow widths and leave the dungeon scene itself unobstructed.
 
@@ -46,7 +46,7 @@ Sal's legitimate paid partial rest costs 5g, restores HP/MP, and rolls a weighte
 
 The user performance is canonical. Keep source/master recordings in `assets/audio/source/` and compact browser playback files under `assets/audio/music/`. Existing playback targets approximately -16 LUFS integrated and peaks no higher than -1 dBTP where track length allows; do not remix during asset registration. Dungeon/battle playback, one-shot service pools, volume gain, unlock behavior, and iOS ambient-session preference are managed by `audio.js` and `audio-session.js`.
 
-Register service music in `js/location-music.js` under `inn`, `store`, `questBoard`, `statistics`, `achievements`, `character`, or `settings`. Empty arrays are valid and intentional. Each track needs a unique ID, local `src`, matching `pool`, gain in 0–1, positive weight, and `loop: false`. Re-entry selects again and avoids the immediately previous track where alternatives exist; subviews share the same visit. A user can say “Here is another Inn track”; add a new stable entry without replacing earlier tracks.
+Register service music in `js/location-music.js` under `inn`, `store`, `questBoard`, `statistics`, `achievements`, `character`, or `settings`. Empty arrays are valid and intentional. Each track needs a unique ID, local `src`, matching `pool`, gain in 0–1, positive weight, and `loop: false`. Re-entry selects again and avoids the immediately previous track where alternatives exist; subviews share the same visit. Register source provenance in `js/audio-sources.js` when adding a source/master mapping. Refresh `docs/AUDIO_INVENTORY.md` with `node tools/audio-report.mjs --write`.
 
 The Inn currently has three one-shot clips from the supplied snoring performance (`inn-001` through `inn-003`), the Store has five one-shot intro clips (`store-001` through `store-005`), Character has five one-shot screen-opening clips (`character-001` through `character-005`), Settings has four one-shot opening clips (`settings-001` through `settings-004`), and Statistics has six one-shot opening clips (`statistics-001` through `statistics-006`). Untouched M4A masters live under `assets/audio/source/{inn,store,character,settings,statistics}/`; loudness-matched MP3 runtime clips are under `assets/audio/music/{inn,store,character,settings,statistics}/`. Preserve the masters when adding future edits or alternate takes.
 
@@ -65,3 +65,15 @@ After a legitimate gesture, playback uses the shared audio manager. It requests 
 ## Validation
 
 Run `node tests/run.mjs`. It checks content references and local asset paths, historical save migrations/recovery, procedural floors, room props, quest graph, statuses, attack unlocks, market and Inn simulation, encounter/loot distributions, location audio behavior, and core game actions. Add tests for new reusable rules, not just one specific screen string. GitHub Pages runs the same preflight before upload.
+
+## Adding new content
+
+- **Enemy art:** keep the source in `assets/source/`, add processed Ink and Colored paths to that monster’s `sprite`, then validate.
+- **Room prop:** preserve its source, register a stable ID in `roomProps`, set compatible room IDs/zones/layer/scale and fallback, then add its ID to the room’s prop pool.
+- **NPC portrait:** add optional `art.ink` / `art.colored` metadata to the NPC definition. The portrait slot resolves automatically where the NPC screen renders.
+- **Item art:** add optional art metadata to the item; inventory item pills retain their text if no art exists.
+- **Room background:** add an image under `assets/images/rooms/` and a weighted variant in that room’s exploration entry. Use `focal`/`mobileFocal` when its crop needs guidance. No room-specific renderer or CSS rule is needed.
+- **Battle background:** register it independently under `BATTLE_BACKGROUND_REGISTRY`, either for one room type or as a default. Exploration props are never part of the battle layer.
+- **Location audio:** add a local processed clip and pool entry in `location-music.js`, then record its master mapping in `audio-sources.js`. No audio-manager branch is needed.
+
+After registry changes, run `node tools/art-report.mjs --write` and/or `node tools/audio-report.mjs --write`, then run the canonical `node tests/run.mjs` preflight. Both reports are checked for staleness by preflight.

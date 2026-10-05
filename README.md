@@ -24,13 +24,17 @@ Run the deployment preflight before publishing:
 node tests/run.mjs
 ```
 
-It validates content and runtime assets, historical save migrations and backup recovery, 5,001 seeded floor layouts, room prop placement, quest-chain links, and bounded gameplay simulations. The same command runs before GitHub Pages deployment.
+It validates content and runtime assets, art/audio inventory freshness, historical save migrations and backup recovery, 5,001 seeded floor layouts, room prop placement, quest-chain links, and bounded gameplay simulations. Refresh generated inventories after registry edits with `node tools/art-report.mjs --write` and `node tools/audio-report.mjs --write`.
 
 Append `?qa=1` to the live or local URL for development diagnostics and controls. QA state remains local to the browser.
 
 ## Project shape
 
-The site is static HTML, CSS, and native JavaScript modules hosted by GitHub Pages. `js/app.js` renders screens and handles delegated input; `js/game.js` resolves actions; `js/state.js` owns save shape, migrations, and map generation; `js/data.js` and `js/progression.js` hold content; focused modules provide audio, economy, encounter, status, room-art, and validation systems. See [Architecture](docs/ARCHITECTURE.md), [Game State](docs/GAME_STATE.md), [Content Guide](docs/CONTENT_GUIDE.md), [Art Backlog](docs/ART_BACKLOG.md), and [Roadmap](ROADMAP.md).
+The site is static HTML, CSS, and native JavaScript modules hosted by GitHub Pages. `js/app.js` renders screens and handles delegated input; `js/ui/town.js` owns Town destination metadata/rendering; `js/screen-presentation.js` holds shared screen policies; `js/game.js` resolves actions; `js/state.js` owns save shape, migrations, and map generation; `js/data.js` and `js/progression.js` hold gameplay content. `scene-backgrounds.js` separates exploration and battle background registries, and `art-assets.js` resolves paired variants consistently. See [Architecture](docs/ARCHITECTURE.md), [Game State](docs/GAME_STATE.md), [Content Guide](docs/CONTENT_GUIDE.md), [Art Backlog](docs/ART_BACKLOG.md), [Audio Inventory](docs/AUDIO_INVENTORY.md), and [Roadmap](ROADMAP.md).
+
+## Adding new content
+
+Register metadata next to its content domain, add local runtime assets, and run `node tests/run.mjs`. Room and battle backgrounds use separate registries; adding a variant does not require editing screen markup. The content guide documents the asset recipes.
 
 Hand-drawn player artwork and performances are retained in `assets/source/`; processed paired art and runtime audio live separately. User linework and recordings remain canonical. No server, account, remote dependency, or generated artwork is required to run the game.
 
