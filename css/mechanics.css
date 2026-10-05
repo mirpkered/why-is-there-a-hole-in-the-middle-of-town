@@ -145,6 +145,8 @@
 .location-hole .location-art{grid-column:2;grid-row:1/3;width:100%;height:86px;border-radius:8px;font-size:2.4rem;background:radial-gradient(ellipse,#080a09 0 35%,#554127 38%,#29271f 68%,transparent 70%);color:#d29b56}
 .location-hole .location-art--illustration{background:#e7dfca;box-shadow:0 2px 8px #0005;overflow:hidden}
 .location-art--illustration img{display:block;width:100%;height:100%;object-fit:contain}
+.location-store,.location-inn,.location-quests{grid-template-columns:52px minmax(0,1fr)}
+.location-store .location-art--illustration,.location-inn .location-art--illustration,.location-quests .location-art--illustration{width:48px;height:38px;border-radius:5px;background:#e7dfca;overflow:hidden}
 .location-hole b,.location-hole small{grid-column:1}
 .location-hole b{font-size:1.14rem;letter-spacing:.08em}
 .location-hole small{font-size:.78rem}
@@ -156,6 +158,7 @@
 .inn-panel{max-width:620px}.inn-greeting{margin-top:0;color:var(--muted)}.inn-vitals{display:flex;flex-wrap:wrap;gap:.45rem;margin:.5rem 0}.inn-vitals span{flex:1 1 70px;padding:.5rem;border:1px solid var(--line);border-radius:8px;background:#171b19}.inn-effects,.inn-event{padding:.6rem .7rem;margin:.45rem 0;border-left:3px solid var(--gold);background:#171b19;color:var(--muted);font-size:.9rem}.inn-rest-button{width:100%;min-height:52px}.town-status-effect{color:#d8c389}
 .settings-group{margin:.5rem 0 .8rem;padding:.45rem .75rem .65rem;border:1px solid var(--line);border-radius:9px}.settings-group legend{padding:0 .35rem;color:var(--gold);font-size:.78rem;font-weight:800;text-transform:uppercase;letter-spacing:.08em}.settings-card .settings-group label{margin:.55rem 0}
 @media(max-width:360px){.shell:has(.town-hub){padding:.45rem .55rem calc(.75rem + env(safe-area-inset-bottom))}.town-hub{gap:.35rem}.hub-grid{gap:.35rem;grid-auto-rows:minmax(68px,auto)}.location{min-height:68px;grid-template-columns:32px minmax(0,1fr);column-gap:.4rem;padding:.38rem}.location-art{width:30px;height:36px;font-size:1.25rem}.location-hole{min-height:82px;grid-template-columns:minmax(0,1fr) minmax(100px,42%)}.location-hole .location-art{width:100%;height:70px}.location b{font-size:.72rem}.location small{font-size:.65rem}.location-hole b{font-size:1rem}.town-hub-heading .section-title{font-size:1.24rem}.town-hub-flavor{font-size:.69rem}}
+@media(max-width:360px){.location-store,.location-inn,.location-quests{grid-template-columns:46px minmax(0,1fr)}.location-store .location-art--illustration,.location-inn .location-art--illustration,.location-quests .location-art--illustration{width:42px;height:34px}}
 
 /* Compact service navigation and one-screen character registration. */
 .town-status{position:sticky;top:env(safe-area-inset-top,0px);z-index:12;min-height:44px;flex-wrap:nowrap;gap:.25rem .7rem;margin:0 0 .5rem;padding:.28rem .45rem;border-radius:0 0 8px 8px;background:#171b19f7;backdrop-filter:blur(9px);font-size:.76rem}
@@ -164,6 +167,9 @@
 .town-service{max-width:760px;margin:0 auto}
 .town-service-heading{display:grid;grid-template-columns:34px minmax(0,1fr);align-items:center;gap:.4rem .6rem;margin:.15rem 0 .45rem}
 .town-service-heading .service-emblem{grid-row:1/3;display:grid;place-items:center;width:32px;height:32px;border-radius:8px;background:#171b19;color:var(--gold);font-size:1.15rem}
+.town-service-heading:has(.town-service-art){grid-template-columns:58px minmax(0,1fr)}
+.town-service-heading .town-service-art{width:54px;height:38px;background:#e7dfca;overflow:hidden;border-radius:5px}
+.town-service-art img{display:block;width:100%;height:100%;object-fit:contain}
 .town-service-heading .eyebrow{font-size:.62rem;margin:0}
 .town-service-heading .section-title{font-size:clamp(1.1rem,3.8vw,1.45rem);margin:0;line-height:1.15}
 .town-service-heading>small{grid-column:2;color:var(--muted);font-size:.72rem;line-height:1.25}
