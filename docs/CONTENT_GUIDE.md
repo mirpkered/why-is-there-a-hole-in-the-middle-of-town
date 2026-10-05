@@ -44,9 +44,9 @@ Sal's legitimate paid partial rest costs 5g, restores HP/MP, and rolls a weighte
 
 The user performance is canonical. Keep source/master recordings in `assets/audio/source/` and compact browser playback files under `assets/audio/music/`. Existing playback targets approximately -16 LUFS integrated and peaks no higher than -1 dBTP where track length allows; do not remix during asset registration. Dungeon/battle playback, one-shot service pools, volume gain, unlock behavior, and iOS ambient-session preference are managed by `audio.js` and `audio-session.js`.
 
-Register service music in `js/location-music.js` under `inn`, `store`, `questBoard`, `statistics`, `achievements`, or `character`. Empty arrays are valid and intentional. Each track needs a unique ID, local `src`, matching `pool`, gain in 0–1, positive weight, and `loop: false`. Re-entry selects again and avoids the immediately previous track where alternatives exist; subviews share the same visit. A user can say “Here is another Inn track”; add a new stable entry without replacing earlier tracks.
+Register service music in `js/location-music.js` under `inn`, `store`, `questBoard`, `statistics`, `achievements`, `character`, or `settings`. Empty arrays are valid and intentional. Each track needs a unique ID, local `src`, matching `pool`, gain in 0–1, positive weight, and `loop: false`. Re-entry selects again and avoids the immediately previous track where alternatives exist; subviews share the same visit. A user can say “Here is another Inn track”; add a new stable entry without replacing earlier tracks.
 
-The Inn currently has three one-shot clips from the supplied snoring performance (`inn-001` through `inn-003`), the Store has five one-shot intro clips (`store-001` through `store-005`), and Character has five one-shot screen-opening clips (`character-001` through `character-005`). Untouched M4A masters live under `assets/audio/source/{inn,store,character}/`; loudness-matched MP3 runtime clips are under `assets/audio/music/{inn,store,character}/`. Preserve the masters when adding future edits or alternate takes.
+The Inn currently has three one-shot clips from the supplied snoring performance (`inn-001` through `inn-003`), the Store has five one-shot intro clips (`store-001` through `store-005`), Character has five one-shot screen-opening clips (`character-001` through `character-005`), and Settings has four one-shot opening clips (`settings-001` through `settings-004`). Untouched M4A masters live under `assets/audio/source/{inn,store,character,settings}/`; loudness-matched MP3 runtime clips are under `assets/audio/music/{inn,store,character,settings}/`. Preserve the masters when adding future edits or alternate takes.
 
 | User recording | Pool |
 | --- | --- |
@@ -56,6 +56,7 @@ The Inn currently has three one-shot clips from the supplied snoring performance
 | Statistics | `statistics` |
 | Achievements | `achievements` |
 | Character / Gear / Pack / Inventory | `character` |
+| Settings | `settings` |
 
 After a legitimate gesture, playback uses the shared audio manager. It requests `navigator.audioSession.type = 'ambient'` when supported, allowing iOS to apply Ring/Silent behavior. Unsupported browsers keep normal in-game volume controls but may not honor the physical switch. The OS retains final volume and device routing.
 

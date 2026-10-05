@@ -20,6 +20,12 @@ export const LOCATION_MUSIC_POOLS = Object.freeze({
     { id: 'character-003', pool: 'character', src: 'assets/audio/music/character/character-003.mp3', gain: 1, weight: 1, loop: false, enabled: true, preloadPriority: 'low' },
     { id: 'character-004', pool: 'character', src: 'assets/audio/music/character/character-004.mp3', gain: 1, weight: 1, loop: false, enabled: true, preloadPriority: 'low' },
     { id: 'character-005', pool: 'character', src: 'assets/audio/music/character/character-005.mp3', gain: 1, weight: 1, loop: false, enabled: true, preloadPriority: 'low' }
+  ],
+  settings: [
+    { id: 'settings-001', pool: 'settings', src: 'assets/audio/music/settings/settings-001.mp3', gain: 1, weight: 1, loop: false, enabled: true, preloadPriority: 'low' },
+    { id: 'settings-002', pool: 'settings', src: 'assets/audio/music/settings/settings-002.mp3', gain: 1, weight: 1, loop: false, enabled: true, preloadPriority: 'low' },
+    { id: 'settings-003', pool: 'settings', src: 'assets/audio/music/settings/settings-003.mp3', gain: 1, weight: 1, loop: false, enabled: true, preloadPriority: 'low' },
+    { id: 'settings-004', pool: 'settings', src: 'assets/audio/music/settings/settings-004.mp3', gain: 1, weight: 1, loop: false, enabled: true, preloadPriority: 'low' }
   ]
 });
 
