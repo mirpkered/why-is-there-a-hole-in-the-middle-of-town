@@ -63,6 +63,8 @@
 .room-prop{position:absolute;display:block;width:17%;height:40%;transform-origin:center bottom;filter:drop-shadow(0 3px 4px #08090999);transform-style:preserve-3d}
 .room-prop svg,.room-prop img{display:block;width:100%;height:100%;overflow:visible}
 .room-prop[data-prop-id="mushroom-cluster"] img{object-fit:contain}
+.room-prop[data-prop-id="small-mushroom"]{width:10%;height:18%}
+.room-prop[data-prop-id="small-mushroom"] img{object-fit:contain}
 .room-prop-zone--far_left{left:18%;top:40%;width:12%;height:27%}
 .room-prop-zone--far_center{left:50%;top:39%;width:13%;height:28%}
 .room-prop-zone--far_right{left:82%;top:40%;width:12%;height:27%}
