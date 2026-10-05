@@ -22,7 +22,7 @@ const { achievements } = await import('../js/progression.js?preflight');
 const { validateQuestTemplate, questObjectiveTemplates } = await import('../js/quest-templates.js?preflight');
 const { validWeightedRows, weightedChoice } = await import('../js/random-utils.js?preflight');
 const { applyStatus, tickStatuses } = await import('../js/status-effects.js?preflight');
-const { LOCATION_MUSIC_POOLS, LOCATION_MUSIC_CONTEXTS, chooseLocationTrack, validateLocationMusic } = await import('../js/location-music.js?v=store-music-20261005a');
+const { LOCATION_MUSIC_POOLS, LOCATION_MUSIC_CONTEXTS, chooseLocationTrack, validateLocationMusic } = await import('../js/location-music.js?v=character-music-20261005a');
 const { configureAmbientAudioSession, audioSessionDiagnostics } = await import('../js/audio-session.js?preflight');
 const { scaleEnemy } = await import('../js/enemy-scaling.js?preflight');
 const { selectWithHistory, paceEncounterChance, chooseEncounterCategory, chooseEnemyAttack, monsterFamilies } = await import('../js/encounter-director.js?preflight');
@@ -396,20 +396,25 @@ check('100 generated three-floor maps route safely to town and interrupted retur
 });
 
 
-check('Inn and Store recordings are valid one-shot tracks and avoid immediate repeats',()=>{
+check('Inn, Store, and Character recordings are valid one-shot tracks and avoid immediate repeats',()=>{
   const actual=LOCATION_MUSIC_POOLS.inn;
   const store=LOCATION_MUSIC_POOLS.store;
+  const character=LOCATION_MUSIC_POOLS.character;
   assert.deepEqual(actual.map(track=>track.id),['inn-001','inn-002','inn-003']);
   assert.deepEqual(store.map(track=>track.id),['store-001','store-002','store-003','store-004','store-005']);
-  assert.deepEqual(validateLocationMusic().poolCounts,{inn:3,store:5,questBoard:0,statistics:0,achievements:0,character:0});
+  assert.deepEqual(character.map(track=>track.id),['character-001','character-002','character-003','character-004','character-005']);
+  assert.deepEqual(validateLocationMusic().poolCounts,{inn:3,store:5,questBoard:0,statistics:0,achievements:0,character:5});
   assert.equal(validateLocationMusic().errorCount,0);
-  assert.ok([...actual,...store].every(track=>existsSync(resolve(track.src))&&track.loop===false&&track.gain===1));
+  assert.ok([...actual,...store,...character].every(track=>existsSync(resolve(track.src))&&track.loop===false&&track.gain===1));
   let seed=42,previous=null;const appearances=new Map(actual.map(track=>[track.id,0])),random=()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296};
   for(let visit=0;visit<30;visit++){const track=chooseLocationTrack('inn',previous,LOCATION_MUSIC_POOLS,random);assert.ok(track);assert.notEqual(track.id,previous);appearances.set(track.id,appearances.get(track.id)+1);previous=track.id}
   assert.ok([...appearances.values()].every(count=>count>0));
   previous=null;const storeAppearances=new Map(store.map(track=>[track.id,0]));
   for(let visit=0;visit<50;visit++){const track=chooseLocationTrack('store',previous,LOCATION_MUSIC_POOLS,random);assert.ok(track);assert.notEqual(track.id,previous);storeAppearances.set(track.id,storeAppearances.get(track.id)+1);previous=track.id}
   assert.ok([...storeAppearances.values()].every(count=>count>0));
+  previous=null;const characterAppearances=new Map(character.map(track=>[track.id,0]));
+  for(let visit=0;visit<50;visit++){const track=chooseLocationTrack('character',previous,LOCATION_MUSIC_POOLS,random);assert.ok(track);assert.notEqual(track.id,previous);characterAppearances.set(track.id,characterAppearances.get(track.id)+1);previous=track.id}
+  assert.ok([...characterAppearances.values()].every(count=>count>0));
   const pools={...Object.fromEntries(LOCATION_MUSIC_CONTEXTS.map(context=>[context,[]])),inn:[{id:'inn-a',pool:'inn',src:'assets/audio/music/inn/a.mp3',gain:.4,loop:false},{id:'inn-b',pool:'inn',src:'assets/audio/music/inn/b.mp3',gain:.4,loop:false}]};
   assert.equal(chooseLocationTrack('inn','inn-a',pools,()=>0).id,'inn-b');
   assert.equal(validateLocationMusic(pools).errorCount,0);

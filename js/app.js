@@ -7,7 +7,7 @@ import {syncMusicContext,updateMusicPreferences,playBattleTheme,playDungeonPool,
 import {classAbilities,achievements,depthBands} from './progression.js?v=content-expansion-20261005a';
 import {validateContent} from './content-validation.js?v=store-music-20261005a';
 import {generateAbsurdName,inspectNameGenerator} from './name-generator.js?v=maintenance-20261006a';
-import {LOCATION_MUSIC_POOLS,LOCATION_MUSIC_CONTEXTS,validateLocationMusic} from './location-music.js?v=location-music-20261004a';
+import {LOCATION_MUSIC_POOLS,LOCATION_MUSIC_CONTEXTS,validateLocationMusic} from './location-music.js?v=character-music-20261005a';
 import {TOWN_ART_ASSETS} from './town-art.js?v=town-service-signs-20261005a';
 
 const app=document.querySelector('#app'),modal=document.querySelector('#modal-root'),qa=new URLSearchParams(location.search).get('qa')==='1',buildVersion=document.querySelector('meta[name="game-build"]')?.content||'development';

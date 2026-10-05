@@ -14,7 +14,13 @@ export const LOCATION_MUSIC_POOLS = Object.freeze({
   questBoard: [],
   statistics: [],
   achievements: [],
-  character: []
+  character: [
+    { id: 'character-001', pool: 'character', src: 'assets/audio/music/character/character-001.mp3', gain: 1, weight: 1, loop: false, enabled: true, preloadPriority: 'low' },
+    { id: 'character-002', pool: 'character', src: 'assets/audio/music/character/character-002.mp3', gain: 1, weight: 1, loop: false, enabled: true, preloadPriority: 'low' },
+    { id: 'character-003', pool: 'character', src: 'assets/audio/music/character/character-003.mp3', gain: 1, weight: 1, loop: false, enabled: true, preloadPriority: 'low' },
+    { id: 'character-004', pool: 'character', src: 'assets/audio/music/character/character-004.mp3', gain: 1, weight: 1, loop: false, enabled: true, preloadPriority: 'low' },
+    { id: 'character-005', pool: 'character', src: 'assets/audio/music/character/character-005.mp3', gain: 1, weight: 1, loop: false, enabled: true, preloadPriority: 'low' }
+  ]
 });
 
 export const LOCATION_MUSIC_CONTEXTS = Object.freeze(Object.keys(LOCATION_MUSIC_POOLS));
