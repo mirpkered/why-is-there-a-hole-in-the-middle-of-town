@@ -148,6 +148,13 @@ check('small mushroom is a compact paired Mushroom Room prop',()=>{
   const sample={...small,flip:false,zone:'far-center',scale:1,depth:1};assert.match(roomPropMarkup({props:[sample]},'ink'),/small-mushroom-ink\.png/);assert.match(roomPropMarkup({props:[sample]},'colored'),/small-mushroom-colored\.png/);
 });
 
+check('hand-drawn market sign is paired, transparent art for Kobold Market',()=>{
+  const sign=props['market-sign'];assert.ok(sign);assert.ok(sign.rooms.includes('market'));assert.ok(roomTypes.market.visual.propPool.includes('market-sign'));assert.equal(sign.placeholder,'sign');
+  for(const [style,path] of [['ink',sign.ink],['colored',sign.colored]]){assert.ok(path);const png=readFileSync(resolve(path));assert.equal(png.toString('hex',0,8),'89504e470d0a1a0a');assert.equal(png[25],6,`${style} market sign must preserve PNG alpha`);assert.ok(png.readUInt32BE(16)<=700&&png.readUInt32BE(20)<=750,'market sign dimensions remain reasonable for runtime use')}
+  assert.ok(existsSync(resolve('assets/source/room-props/market-sign-original.jpg')),'original sign photo remains archived');
+  const sample={...sign,flip:false,zone:'far-center',scale:1,depth:1};assert.match(roomPropMarkup({props:[sample]},'ink'),/market-sign-ink\.png/);assert.match(roomPropMarkup({props:[sample]},'colored'),/market-sign-colored\.png/);
+});
+
 check('weighted selection handles invalid rows and samples eligible entries', () => {
   assert.equal(validWeightedRows([{weight: 0}, {weight: -1}, {weight: 2}]).length, 1);
   assert.equal(weightedChoice([], () => 0), null);
