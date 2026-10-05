@@ -29,10 +29,11 @@ jobs:
         run: node tests/run.mjs
       - name: Assemble runtime-only Pages site
         run: |
-          mkdir -p _site/assets
+          mkdir -p _site/assets _site/assets/audio
           cp index.html site.webmanifest _site/
           cp -R css js _site/
-          cp -R assets/icons assets/images assets/monsters assets/audio/music _site/assets/
+          cp -R assets/icons assets/images assets/monsters _site/assets/
+          cp -R assets/audio/music _site/assets/audio/
           test -f _site/js/app.js
           test -f _site/assets/images/town/the-hole-colored.png
           test -f _site/assets/audio/music/battle-theme.mp3
