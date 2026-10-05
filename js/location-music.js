@@ -12,7 +12,14 @@ export const LOCATION_MUSIC_POOLS = Object.freeze({
     { id: 'store-005', pool: 'store', src: 'assets/audio/music/store/store-005.mp3', gain: 1, weight: 1, loop: false, enabled: true, preloadPriority: 'low' }
   ],
   questBoard: [],
-  statistics: [],
+  statistics: [
+    { id: 'statistics-001', pool: 'statistics', src: 'assets/audio/music/statistics/statistics-001.mp3', gain: 1, weight: 1, loop: false, enabled: true, preloadPriority: 'low' },
+    { id: 'statistics-002', pool: 'statistics', src: 'assets/audio/music/statistics/statistics-002.mp3', gain: 1, weight: 1, loop: false, enabled: true, preloadPriority: 'low' },
+    { id: 'statistics-003', pool: 'statistics', src: 'assets/audio/music/statistics/statistics-003.mp3', gain: 1, weight: 1, loop: false, enabled: true, preloadPriority: 'low' },
+    { id: 'statistics-004', pool: 'statistics', src: 'assets/audio/music/statistics/statistics-004.mp3', gain: 1, weight: 1, loop: false, enabled: true, preloadPriority: 'low' },
+    { id: 'statistics-005', pool: 'statistics', src: 'assets/audio/music/statistics/statistics-005.mp3', gain: 1, weight: 1, loop: false, enabled: true, preloadPriority: 'low' },
+    { id: 'statistics-006', pool: 'statistics', src: 'assets/audio/music/statistics/statistics-006.mp3', gain: 1, weight: 1, loop: false, enabled: true, preloadPriority: 'low' }
+  ],
   achievements: [],
   character: [
     { id: 'character-001', pool: 'character', src: 'assets/audio/music/character/character-001.mp3', gain: 1, weight: 1, loop: false, enabled: true, preloadPriority: 'low' },

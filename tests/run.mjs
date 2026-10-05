@@ -22,7 +22,7 @@ const { achievements } = await import('../js/progression.js?preflight');
 const { validateQuestTemplate, questObjectiveTemplates } = await import('../js/quest-templates.js?preflight');
 const { validWeightedRows, weightedChoice } = await import('../js/random-utils.js?preflight');
 const { applyStatus, tickStatuses } = await import('../js/status-effects.js?preflight');
-const { LOCATION_MUSIC_POOLS, LOCATION_MUSIC_CONTEXTS, chooseLocationTrack, validateLocationMusic } = await import('../js/location-music.js?v=settings-music-20261005a');
+const { LOCATION_MUSIC_POOLS, LOCATION_MUSIC_CONTEXTS, chooseLocationTrack, validateLocationMusic } = await import('../js/location-music.js?v=statistics-music-20261005a');
 const { configureAmbientAudioSession, audioSessionDiagnostics } = await import('../js/audio-session.js?preflight');
 const { scaleEnemy } = await import('../js/enemy-scaling.js?preflight');
 const { selectWithHistory, paceEncounterChance, chooseEncounterCategory, chooseEnemyAttack, monsterFamilies } = await import('../js/encounter-director.js?preflight');
@@ -396,18 +396,20 @@ check('100 generated three-floor maps route safely to town and interrupted retur
 });
 
 
-check('Inn, Store, Character, and Settings recordings are valid one-shot tracks and avoid immediate repeats',()=>{
+check('Inn, Store, Character, Settings, and Statistics recordings are valid one-shot tracks and avoid immediate repeats',()=>{
   const actual=LOCATION_MUSIC_POOLS.inn;
   const store=LOCATION_MUSIC_POOLS.store;
   const character=LOCATION_MUSIC_POOLS.character;
   const settings=LOCATION_MUSIC_POOLS.settings;
+  const statistics=LOCATION_MUSIC_POOLS.statistics;
   assert.deepEqual(actual.map(track=>track.id),['inn-001','inn-002','inn-003']);
   assert.deepEqual(store.map(track=>track.id),['store-001','store-002','store-003','store-004','store-005']);
   assert.deepEqual(character.map(track=>track.id),['character-001','character-002','character-003','character-004','character-005']);
   assert.deepEqual(settings.map(track=>track.id),['settings-001','settings-002','settings-003','settings-004']);
-  assert.deepEqual(validateLocationMusic().poolCounts,{inn:3,store:5,questBoard:0,statistics:0,achievements:0,character:5,settings:4});
+  assert.deepEqual(statistics.map(track=>track.id),['statistics-001','statistics-002','statistics-003','statistics-004','statistics-005','statistics-006']);
+  assert.deepEqual(validateLocationMusic().poolCounts,{inn:3,store:5,questBoard:0,statistics:6,achievements:0,character:5,settings:4});
   assert.equal(validateLocationMusic().errorCount,0);
-  assert.ok([...actual,...store,...character,...settings].every(track=>existsSync(resolve(track.src))&&track.loop===false&&track.gain===1));
+  assert.ok([...actual,...store,...character,...settings,...statistics].every(track=>existsSync(resolve(track.src))&&track.loop===false&&track.gain===1));
   let seed=42,previous=null;const appearances=new Map(actual.map(track=>[track.id,0])),random=()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296};
   for(let visit=0;visit<30;visit++){const track=chooseLocationTrack('inn',previous,LOCATION_MUSIC_POOLS,random);assert.ok(track);assert.notEqual(track.id,previous);appearances.set(track.id,appearances.get(track.id)+1);previous=track.id}
   assert.ok([...appearances.values()].every(count=>count>0));
@@ -420,6 +422,9 @@ check('Inn, Store, Character, and Settings recordings are valid one-shot tracks 
   previous=null;const settingsAppearances=new Map(settings.map(track=>[track.id,0]));
   for(let visit=0;visit<40;visit++){const track=chooseLocationTrack('settings',previous,LOCATION_MUSIC_POOLS,random);assert.ok(track);assert.notEqual(track.id,previous);settingsAppearances.set(track.id,settingsAppearances.get(track.id)+1);previous=track.id}
   assert.ok([...settingsAppearances.values()].every(count=>count>0));
+  previous=null;const statisticsAppearances=new Map(statistics.map(track=>[track.id,0]));
+  for(let visit=0;visit<60;visit++){const track=chooseLocationTrack('statistics',previous,LOCATION_MUSIC_POOLS,random);assert.ok(track);assert.notEqual(track.id,previous);statisticsAppearances.set(track.id,statisticsAppearances.get(track.id)+1);previous=track.id}
+  assert.ok([...statisticsAppearances.values()].every(count=>count>0));
   const pools={...Object.fromEntries(LOCATION_MUSIC_CONTEXTS.map(context=>[context,[]])),inn:[{id:'inn-a',pool:'inn',src:'assets/audio/music/inn/a.mp3',gain:.4,loop:false},{id:'inn-b',pool:'inn',src:'assets/audio/music/inn/b.mp3',gain:.4,loop:false}]};
   assert.equal(chooseLocationTrack('inn','inn-a',pools,()=>0).id,'inn-b');
   assert.equal(validateLocationMusic(pools).errorCount,0);
@@ -574,7 +579,7 @@ await (async()=>{
   }
   globalThis.document={baseURI:'https://game.test/',visibilityState:'visible',addEventListener(){}};globalThis.Audio=MockAudio;
   try{
-    const {syncMusicContext,stopMusic,musicPlaybackDiagnostics,updateMusicPreferences}=await import('../js/audio.js?v=settings-music-20261005a');
+    const {syncMusicContext,stopMusic,musicPlaybackDiagnostics,updateMusicPreferences}=await import('../js/audio.js?v=statistics-music-20261005a');
     const pool=LOCATION_MUSIC_POOLS.inn;
     updateMusicPreferences({musicEnabled:true,musicVolume:.4});await syncMusicContext('inn',{musicEnabled:true,musicVolume:.4},true);
     const firstTrack=musicPlaybackDiagnostics().selectedLocationTrack;assert.ok(pool.some(track=>track.id===firstTrack));assert.equal(musicPlaybackDiagnostics().loop,false);assert.equal(musicPlaybackDiagnostics().effectiveGain,.4);
@@ -585,6 +590,7 @@ await (async()=>{
     await syncMusicContext('town',{musicEnabled:true,musicVolume:.4},true);assert.equal(musicPlaybackDiagnostics().playing,false);
     await syncMusicContext('inn',{musicEnabled:true,musicVolume:.4},true);assert.notEqual(musicPlaybackDiagnostics().selectedLocationTrack,firstTrack);assert.ok(channel.playCount>firstPlayCount);
     await syncMusicContext('settings',{musicEnabled:true,musicVolume:.4},true);assert.ok(LOCATION_MUSIC_POOLS.settings.some(track=>track.id===musicPlaybackDiagnostics().selectedLocationTrack));assert.equal(musicPlaybackDiagnostics().loop,false);
+    await syncMusicContext('statistics',{musicEnabled:true,musicVolume:.4},true);assert.ok(LOCATION_MUSIC_POOLS.statistics.some(track=>track.id===musicPlaybackDiagnostics().selectedLocationTrack));assert.equal(musicPlaybackDiagnostics().loop,false);
     updateMusicPreferences({musicEnabled:false,musicVolume:.4});assert.equal(musicPlaybackDiagnostics().playing,false);
     stopMusic();
   }finally{globalThis.document=previousDocument;globalThis.Audio=PreviousAudio}
