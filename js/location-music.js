@@ -4,7 +4,13 @@ export const LOCATION_MUSIC_POOLS = Object.freeze({
     { id: 'inn-002', pool: 'inn', src: 'assets/audio/music/inn/inn-002.mp3', gain: 1, weight: 1, loop: false, enabled: true, preloadPriority: 'low' },
     { id: 'inn-003', pool: 'inn', src: 'assets/audio/music/inn/inn-003.mp3', gain: 1, weight: 1, loop: false, enabled: true, preloadPriority: 'low' }
   ],
-  store: [],
+  store: [
+    { id: 'store-001', pool: 'store', src: 'assets/audio/music/store/store-001.mp3', gain: 1, weight: 1, loop: false, enabled: true, preloadPriority: 'low' },
+    { id: 'store-002', pool: 'store', src: 'assets/audio/music/store/store-002.mp3', gain: 1, weight: 1, loop: false, enabled: true, preloadPriority: 'low' },
+    { id: 'store-003', pool: 'store', src: 'assets/audio/music/store/store-003.mp3', gain: 1, weight: 1, loop: false, enabled: true, preloadPriority: 'low' },
+    { id: 'store-004', pool: 'store', src: 'assets/audio/music/store/store-004.mp3', gain: 1, weight: 1, loop: false, enabled: true, preloadPriority: 'low' },
+    { id: 'store-005', pool: 'store', src: 'assets/audio/music/store/store-005.mp3', gain: 1, weight: 1, loop: false, enabled: true, preloadPriority: 'low' }
+  ],
   questBoard: [],
   statistics: [],
   achievements: [],

@@ -46,7 +46,7 @@ The user performance is canonical. Keep source/master recordings in `assets/audi
 
 Register service music in `js/location-music.js` under `inn`, `store`, `questBoard`, `statistics`, `achievements`, or `character`. Empty arrays are valid and intentional. Each track needs a unique ID, local `src`, matching `pool`, gain in 0–1, positive weight, and `loop: false`. Re-entry selects again and avoids the immediately previous track where alternatives exist; subviews share the same visit. A user can say “Here is another Inn track”; add a new stable entry without replacing earlier tracks.
 
-The Inn currently has three one-shot clips from the supplied snoring performance (`inn-001` through `inn-003`). The untouched M4A master is archived at `assets/audio/source/inn/inn-original.m4a`; the three trimmed, loudness-matched MP3 runtime clips are under `assets/audio/music/inn/`. Preserve the master when adding future edits or alternate takes.
+The Inn currently has three one-shot clips from the supplied snoring performance (`inn-001` through `inn-003`). The Store currently has five one-shot intro clips (`store-001` through `store-005`). Untouched M4A masters live under `assets/audio/source/{inn,store}/`; trimmed, loudness-matched MP3 runtime clips are under `assets/audio/music/{inn,store}/`. Preserve the masters when adding future edits or alternate takes.
 
 | User recording | Pool |
 | --- | --- |

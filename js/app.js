@@ -3,9 +3,9 @@ import {state,setState,startGame,STARTING_CLASSES,STARTING_STAT_RANGES,rollStart
 import {equipItem,canEquipItem,unequipSlot,buyItem,sellItem,salePrice,compareEquipment,descend,ascend,retreat,retreatChancePercent,returnPlan,attemptReturn,storeStock,canTrade,completeTrade,buyNpcStock,closeNpc,talkNpc,qaGiveItem,qaRemoveItem,qaGiveGold,qaSpawnMonster,qaSpawnNpc,qaAdvanceFloor,qaSetStat,qaClearInventory,qaTeleport,qaTeleportEdge,qaRegenerateFloor,qaRevealFloor,qaFloorValidation,qaForceAttack,qaSetResources,qaRevealNearby,qaRevealReturnRoute,qaSetClass,qaSetLevel,qaStartQuest,qaResetCareer,qaUnlockAchievement,qaEconomySimulation,inventoryUsed,inventoryCapacity,countItem,canRemoveItem,questReservedQuantity,questStatus,turnInQuest,qaEnemyScalingMatrix,marketDemand,marketState,restAtInn,innEffectSummary,qaForceInnEvent,qaClearInnEffects,qaSetWellRestedBattles,qaRestockMarket,qaSetMarketDemand,qaMarketSimulation,qaInnSimulation} from './game.js?v=maintenance-20261006a';
 import {quests,items,monsters,enemyVariants,dungeonNpcs,trades,shopStock,townNpcs,dungeonEvents,roomTypes,monsterForId,innEvents} from './data.js?v=campfire-prop-20261004a';
 import {createRoomDecoration,roomPropMarkup} from './room-visuals.js?v=maintenance-20261006a';
-import {syncMusicContext,updateMusicPreferences,playBattleTheme,playDungeonPool,playLocationTrack,stopMusic,currentMusicTrack,musicPlaybackDiagnostics,prepareBattleAudio} from './audio.js?v=inn-music-20261005a';
+import {syncMusicContext,updateMusicPreferences,playBattleTheme,playDungeonPool,playLocationTrack,stopMusic,currentMusicTrack,musicPlaybackDiagnostics,prepareBattleAudio} from './audio.js?v=store-music-20261005a';
 import {classAbilities,achievements,depthBands} from './progression.js?v=content-expansion-20261005a';
-import {validateContent} from './content-validation.js?v=inn-music-20261005a';
+import {validateContent} from './content-validation.js?v=store-music-20261005a';
 import {generateAbsurdName,inspectNameGenerator} from './name-generator.js?v=maintenance-20261006a';
 import {LOCATION_MUSIC_POOLS,LOCATION_MUSIC_CONTEXTS,validateLocationMusic} from './location-music.js?v=location-music-20261004a';
 import {TOWN_ART_ASSETS} from './town-art.js?v=town-service-signs-20261005a';
