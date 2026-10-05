@@ -8,9 +8,9 @@ Coverage summary from the current registries and files in `assets/images/`. This
 
 Deadly Rat, Killer Rabbit, Kung Fungoose, Pocket Slime, Fire-Breathing Earthworm, Heart-Attack, Porkscrew, Rotten Apple, and Poo Gas each have Original Ink and Colored runtime PNGs registered on their existing monster definition.
 
-### Town destinations (4)
+### Town destinations and services (5)
 
-The Hole, General Store, The Inn, and Quest Board have paired transparent destination illustrations registered in `js/town-art.js`. The Hole is the featured Town button art. The colored Quest Board sign uses muted wood tones. All source scans are retained under `assets/source/town/`.
+The Hole, General Store, The Inn, Quest Board, and Statistics have paired transparent illustrations registered in `js/town-art.js`. The Hole is the featured Town button art. Statistics uses the supplied chart sign. The colored Quest Board sign uses muted wood tones. All source scans are retained under `assets/source/town/`.
 
 ### Room props (1 of 25 definitions)
 

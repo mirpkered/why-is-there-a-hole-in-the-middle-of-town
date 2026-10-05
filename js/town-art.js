@@ -15,5 +15,9 @@ export const TOWN_ART_ASSETS={
   'quest-board':{
     ink:'assets/images/town/quest-sign-ink.png',
     colored:'assets/images/town/quest-sign-colored.png'
+  },
+  'statistics':{
+    ink:'assets/images/town/statistics-button-ink.png',
+    colored:'assets/images/town/statistics-button-colored.png'
   }
 };
