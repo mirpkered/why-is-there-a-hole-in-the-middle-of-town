@@ -23,5 +23,9 @@ export const TOWN_ART_ASSETS={
   'settings':{
     ink:'assets/images/town/settings-button-ink.png',
     colored:'assets/images/town/settings-button-colored.png'
+  },
+  'character':{
+    ink:'assets/images/town/character-button-ink.png',
+    colored:'assets/images/town/character-button-colored.png'
   }
 };
