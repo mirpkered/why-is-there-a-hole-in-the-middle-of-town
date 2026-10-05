@@ -3,7 +3,7 @@ import {roomProps,ROOM_PROP_ZONES} from './room-visuals.js?v=maintenance-2026100
 import {classAbilities,achievements,depthBands} from './progression.js?v=content-expansion-20261005a';
 import {questObjectiveTemplates} from './quest-templates.js?v=systems-20261002a';
 import {statusEffectDefinitions} from './status-effects.js?v=systems-20261002a';
-import {validateLocationMusic} from './location-music.js?v=location-music-20261004a';
+import {validateLocationMusic} from './location-music.js?v=inn-music-20261005a';
 import {TOWN_ART_ASSETS} from './town-art.js?v=town-service-signs-20261005a';
 
 const slots=new Set(['head','body','mainHand','offHand','feet','accessory']);

@@ -22,7 +22,7 @@ const { achievements } = await import('../js/progression.js?preflight');
 const { validateQuestTemplate, questObjectiveTemplates } = await import('../js/quest-templates.js?preflight');
 const { validWeightedRows, weightedChoice } = await import('../js/random-utils.js?preflight');
 const { applyStatus, tickStatuses } = await import('../js/status-effects.js?preflight');
-const { LOCATION_MUSIC_POOLS, LOCATION_MUSIC_CONTEXTS, chooseLocationTrack, validateLocationMusic } = await import('../js/location-music.js?v=location-music-20261004a');
+const { LOCATION_MUSIC_POOLS, LOCATION_MUSIC_CONTEXTS, chooseLocationTrack, validateLocationMusic } = await import('../js/location-music.js?v=inn-music-20261005a');
 const { configureAmbientAudioSession, audioSessionDiagnostics } = await import('../js/audio-session.js?preflight');
 const { scaleEnemy } = await import('../js/enemy-scaling.js?preflight');
 const { selectWithHistory, paceEncounterChance, chooseEncounterCategory, chooseEnemyAttack, monsterFamilies } = await import('../js/encounter-director.js?preflight');
@@ -396,8 +396,15 @@ check('100 generated three-floor maps route safely to town and interrupted retur
 });
 
 
-check('location music pools accept empty lists and select one-shot tracks without immediate repeats',()=>{
-  assert.deepEqual(validateLocationMusic().poolCounts,Object.fromEntries(LOCATION_MUSIC_CONTEXTS.map(context=>[context,0])));
+check('Inn recordings are registered as valid one-shot tracks and avoid immediate repeats',()=>{
+  const actual=LOCATION_MUSIC_POOLS.inn;
+  assert.deepEqual(actual.map(track=>track.id),['inn-001','inn-002','inn-003']);
+  assert.deepEqual(validateLocationMusic().poolCounts,{inn:3,store:0,questBoard:0,statistics:0,achievements:0,character:0});
+  assert.equal(validateLocationMusic().errorCount,0);
+  assert.ok(actual.every(track=>existsSync(resolve(track.src))&&track.pool==='inn'&&track.loop===false&&track.gain===1));
+  let seed=42,previous=null;const appearances=new Map(actual.map(track=>[track.id,0])),random=()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296};
+  for(let visit=0;visit<30;visit++){const track=chooseLocationTrack('inn',previous,LOCATION_MUSIC_POOLS,random);assert.ok(track);assert.notEqual(track.id,previous);appearances.set(track.id,appearances.get(track.id)+1);previous=track.id}
+  assert.ok([...appearances.values()].every(count=>count>0));
   const pools={...Object.fromEntries(LOCATION_MUSIC_CONTEXTS.map(context=>[context,[]])),inn:[{id:'inn-a',pool:'inn',src:'assets/audio/music/inn/a.mp3',gain:.4,loop:false},{id:'inn-b',pool:'inn',src:'assets/audio/music/inn/b.mp3',gain:.4,loop:false}]};
   assert.equal(chooseLocationTrack('inn','inn-a',pools,()=>0).id,'inn-b');
   assert.equal(validateLocationMusic(pools).errorCount,0);
@@ -542,7 +549,7 @@ await (async()=>{
   }
   globalThis.document={baseURI:'https://game.test/',visibilityState:'visible',addEventListener(){}};globalThis.Audio=MockAudio;
   try{
-    const {syncMusicContext,stopMusic,musicPlaybackDiagnostics,updateMusicPreferences}=await import('../js/audio.js?v=location-music-20261004a');
+    const {syncMusicContext,stopMusic,musicPlaybackDiagnostics,updateMusicPreferences}=await import('../js/audio.js?v=inn-music-20261005a');
     const pool=LOCATION_MUSIC_POOLS.inn;pool.push({id:'test-inn-a',name:'Test Inn A',pool:'inn',src:'assets/audio/music/inn/test-a.mp3',gain:.5,loop:false},{id:'test-inn-b',name:'Test Inn B',pool:'inn',src:'assets/audio/music/inn/test-b.mp3',gain:.5,loop:false});
     updateMusicPreferences({musicEnabled:true,musicVolume:.4});await syncMusicContext('inn',{musicEnabled:true,musicVolume:.4},true);
     const firstTrack=musicPlaybackDiagnostics().selectedLocationTrack;assert.ok(['test-inn-a','test-inn-b'].includes(firstTrack));assert.equal(musicPlaybackDiagnostics().loop,false);assert.equal(musicPlaybackDiagnostics().effectiveGain,.2);

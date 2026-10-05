@@ -1,5 +1,9 @@
 export const LOCATION_MUSIC_POOLS = Object.freeze({
-  inn: [],
+  inn: [
+    { id: 'inn-001', pool: 'inn', src: 'assets/audio/music/inn/inn-001.mp3', gain: 1, weight: 1, loop: false, enabled: true, preloadPriority: 'low' },
+    { id: 'inn-002', pool: 'inn', src: 'assets/audio/music/inn/inn-002.mp3', gain: 1, weight: 1, loop: false, enabled: true, preloadPriority: 'low' },
+    { id: 'inn-003', pool: 'inn', src: 'assets/audio/music/inn/inn-003.mp3', gain: 1, weight: 1, loop: false, enabled: true, preloadPriority: 'low' }
+  ],
   store: [],
   questBoard: [],
   statistics: [],
