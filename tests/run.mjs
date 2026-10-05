@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
+import { inflateSync } from 'node:zlib';
 
 const storage = new Map();
 globalThis.localStorage = {
@@ -28,6 +29,17 @@ const game = await import('../js/game.js?preflight');
 
 let checks = 0;
 function check(name, fn) { fn(); checks++; console.log(`✓ ${name}`); }
+
+function inspectTransparentPng(path) {
+  const bytes=readFileSync(path);assert.equal(bytes.toString('hex',0,8),'89504e470d0a1a0a');
+  const width=bytes.readUInt32BE(16),height=bytes.readUInt32BE(20);assert.equal(bytes[24],8);assert.equal(bytes[25],6,'Town art must be RGBA');
+  const chunks=[];let offset=8;while(offset<bytes.length){const length=bytes.readUInt32BE(offset),type=bytes.toString('ascii',offset+4,offset+8);if(type==='IDAT')chunks.push(bytes.subarray(offset+8,offset+8+length));offset+=12+length;if(type==='IEND')break;}
+  const raw=inflateSync(Buffer.concat(chunks)),stride=width*4;assert.equal(raw.length,(stride+1)*height);let x0=width,y0=height,x1=-1,y1=-1;
+  for(let y=0;y<height;y++){assert.equal(raw[y*(stride+1)],0,'processed Town art PNG rows use the lossless no-filter encoding');for(let x=0;x<width;x++)if(raw[y*(stride+1)+1+x*4+3]>=8){x0=Math.min(x0,x);x1=Math.max(x1,x);y0=Math.min(y0,y);y1=Math.max(y1,y);}}
+  const alphaAt=(x,y)=>raw[y*(stride+1)+1+x*4+3];assert.equal(alphaAt(0,0),0);assert.equal(alphaAt(width-1,0),0);assert.equal(alphaAt(0,height-1),0);assert.equal(alphaAt(width-1,height-1),0);
+  assert.ok(x0<=12&&y0<=12&&width-1-x1<=12&&height-1-y1<=12,`Town image should be closely cropped: ${path}`);
+  return {width,height};
+}
 
 check('content definitions have no critical validation errors', () => {
   const report = validateContent();
@@ -398,6 +410,15 @@ check('new content chains, existing-item readiness, trade history, and Inn rewar
   game.setState(freshState());game.startGame('Inn Event Tester','Cleric');game.state.player.hp--;const gold=game.state.town.gold;const rest=game.restAtInn('bed-coin');
   assert.equal(rest.ok,true);assert.equal(game.state.town.gold,gold-4);assert.equal(game.state.career.innEventsTriggered,1);
   game.state.player.hp--;const snack=game.restAtInn('mystery-snack');assert.equal(snack.ok,true);assert.ok(game.countItem('healing-tonic')>=3);
+});
+
+check('town button art has transparent cropped bounds and no rectangular image backing',()=>{
+  for(const assets of Object.values(TOWN_ART_ASSETS))for(const path of Object.values(assets))inspectTransparentPng(resolve(path));
+  const css=readFileSync(resolve('css/mechanics.css'),'utf8'),appSource=readFileSync(resolve('js/app.js'),'utf8');
+  assert.match(css,/\.location--art-destination \.location-art--illustration\{[^}]*background:transparent/);
+  assert.match(css,/\.location--art-destination \.location-art--illustration\{[^}]*box-shadow:none/);
+  assert.match(appSource,/assets\[style\].*town-art-transparent-crop-20261005a/);
+  for(const [label,target] of [['ENTER THE HOLE','dungeon'],['GENERAL STORE','store'],['THE INN','inn'],['QUEST BOARD','quests']])assert.ok(appSource.includes(`data-go="${target}"`)&&appSource.includes(label),`${label} destination button should remain wired`);
 });
 
 check('ambient audio session uses feature detection and never selects playback mode', () => {
