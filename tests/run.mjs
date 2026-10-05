@@ -12,7 +12,7 @@ globalThis.localStorage = {
 };
 
 const { SAVE_KEY, SAVE_BACKUP_KEY, SAVE_RECOVERY_KEY, SAVE_VERSION, freshState, generateFloorMap, validateFloorMap, analyzeFloorMap, saveState, loadState } = await import('../js/state.js?preflight');
-const { items, monsters, lootTables, floorEncounterTable, innEvents, shopStock, roomTypes } = await import('../js/data.js?preflight');
+const { items, monsters, lootTables, floorEncounterTable, innEvents, shopStock, roomTypes, dungeonEvents } = await import('../js/data.js?preflight');
 const { makeMarketCycle, currentSellValue, simulateMarkets, simulateInnEvents } = await import('../js/town-economy.js?preflight');
 const { generateAbsurdName, inspectNameGenerator, MAX_NAME_LENGTH } = await import('../js/name-generator.js?preflight');
 const { roomProps: props, createRoomDecoration, roomPropMarkup } = await import('../js/room-visuals.js?preflight');
@@ -153,6 +153,14 @@ check('hand-drawn market sign is paired, transparent art for Kobold Market',()=>
   for(const [style,path] of [['ink',sign.ink],['colored',sign.colored]]){assert.ok(path);const png=readFileSync(resolve(path));assert.equal(png.toString('hex',0,8),'89504e470d0a1a0a');assert.equal(png[25],6,`${style} market sign must preserve PNG alpha`);assert.ok(png.readUInt32BE(16)<=700&&png.readUInt32BE(20)<=750,'market sign dimensions remain reasonable for runtime use')}
   assert.ok(existsSync(resolve('assets/source/room-props/market-sign-original.jpg')),'original sign photo remains archived');
   const sample={...sign,flip:false,zone:'far-center',scale:1,depth:1};assert.match(roomPropMarkup({props:[sample]},'ink'),/market-sign-ink\.png/);assert.match(roomPropMarkup({props:[sample]},'colored'),/market-sign-colored\.png/);
+});
+
+check('Very Small Door art appears only in its compatible room families',()=>{
+  const door=props['small-door'];assert.ok(door);assert.deepEqual([...door.rooms].sort(),['library','records']);assert.deepEqual([...dungeonEvents['very-small-door'].rooms].sort(),['library','records']);
+  for(const roomId of door.rooms)assert.ok(roomTypes[roomId].visual.propPool.includes('small-door'),`${roomId} can place the Very Small Door`);
+  for(const [style,path] of [['ink',door.ink],['colored',door.colored]]){const png=readFileSync(resolve(path));assert.equal(png.toString('hex',0,8),'89504e470d0a1a0a');assert.equal(png[25],6,`${style} door art must preserve PNG alpha`);assert.ok(png.readUInt32BE(16)<=650&&png.readUInt32BE(20)<=700,'door dimensions remain compact for runtime use')}
+  assert.ok(existsSync(resolve('assets/source/room-props/small-door-original.jpg')),'original door photo remains archived');
+  const sample={...door,flip:false,zone:'wall-center',scale:1,depth:1};assert.match(roomPropMarkup({props:[sample]},'ink'),/small-door-ink\.png/);assert.match(roomPropMarkup({props:[sample]},'colored'),/small-door-colored\.png/);
 });
 
 check('weighted selection handles invalid rows and samples eligible entries', () => {
