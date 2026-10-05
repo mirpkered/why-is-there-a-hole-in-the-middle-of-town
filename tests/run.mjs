@@ -469,17 +469,16 @@ check('town button art has transparent cropped bounds and no rectangular image b
   assert.match(css,/\.location--art-destination \.location-art--illustration\{[^}]*background:transparent/);
   assert.match(css,/\.location--art-destination \.location-art--illustration\{[^}]*box-shadow:none/);
   assert.match(css,/\.location--art-destination \.location-art--illustration\{[^}]*position:absolute/);
-  assert.match(css,/\.location--art-destination>b\{[^}]*min-height:44px/);
-  assert.match(appSource,/assets\[style\].*town-art-transparent-crop-20261005a/);
-  for(const [label,target] of [['ENTER THE HOLE','dungeon'],['GENERAL STORE','store'],['THE INN','inn'],['QUEST BOARD','quests'],['STATISTICS','statistics'],['CHARACTER','character']])assert.ok(appSource.includes(`data-go="${target}"`)&&appSource.includes(label),`${label} destination button should remain wired`);
-  assert.match(appSource,/data-art-slot="character" data-go="character"[^`]*townArtMarkup\('character'/,'Character art button should retain its existing navigation');
-  assert.match(appSource,/data-art-slot="settings" data-action="settings"[^`]*SETTINGS<\/b><\/button>/,'Settings art button should retain its existing action');
+  assert.match(css,/\.town-hub \.location--art-destination\{[^}]*border:0[^}]*background:transparent[^}]*box-shadow:none/);
+  assert.match(css,/\.town-hub \.location--art-destination:focus-visible\{[^}]*outline/);
+  assert.match(appSource,/assets\[style\].*town-art-buttons-20261006a/);
   const townBranch=appSource.match(/if\(screen==='town'\).*?if\(screen==='quests'\)/s)?.[0]||'';
   assert.ok(townBranch,'Town hub render branch should be present');
+  for(const [target,name,slot] of [['dungeon','Enter the Hole','the-hole'],['store','General Store','general-store'],['inn','The Inn','inn'],['quests','Quest Board','quest-board'],['statistics','Statistics','statistics'],['character','Character','character'],['achievements','Achievements','achievements']])assert.match(townBranch,new RegExp(`data-art-slot="${slot}" data-go="${target}" aria-label="${name}"`),`${name} art button should keep its accessible name and navigation`);
+  assert.match(townBranch,/data-art-slot="settings" data-action="settings" aria-label="Settings"/,'Settings art button should keep its accessible name and action');
+  assert.doesNotMatch(townBranch,/<b>|<small>/,'Town art buttons should not display overlay labels or metadata');
+  assert.match(appSource,/image\.parentElement\.classList\.add\('is-missing-art'\)/,'Missing Town art should fall back without losing navigation');
   assert.doesNotMatch(townBranch,/Market cycle \$\{|HP \$\{state\.player\.hp|new notices|ready to turn in/,'art-led Town destinations should omit redundant status lines');
-  assert.match(townBranch,/location-store[^`]*GENERAL STORE<\/b><\/button>/);
-  assert.match(townBranch,/location-inn[^`]*THE INN<\/b><\/button>/);
-  assert.match(townBranch,/location-quests[^`]*QUEST BOARD<\/b><\/button>/);
 });
 
 check('ambient audio session uses feature detection and never selects playback mode', () => {

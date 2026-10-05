@@ -20,6 +20,10 @@ export const TOWN_ART_ASSETS={
     ink:'assets/images/town/statistics-button-ink.png',
     colored:'assets/images/town/statistics-button-colored.png'
   },
+  'achievements':{
+    ink:'assets/images/town/achievements-button-ink.png',
+    colored:'assets/images/town/achievements-button-colored.png'
+  },
   'settings':{
     ink:'assets/images/town/settings-button-ink.png',
     colored:'assets/images/town/settings-button-colored.png'
