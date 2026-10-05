@@ -12,9 +12,9 @@ Deadly Rat, Killer Rabbit, Kung Fungoose, Pocket Slime, Fire-Breathing Earthworm
 
 The Hole, General Store, The Inn, Quest Board, Statistics, Settings, and Character have paired transparent illustrations registered in `js/town-art.js`. The Hole is the featured Town button art. Statistics uses the supplied chart sign, Settings the twin-gear sign, and Character the television with two adventurers. The colored Quest Board sign uses muted wood tones. All source scans are retained under `assets/source/town/`.
 
-### Room props (4 of 25 definitions)
+### Room props (5 of 26 definitions)
 
-Campfire, Wooden Crate, Mushroom Cluster, and the user-drawn Tall Mushroom have paired Ink/Colored PNGs; original photos are retained under `assets/source/room-props/`. Other room props currently use CSS/SVG placeholder presentation.
+Campfire, Wooden Crate, Mushroom Cluster, Tall Mushroom, and the user-drawn Leaning Tall Mushroom have paired Ink/Colored PNGs; original photos are retained under `assets/source/room-props/`. Other room props currently use CSS/SVG placeholder presentation.
 
 ## Needs art
 
