@@ -12,16 +12,16 @@ Deadly Rat, Killer Rabbit, Kung Fungoose, Pocket Slime, Fire-Breathing Earthworm
 
 The Hole, General Store, The Inn, Quest Board, Statistics, Settings, and Character have paired transparent illustrations registered in `js/town-art.js`. The Hole is the featured Town button art. Statistics uses the supplied chart sign, Settings the twin-gear sign, and Character the television with two adventurers. The colored Quest Board sign uses muted wood tones. All source scans are retained under `assets/source/town/`.
 
-### Room props (1 of 25 definitions)
+### Room props (2 of 25 definitions)
 
-Campfire has paired Ink/Colored PNGs and its source is under `assets/source/room-props/`. Other room props currently use CSS/SVG placeholder presentation.
+Campfire and the user-drawn Wooden Crate have paired Ink/Colored PNGs; both original photos are retained under `assets/source/room-props/`. Other room props currently use CSS/SVG placeholder presentation.
 
 ## Needs art
 
 - **Enemies (3):** Kobold Toll-Taker, Skeleton on Break, Permit-Office Mimic. They currently use local SVG fallback sprites.
 - **NPCs (5 definitions):** town clerk, shopkeeper, innkeeper, kobold trader, and lost surveyor. No custom portraits are registered.
 - **Items (48 definitions):** no item-specific custom art is registered; item presentation remains text/fallback UI.
-- **Room props (24 definitions):** mushroom cluster, tall mushrooms, water debris, floating plank, small altar, candle, wooden crate, barrel, labeled box, campfire kettle, bedroll, abandoned pack, market stall/basket/sign, bookshelf/book stack/labeled stone, filing cabinet/archive box/paper stack, spoon pile/single spoon, and stone debris. All use placeholders at present.
+- **Room props (23 definitions):** mushroom cluster, tall mushrooms, water debris, floating plank, small altar, candle, barrel, labeled box, campfire kettle, bedroll, abandoned pack, market stall/basket/sign, bookshelf/book stack/labeled stone, filing cabinet/archive box/paper stack, spoon pile/single spoon, and stone debris. These use CSS/SVG placeholders.
 - **Interactive objects/landmarks:** discovery UI and room-compatible placeholder props have no dedicated paired object illustration set.
 - **Other Town destinations:** Character, Statistics, Achievements, and Settings use simple UI emblems; custom drawings are not registered.
 

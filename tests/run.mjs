@@ -15,7 +15,7 @@ const { SAVE_KEY, SAVE_BACKUP_KEY, SAVE_RECOVERY_KEY, SAVE_VERSION, freshState, 
 const { items, monsters, lootTables, floorEncounterTable, innEvents, shopStock, roomTypes } = await import('../js/data.js?preflight');
 const { makeMarketCycle, currentSellValue, simulateMarkets, simulateInnEvents } = await import('../js/town-economy.js?preflight');
 const { generateAbsurdName, inspectNameGenerator, MAX_NAME_LENGTH } = await import('../js/name-generator.js?preflight');
-const { roomProps: props, createRoomDecoration } = await import('../js/room-visuals.js?preflight');
+const { roomProps: props, createRoomDecoration, roomPropMarkup } = await import('../js/room-visuals.js?preflight');
 const { TOWN_ART_ASSETS } = await import('../js/town-art.js?preflight');
 const { validateContent, validateQuestGraph } = await import('../js/content-validation.js?preflight');
 const { achievements } = await import('../js/progression.js?preflight');
@@ -101,6 +101,14 @@ check('room prop generation respects compatibility and is repeatable across all 
     assert.deepEqual(second,first,`${room.id} decorations must be deterministic`);
     for(const prop of first.props){assert.ok((room.visual?.propPool||[]).includes(prop.id));assert.ok(prop.rooms.includes(room.id));assert.ok((room.visual?.placementRules||[]).includes(prop.zone)||!room.visual?.placementRules,`${room.id}/${prop.id} used incompatible zone ${prop.zone}`)}
   }
+});
+
+check('hand-drawn wooden crate is registered as a paired storage-room prop',()=>{
+  const crate=props['wooden-crate'];assert.ok(crate);assert.ok(crate.rooms.includes('storage'));assert.equal(crate.placeholder,'crate');
+  for(const [style,path] of [['ink',crate.ink],['colored',crate.colored]]){assert.ok(path);const png=readFileSync(resolve(path));assert.equal(png.toString('hex',0,8),'89504e470d0a1a0a');assert.equal(png[25],6,`${style} crate must preserve PNG alpha`);assert.ok(png.readUInt32BE(16)<=1600&&png.readUInt32BE(20)<=1300,'crate art dimensions remain reasonable for runtime use')}
+  const sample={...crate,flip:false,zone:'far-left',scale:1,depth:1};
+  assert.match(roomPropMarkup({props:[sample]},'ink'),/wooden-crate-ink\.png/);
+  assert.match(roomPropMarkup({props:[sample]},'colored'),/wooden-crate-colored\.png/);
 });
 
 check('weighted selection handles invalid rows and samples eligible entries', () => {
