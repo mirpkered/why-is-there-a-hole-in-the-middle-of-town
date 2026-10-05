@@ -589,7 +589,7 @@ check('town button art has transparent cropped bounds and no rectangular image b
   assert.match(css,/\.location--art-destination \.location-art--illustration\{[^}]*position:absolute/);
   assert.match(css,/\.town-hub \.location--art-destination\{[^}]*border:0[^}]*background:transparent[^}]*box-shadow:none/);
   assert.match(css,/\.town-hub \.location--art-destination\.location-hole\{[^}]*grid-column:1\/-1[^}]*height:clamp\([^)]*\)[^}]*border:0[^}]*background:transparent[^}]*box-shadow:none/,'Hole should be a prominent transparent art hit area with no visible shell');
-  assert.match(css,/\.town-hub \.location--art-destination\.location-hole \.location-art--illustration img\{object-fit:contain;object-position:center;filter:none\}/,'Hole illustration should preserve aspect ratio and avoid visual overlays');
+  assert.match(css,/\.town-hub \.location--art-destination\.location-hole \.location-art--illustration img\{filter:drop-shadow/,'Hole illustration should preserve aspect ratio and high-contrast edge separation');
   assert.match(css,/\.town-hub \.location--art-destination\.location-hole:active|\.town-hub \.location--art-destination:active/,'art buttons should retain a pressed-state response');
   assert.match(css,/\.town-hub \.location--art-destination\.location-hole:focus-visible\{outline:/,'Hole should keep keyboard-visible focus treatment');
   assert.match(css,/\.town-hub \.location--art-destination:focus-visible\{[^}]*outline/);
@@ -598,11 +598,15 @@ check('town button art has transparent cropped bounds and no rectangular image b
   assert.ok(townBranch,'Town hub render branch should be present');
   for(const [target,name,slot] of [['dungeon','Enter the Hole','the-hole'],['store','General Store','general-store'],['inn','The Inn','inn'],['quests','Quest Board','quest-board'],['statistics','Statistics','statistics'],['character','Character','character'],['achievements','Achievements','achievements']])assert.match(townBranch,new RegExp(`data-art-slot="${slot}" data-go="${target}" aria-label="${name}"`),`${name} art button should keep its accessible name and navigation`);
   assert.match(townBranch,/data-art-slot="settings" data-action="settings" aria-label="Settings"/,'Settings art button should keep its accessible name and action');
-  assert.doesNotMatch(townBranch,/<b>|<small>/,'Town art buttons should not display overlay labels or metadata');
-  assert.match(townBranch,/<button class="location location-hole location--art-destination" data-art-slot="the-hole" data-go="dungeon" aria-label="Enter the Hole">\$\{townArtMarkup\('the-hole'/,'Hole image itself should be the only visible button content and retain dungeon navigation and accessible name');
+  assert.match(townBranch,/<span class="town-destination-label town-destination-label--featured"><b>ENTER THE HOLE<\/b><small>Deepest: Floor/,'Hole should pair the prominent drawing with clear title and floor progress');
+  assert.match(townBranch,/<button class="location location-hole location--art-destination" data-art-slot="the-hole" data-go="dungeon" aria-label="Enter the Hole">\$\{townArtMarkup\('the-hole'/,'Hole drawing should remain inside its full-tile dungeon navigation button');
   assert.match(appSource,/const assets=TOWN_ART_ASSETS\[slot\],style=state\.settings\?\.spriteStyle==='ink'\?'ink':'colored'/,'Hole should follow existing Ink/Colored style selection');
   assert.match(appSource,/image\.parentElement\.classList\.add\('is-missing-art'\)/,'Missing Town art should fall back without losing navigation');
   assert.doesNotMatch(townBranch,/Market cycle \$\{|HP \$\{state\.player\.hp|new notices|ready to turn in/,'art-led Town destinations should omit redundant status lines');
+});
+
+check('all Town art buttons have visible labels and the featured Hole keeps floor progress',()=>{
+  const appSource=readFileSync(resolve('js/app.js'),'utf8'),css=readFileSync(resolve('css/mechanics.css'),'utf8');for(const label of ['ENTER THE HOLE','GENERAL STORE','THE INN','QUEST BOARD','CHARACTER','STATISTICS','SETTINGS','ACHIEVEMENTS'])assert.ok(appSource.includes(`>${label}</span>`)||appSource.includes(`>${label}</b>`),`missing visible Town label: ${label}`);assert.match(appSource,/Deepest: Floor \$\{state\.dungeon\.deepestFloor\|\|1\}/);assert.match(css,/town-hub \.location--art-destination::before\{[^}]*#fff9e8/);assert.match(css,/town-destination-label\{position:absolute/);assert.match(css,/town-art-image--ink/)
 });
 
 check('ambient audio session uses feature detection and never selects playback mode', () => {
