@@ -457,6 +457,7 @@ check('town button art has transparent cropped bounds and no rectangular image b
   assert.match(css,/\.location--art-destination>b\{[^}]*min-height:44px/);
   assert.match(appSource,/assets\[style\].*town-art-transparent-crop-20261005a/);
   for(const [label,target] of [['ENTER THE HOLE','dungeon'],['GENERAL STORE','store'],['THE INN','inn'],['QUEST BOARD','quests'],['STATISTICS','statistics']])assert.ok(appSource.includes(`data-go="${target}"`)&&appSource.includes(label),`${label} destination button should remain wired`);
+  assert.match(appSource,/data-art-slot="settings" data-action="settings"[^`]*SETTINGS<\/b><\/button>/,'Settings art button should retain its existing action');
   const townBranch=appSource.match(/if\(screen==='town'\).*?if\(screen==='quests'\)/s)?.[0]||'';
   assert.ok(townBranch,'Town hub render branch should be present');
   assert.doesNotMatch(townBranch,/Market cycle \$\{|HP \$\{state\.player\.hp|new notices|ready to turn in/,'art-led Town destinations should omit redundant status lines');

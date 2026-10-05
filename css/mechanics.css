@@ -167,6 +167,7 @@
 .location--art-destination.location-inn{background:radial-gradient(ellipse at 50% 28%,#67493d,#402f30 68%,#252421);border-color:#8d6257;box-shadow:inset 0 0 0 3px #c9937130,inset 0 1px #ffffff20,0 2px 7px #0004}
 .location--art-destination.location-quests{background:radial-gradient(ellipse at 50% 28%,#566044,#343a2d 68%,#222620);border-color:#687552;box-shadow:inset 0 0 0 3px #b3c17b24,inset 0 1px #ffffff20,0 2px 7px #0004}
 .location--art-destination.location-records{background:radial-gradient(ellipse at 50% 28%,#526454,#303c36 68%,#202522);border-color:#708575;box-shadow:inset 0 0 0 3px #b2c9a224,inset 0 1px #ffffff20,0 2px 7px #0004}
+.location--art-destination.location-settings{background:radial-gradient(ellipse at 50% 28%,#4d5861,#30383e 68%,#212629);border-color:#778a91;box-shadow:inset 0 0 0 3px #b9c7c124,inset 0 1px #ffffff20,0 2px 7px #0004}
 .location--art-destination:active{transform:translateY(1px) scale(.985);filter:brightness(1.12);box-shadow:inset 0 2px 8px #0005}
 .location--art-destination:focus-visible{outline:3px solid #f1d58f;outline-offset:2px;z-index:1}
 .location--art-destination:disabled{cursor:not-allowed;filter:grayscale(.75);opacity:.55}

@@ -19,5 +19,9 @@ export const TOWN_ART_ASSETS={
   'statistics':{
     ink:'assets/images/town/statistics-button-ink.png',
     colored:'assets/images/town/statistics-button-colored.png'
+  },
+  'settings':{
+    ink:'assets/images/town/settings-button-ink.png',
+    colored:'assets/images/town/settings-button-colored.png'
   }
 };
