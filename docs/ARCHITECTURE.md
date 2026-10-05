@@ -33,6 +33,8 @@ Newly visited cells receive a saved room tag and may roll a weighted event or mo
 
 On narrow screens, the dungeon uses a compact HUD with minimap, character status, first-person scene, movement pad, and context actions. During exploration, the minimap can be tapped to open a read-only full-floor view using the same discovery-filtered cells and wall edges; tapping its map again closes it. It is temporary interface state, never saved, and keyboard movement is suspended while it is open. Expansion is disabled during combat so the map cannot cover combat choices; events use their own choice screen. The QA state inspector includes the most recent movement direction, result, coordinates, and facing.
 
+Dungeon presentation has two explicit scene modes. Exploration uses the room-tagged `.scene` with procedural architecture, atmosphere, landmarks, and stable decorative props. Active combat uses a separate `.battle-scene` backdrop with a room label and the enemy sprite; it does not build or show exploration props. After combat, rendering returns to the same saved cell and room tag, so its room dressing remains stable. CSS layers provide the moody stone, water, timber, and room-specific light treatments without adding background image dependencies. This presentation change does not alter the save format.
+
 ## Content model
 
 Quests use stable IDs, source/giver, type, target, count, and reward. Active entries store progress. Items use stable IDs, categories, rarity, prices, quantity rules, equipment modifiers, and optional effects. Content definitions stay separate from player inventory instances. See `docs/CONTENT_GUIDE.md` for event and room conventions.
