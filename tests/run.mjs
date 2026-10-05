@@ -21,6 +21,7 @@ const { validateQuestTemplate, questObjectiveTemplates } = await import('../js/q
 const { validWeightedRows, weightedChoice } = await import('../js/random-utils.js?preflight');
 const { applyStatus, tickStatuses } = await import('../js/status-effects.js?preflight');
 const { LOCATION_MUSIC_POOLS, LOCATION_MUSIC_CONTEXTS, chooseLocationTrack, validateLocationMusic } = await import('../js/location-music.js?v=location-music-20261004a');
+const { configureAmbientAudioSession, audioSessionDiagnostics } = await import('../js/audio-session.js?preflight');
 const { scaleEnemy } = await import('../js/enemy-scaling.js?preflight');
 const { selectWithHistory, paceEncounterChance, chooseEncounterCategory, chooseEnemyAttack, monsterFamilies } = await import('../js/encounter-director.js?preflight');
 const game = await import('../js/game.js?preflight');
@@ -174,6 +175,7 @@ check('all supported historical save versions migrate sequentially and preserve 
   for (let version = 1; version < SAVE_VERSION; version++) {
     storage.clear();
     const legacy = freshState();
+    delete legacy.settings.sfxEnabled;delete legacy.settings.sfxVolume;
     legacy.player = {name: `Legacy ${version}`, class: 'Fighter', hp: 12, maxHp: 24, mp: 2, maxMp: 4, baseMaxHp: 24, baseMaxMp: 4, effects: {}};
     legacy.quests = {active: [], completed: [], available: []};
     legacy.saveVersion = version;
@@ -181,6 +183,7 @@ check('all supported historical save versions migrate sequentially and preserve 
     const restored = loadState();
     assert.equal(restored?.saveVersion, SAVE_VERSION, `version ${version}`);
     assert.equal(restored.player.name, `Legacy ${version}`);
+    assert.equal(restored.settings.sfxEnabled,true);assert.equal(restored.settings.sfxVolume,.8);
     assert.ok(restored.town.flags && Array.isArray(restored.dungeon.encounterHistory));
   }
 });
@@ -397,6 +400,60 @@ check('new content chains, existing-item readiness, trade history, and Inn rewar
   game.state.player.hp--;const snack=game.restAtInn('mystery-snack');assert.equal(snack.ok,true);assert.ok(game.countItem('healing-tonic')>=3);
 });
 
+check('ambient audio session uses feature detection and never selects playback mode', () => {
+  const session = { type: 'auto' };
+  assert.deepEqual(configureAmbientAudioSession(session), { supported: true, configuredType: 'ambient', error: null });
+  assert.deepEqual(audioSessionDiagnostics(session), { supported: true, configuredType: 'ambient', requestedType: 'ambient', error: null });
+  assert.equal(configureAmbientAudioSession(null).supported, false);
+  const readonly = Object.freeze({ type: 'playback' });
+  assert.equal(configureAmbientAudioSession(readonly).supported, false);
+  assert.equal(audioSessionDiagnostics(readonly).configuredType, 'playback');
+});
+
+await (async()=>{
+  const elements = [], gains = [];
+  const previousGlobals={Audio:globalThis.Audio,document:globalThis.document,window:globalThis.window,navigator:Object.getOwnPropertyDescriptor(globalThis,'navigator')};
+  class MockAudio {
+    constructor(src='') { this.src=src; this.paused=true; this.currentTime=0; this.duration=60; this.readyState=4; this.loop=false; this.listeners={}; elements.push(this); }
+    addEventListener(type,fn) { this.listeners[type]=fn; }
+    load() {}
+    play() { this.paused=false; return Promise.resolve(); }
+    pause() { this.paused=true; }
+  }
+  class MockAudioContext {
+    constructor() { this.state='running'; this.currentTime=0; this.destination={}; }
+    createMediaElementSource() { return {connect(){}}; }
+    createGain() { const gain={gain:{value:0,cancelScheduledValues(){},setValueAtTime(value){this.value=value}},connect(){}};gains.push(gain);return gain; }
+    resume() { return Promise.resolve(); }
+  }
+  globalThis.Audio=MockAudio;
+  globalThis.document={addEventListener(){},visibilityState:'visible',baseURI:'http://localhost/'};
+  globalThis.window={AudioContext:MockAudioContext};
+  Object.defineProperty(globalThis,'navigator',{configurable:true,value:{audioSession:{type:'auto'}}});
+  const audio=await import('../js/audio.js?audio-preflight');
+  audio.updateMusicPreferences({musicEnabled:false,musicVolume:1,sfxEnabled:true,sfxVolume:.8});
+  assert.equal(await audio.playBattleTheme({musicEnabled:false,musicVolume:1}),false);
+  assert.equal(elements.length,0,'Music Off must not create or play an audio channel');
+  await audio.playBattleTheme({musicEnabled:true,musicVolume:.5,sfxEnabled:true,sfxVolume:.8});
+  const firstCount=elements.length,diagnostics=audio.musicPlaybackDiagnostics();
+  assert.ok(firstCount>0);
+  assert.equal(diagnostics.audioSession.configuredType,'ambient');
+  assert.match(diagnostics.implementationPath,/MediaElementAudioSourceNode/);
+  assert.equal(diagnostics.audioContextState,'running');
+  assert.equal(diagnostics.effectiveGain,.5);
+  audio.updateMusicPreferences({musicEnabled:true,musicVolume:.25,sfxEnabled:false,sfxVolume:.4});
+  assert.equal(elements.length,firstCount,'changing mix values must reuse the active channel');
+  assert.equal(audio.musicPlaybackDiagnostics().effectiveGain,.25);
+  assert.equal(audio.playSoundEffect('test-effect.ogg'),false,'SFX Off must suppress effects');
+  audio.updateMusicPreferences({musicEnabled:true,musicVolume:0,sfxEnabled:true,sfxVolume:.4});
+  assert.equal(audio.musicPlaybackDiagnostics().effectiveGain,0,'zero music volume must produce zero output gain');
+  assert.equal(audio.playSoundEffect('test-effect.ogg'),true);
+  assert.ok(gains.at(-1).gain.value<=.4);
+  console.log(`  mock runtime: ${elements.length} media elements, ${gains.length} shared gain nodes, ambient session requested`);
+  globalThis.Audio=previousGlobals.Audio;globalThis.document=previousGlobals.document;globalThis.window=previousGlobals.window;
+  if(previousGlobals.navigator)Object.defineProperty(globalThis,'navigator',previousGlobals.navigator);else delete globalThis.navigator;
+})();checks++;console.log('✓ music contexts share Web Audio gain routing and expose QA diagnostics');
+
 check('tag-focused equipment, item interactions, and combat narration stay concise',()=>{
   game.setState(freshState());game.startGame('Apple Tester','Fighter');game.qaGiveItem('suspicious-apple-corer',1);game.equipItem('suspicious-apple-corer');game.qaSpawnMonster('rotten-apple',2,null,5);game.state.combat.hp=100;
   const hp=game.state.combat.hp,result=game.attack();assert.ok(hp-game.state.combat.hp>=game.state.player.attack+2);assert.match(result,/hit/i);
@@ -444,7 +501,7 @@ await (async()=>{
     const pool=LOCATION_MUSIC_POOLS.inn;pool.push({id:'test-inn-a',name:'Test Inn A',pool:'inn',src:'assets/audio/music/inn/test-a.mp3',gain:.5,loop:false},{id:'test-inn-b',name:'Test Inn B',pool:'inn',src:'assets/audio/music/inn/test-b.mp3',gain:.5,loop:false});
     updateMusicPreferences({musicEnabled:true,musicVolume:.4});await syncMusicContext('inn',{musicEnabled:true,musicVolume:.4},true);
     const firstTrack=musicPlaybackDiagnostics().selectedLocationTrack;assert.ok(['test-inn-a','test-inn-b'].includes(firstTrack));assert.equal(musicPlaybackDiagnostics().loop,false);assert.equal(musicPlaybackDiagnostics().effectiveGain,.2);
-    const channel=audios.at(-1);const firstPlayCount=channel.playCount;
+    const channel=audios.find(audio=>audio.src.includes('/assets/audio/music/inn/'));assert.ok(channel,'location music channel should be created');const firstPlayCount=channel.playCount;
     await syncMusicContext('inn',{musicEnabled:true,musicVolume:.4},true);assert.equal(channel.playCount,firstPlayCount);assert.equal(musicPlaybackDiagnostics().playing,true);
     // Ending a one-shot service track must not trigger another play on the same visit.
     channel.paused=true;channel.ended=true;channel.dispatch('ended');await syncMusicContext('inn',{musicEnabled:true,musicVolume:.4},true);assert.equal(channel.playCount,firstPlayCount);assert.equal(musicPlaybackDiagnostics().playbackState,'ended');

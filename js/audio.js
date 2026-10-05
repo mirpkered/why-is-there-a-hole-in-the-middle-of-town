@@ -1,4 +1,5 @@
 import {LOCATION_MUSIC_POOLS,LOCATION_MUSIC_CONTEXTS,chooseLocationTrack} from './location-music.js?v=location-music-20261004a';
+import {configureAmbientAudioSession,audioSessionDiagnostics} from './audio-session.js?v=ambient-audio-20261005a';
 const battleTheme = new URL('../assets/audio/music/battle-theme.mp3', import.meta.url).href;
 const dungeonTracks = [4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21].map(number => ({
   id: `recording-${number}`,
@@ -11,6 +12,9 @@ let battleGainNode = null;
 let audioContext = null;
 let enabled = true;
 let volume = 0.28;
+let sfxEnabled = true;
+let sfxVolume = 0.8;
+const sfxChannels = new Map();
 let activeContext = null;
 let activeTrackId = null;
 let qaPlayback = false;
@@ -18,6 +22,7 @@ let combatActive = false;
 let playRequestId = 0;
 let dungeonChannels = null;
 let locationChannel = null;
+let locationGainNode = null;
 let locationTrack = null;
 let locationAttempted = false;
 const lastLocationTrackByPool = new Map();
@@ -30,6 +35,11 @@ let battlePreparedAt = null;
 let battleStartRequestedAt = null;
 let battleStartLatencyMs = null;
 let battleAudioError = null;
+let outputPath = 'not initialized';
+
+// Declare this before creating media elements or the Web Audio graph. iOS may
+// otherwise treat HTML media as primary playback and let it ignore Ring/Silent.
+configureAmbientAudioSession();
 
 function getAudioContext(){
   if(audioContext)return audioContext;
@@ -40,17 +50,18 @@ function getAudioContext(){
 
 function connectElement(element){
   const context=getAudioContext();
-  if(!context)return null;
+  if(!context){outputPath='HTMLAudioElement volume fallback';return null}
   try{
     const source=context.createMediaElementSource(element),gain=context.createGain();
     source.connect(gain);gain.connect(context.destination);
+    outputPath='HTMLAudioElement → MediaElementAudioSourceNode → GainNode → AudioContext.destination';
     return gain;
-  }catch{return null}
+  }catch{outputPath='HTMLAudioElement volume fallback';return null}
 }
 
-function applyGain(element,gainNode,effectiveGain){
+function applyGain(element,gainNode,effectiveGain,channelEnabled=enabled){
   const level=Math.max(0,Math.min(1,effectiveGain));
-  element.muted=!enabled;
+  element.muted=!channelEnabled;
   element.playbackRate=1;
   if(gainNode){
     const param=gainNode.gain,now=audioContext?.currentTime||0;
@@ -81,6 +92,7 @@ function ensureBattleChannel(){
 }
 
 export function prepareBattleAudio(){
+  configureAmbientAudioSession();
   if(typeof Audio==='undefined')return {available:false,ready:false,state:'unsupported'};
   const channel=ensureBattleChannel();if(!channel)return {available:false,ready:false,state:'unavailable'};
   if(channel.preload!=='auto')channel.preload='auto';
@@ -109,6 +121,7 @@ function ensureLocationChannel(){
   if(locationChannel)return locationChannel;
   if(typeof Audio==='undefined')return null;
   locationChannel=new Audio();locationChannel.preload='none';locationChannel.loop=false;
+  locationGainNode=connectElement(locationChannel);
   locationChannel.addEventListener('ended',()=>{if(locationTrack&&activeContext===locationTrack.pool){activeTrackId=null}});
   locationChannel.addEventListener('error',()=>{if(locationTrack&&activeContext===locationTrack.pool){console.warn(`Location music failed to load: ${locationTrack.id}`,locationChannel.error||'audio error')}});
   return locationChannel;
@@ -116,7 +129,7 @@ function ensureLocationChannel(){
 
 function locationLevel(){
   if(!locationChannel||!locationTrack)return 0;
-  return applyGain(locationChannel,null,volume*locationTrack.gain);
+  return applyGain(locationChannel,locationGainNode,volume*locationTrack.gain);
 }
 
 function stopLocation(clearTrack=true){
@@ -182,6 +195,7 @@ function prepareDungeonChannel(channel,track){
 }
 
 async function playElement(element){
+  configureAmbientAudioSession();
   const promises=[element.play()],context=getAudioContext();
   if(context?.state==='suspended')promises.push(context.resume());
   await Promise.all(promises);
@@ -242,6 +256,9 @@ export function updateMusicPreferences(preferences={}){
   enabled=preferences.musicEnabled!==false;
   const next=Number(preferences.musicVolume);
   volume=Number.isFinite(next)?Math.max(0,Math.min(1,next)):volume;
+  sfxEnabled=preferences.sfxEnabled!==false;
+  const nextSfx=Number(preferences.sfxVolume);
+  sfxVolume=Number.isFinite(nextSfx)?Math.max(0,Math.min(1,nextSfx)):sfxVolume;
   if(!enabled){const context=activeContext,track=locationTrack,attempted=locationAttempted;stopMusic();activeContext=context;locationTrack=track;locationAttempted=attempted}
   else{
     if(battleChannel&&!battleChannel.paused)battleLevel();
@@ -333,11 +350,29 @@ export function musicPlaybackDiagnostics(){
   const configuredGain=battleActive?trackGain.battle:locationTrack?.gain??trackGain.dungeon;
   const playing=!!battleActive||!!(dungeonActive&&!dungeonActive.audio.paused)||locationActive;
   const effectiveGain=volume*configuredGain;
-  return {track:currentMusicTrack(),context:activeContext,pool:locationTrack?.pool||null,selectedLocationTrack:locationTrack?.id||null,previousLocationTrack:locationTrack?lastLocationTrackByPool.get(locationTrack.pool)||null:null,loop:locationTrack?!!locationChannel?.loop:battleActive?!!battleChannel?.loop:!!dungeonActive?.audio.loop,locationAttempted,masterVolume:volume,configuredTrackGain:configuredGain,effectiveGain:enabled&&playing?effectiveGain:0,playing,playbackState:locationTrack?(locationActive?'playing':locationChannel?.ended?'ended':'stopped'):playing?'playing':'idle',pass:battleActive?battlePass:null,battleAudioReadyState:battleChannel?.readyState??0,battleAudioPrepared:!!battlePreparedAt,battleStartLatencyMs,battleAudioError};
+  return {implementationPath:outputPath,audioSession:audioSessionDiagnostics(),audioContextState:audioContext?.state||'not created',track:currentMusicTrack(),context:activeContext,pool:locationTrack?.pool||null,selectedLocationTrack:locationTrack?.id||null,previousLocationTrack:locationTrack?lastLocationTrackByPool.get(locationTrack.pool)||null:null,loop:locationTrack?!!locationChannel?.loop:battleActive?!!battleChannel?.loop:!!dungeonActive?.audio.loop,locationAttempted,musicEnabled:enabled,masterVolume:volume,configuredTrackGain:configuredGain,effectiveGain:enabled&&playing?effectiveGain:0,playing,playbackState:locationTrack?(locationActive?'playing':locationChannel?.ended?'ended':'stopped'):playing?'playing':'idle',pass:battleActive?battlePass:null,battleAudioReadyState:battleChannel?.readyState??0,battleAudioPrepared:!!battlePreparedAt,battleStartLatencyMs,battleAudioError,sfx:{available:sfxChannels.size>0,enabled:sfxEnabled,volume:sfxVolume,registeredChannels:sfxChannels.size}};
+}
+
+/** Shared one-shot output hook for future effects; no SFX are currently registered. */
+export function playSoundEffect(src,gain=1){
+  if(!sfxEnabled||sfxVolume<=0||typeof Audio==='undefined'||!src)return false;
+  configureAmbientAudioSession();
+  let channel=sfxChannels.get(src);
+  if(!channel){
+    const element=new Audio(src);element.preload='auto';element.loop=false;
+    channel={element,gainNode:connectElement(element)};sfxChannels.set(src,channel);
+    element.addEventListener('error',()=>console.warn(`Sound effect failed to load: ${src}`,element.error||'audio error'));
+  }
+  if(!channel.element.paused)return false;
+  channel.element.currentTime=0;
+  applyGain(channel.element,channel.gainNode,sfxVolume*Math.max(0,Math.min(1,Number(gain)||0)),sfxEnabled);
+  playElement(channel.element).catch(error=>console.warn(`Sound effect could not start: ${src}`,error));
+  return true;
 }
 
 document.addEventListener('visibilitychange',()=>{
   if(document.visibilityState!=='visible'||!enabled)return;
+  configureAmbientAudioSession();
   const context=getAudioContext();if(context?.state==='suspended')context.resume().catch(()=>{});
   if(activeContext==='battle'&&battleChannel?.paused&&(combatActive||qaPlayback)){
     battleLevel();battleChannel.play().catch(()=>{});

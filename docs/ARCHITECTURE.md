@@ -81,3 +81,24 @@ Quest chains remain data in `js/data.js`: `next` opens the following stage after
 Equipment interactions use the existing item effect path. `vsTags` adds a small shared physical damage bonus for matching monster tags; `statusResistance` scales incoming status-application chance; `hazardReduction` reduces event hazard damage. Event `requiresItem` choices provide optional interactions without consuming the equipment. These are additive hooks and do not alter the encounter's base attack/stat snapshot.
 
 Inn outcomes are registered by ID and support flavor, temporary benefit, item, gold, and combat-XP reward types. Inn event counters use the career helper. Attack flavor arrays are selected using the persisted combat turn count rather than gameplay RNG, keeping copy variation from perturbing damage or loot rolls. Depth-band content metadata describes future table direction; playable floor availability and encounter tables remain unchanged beyond restrained existing-roster weighting updates.
+# Audio output and iOS Silent mode
+
+All registered game music uses the shared audio manager. Dungeon, battle, and
+service-location tracks use HTML audio elements connected to one Web Audio
+gain graph when the browser supports it; the direct HTML audio volume path is
+the fallback. Music volume and per-track gain are multipliers inside the game.
+The operating system and selected output device remain responsible for final
+volume and routing.
+
+Before audio channels are created or played, the manager feature-detects
+`navigator.audioSession` and requests the `ambient` session type. This declares
+that game audio is nonessential, allowing supported iOS Safari versions to
+apply the Ring/Silent switch. The game does not read or imitate the physical
+switch state. Browsers without AudioSession support keep the current playback
+fallback, so Silent-switch behavior cannot be guaranteed there.
+
+The `?qa=1` Audio panel reports the configured session type, playback path,
+context state, active track, and effective in-game gain. Location tracks share
+the same gain graph as dungeon and battle music, so their output policy and
+volume handling stay consistent. No sound effects are currently registered;
+the diagnostics report that state explicitly.
