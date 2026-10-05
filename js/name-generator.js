@@ -20,7 +20,7 @@ export function generateAbsurdName(random=Math.random){
 }
 
 export function inspectNameGenerator(count=100,random=Math.random){
-  count=Math.max(1,Math.min(10000,Math.floor(count)||100));
+  count=Math.max(1,Math.min(50000,Math.floor(count)||100));
   const names=[],categories={},lengths={min:Infinity,max:0},seen=new Set();let duplicateCount=0,invalidCount=0,ordinaryCount=0;
   for(let i=0;i<count;i++){
     const result=generateAbsurdName(random);names.push(result.name);categories[result.category]=(categories[result.category]||0)+1;

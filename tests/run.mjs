@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { resolve } from 'node:path';
+import { spawnSync } from 'node:child_process';
 import { inflateSync } from 'node:zlib';
 
 const storage = new Map();
@@ -11,12 +12,12 @@ globalThis.localStorage = {
 };
 
 const { SAVE_KEY, SAVE_BACKUP_KEY, SAVE_RECOVERY_KEY, SAVE_VERSION, freshState, generateFloorMap, validateFloorMap, analyzeFloorMap, saveState, loadState } = await import('../js/state.js?preflight');
-const { items, monsters, lootTables, floorEncounterTable, innEvents, shopStock } = await import('../js/data.js?preflight');
+const { items, monsters, lootTables, floorEncounterTable, innEvents, shopStock, roomTypes } = await import('../js/data.js?preflight');
 const { makeMarketCycle, currentSellValue, simulateMarkets, simulateInnEvents } = await import('../js/town-economy.js?preflight');
 const { generateAbsurdName, inspectNameGenerator, MAX_NAME_LENGTH } = await import('../js/name-generator.js?preflight');
-const { roomProps: props } = await import('../js/room-visuals.js?preflight');
+const { roomProps: props, createRoomDecoration } = await import('../js/room-visuals.js?preflight');
 const { TOWN_ART_ASSETS } = await import('../js/town-art.js?preflight');
-const { validateContent } = await import('../js/content-validation.js?preflight');
+const { validateContent, validateQuestGraph } = await import('../js/content-validation.js?preflight');
 const { achievements } = await import('../js/progression.js?preflight');
 const { validateQuestTemplate, questObjectiveTemplates } = await import('../js/quest-templates.js?preflight');
 const { validWeightedRows, weightedChoice } = await import('../js/random-utils.js?preflight');
@@ -29,6 +30,10 @@ const game = await import('../js/game.js?preflight');
 
 let checks = 0;
 function check(name, fn) { fn(); checks++; console.log(`✓ ${name}`); }
+
+check('all runtime JavaScript modules pass Node syntax validation',()=>{
+  for(const file of readdirSync(resolve('js')).filter(name=>name.endsWith('.js'))){const result=spawnSync(process.execPath,['--check',resolve('js',file)],{encoding:'utf8'});assert.equal(result.status,0,`${file}: ${result.stderr||result.stdout}`)}
+});
 
 function inspectTransparentPng(path) {
   const bytes=readFileSync(path);assert.equal(bytes.toString('hex',0,8),'89504e470d0a1a0a');
@@ -64,9 +69,9 @@ check('all registered local runtime assets exist', () => {
   for (const path of new Set(refs.filter(Boolean))) assert.ok(existsSync(resolve(path)), `Missing asset: ${path}`);
 });
 
-check('1,000 seeds at each playable depth generate valid, varied bounded floors', () => {
+check('5,001 floor layouts across playable depths are valid, varied, and deterministic', () => {
   const signatures = new Set(), entrances = new Set(), exits = new Set(); let minWalkable = Infinity, maxWalkable = 0, minRoute = Infinity, maxRoute = 0;
-  for (let seed = 1; seed <= 1000; seed++) for (let floor = 1; floor <= 3; floor++) {
+  for (let seed = 1; seed <= 1667; seed++) for (let floor = 1; floor <= 3; floor++) {
     const map = generateFloorMap(seed * 7919, floor), report = validateFloorMap(map), repeated = generateFloorMap(seed * 7919, floor);
     assert.ok(report.valid, `seed ${seed}, floor ${floor}: ${report.errors.join(', ')}`);
     assert.deepEqual(repeated, map, 'same seed/floor must reproduce the layout');
@@ -79,6 +84,14 @@ check('1,000 seeds at each playable depth generate valid, varied bounded floors'
   }
   assert.ok(signatures.size > 2900, `expected per-run layout variation, got ${signatures.size}`); assert.ok(entrances.size > 30, 'entrance stairs should vary between floors');
   console.log(`  metrics: ${signatures.size} distinct maps; ${entrances.size} entrance and ${exits.size} exit positions; walkable ${minWalkable}–${maxWalkable}; stair path ${minRoute}–${maxRoute}`);
+});
+
+check('room prop generation respects compatibility and is repeatable across all room types',()=>{
+  for(const room of Object.values(roomTypes))for(const floor of [1,2,3])for(let seed=1;seed<=20;seed++){
+    const map=generateFloorMap(seed*1543,floor),first=createRoomDecoration(room,map,floor,5,5),second=createRoomDecoration(room,map,floor,5,5);
+    assert.deepEqual(second,first,`${room.id} decorations must be deterministic`);
+    for(const prop of first.props){assert.ok((room.visual?.propPool||[]).includes(prop.id));assert.ok(prop.rooms.includes(room.id));assert.ok((room.visual?.placementRules||[]).includes(prop.zone)||!room.visual?.placementRules,`${room.id}/${prop.id} used incompatible zone ${prop.zone}`)}
+  }
 });
 
 check('weighted selection handles invalid rows and samples eligible entries', () => {
@@ -236,21 +249,21 @@ check('missing optional save containers are repaired without losing core progres
   assert.ok(Array.isArray(restored.dungeon.explored)); assert.ok(restored.dungeon.visited && restored.town.shop && restored.town.flags);
 });
 
-check('10,000 independent stat rolls per class cover legal ranges without violations', () => {
+check('50,000 independent stat rolls per class cover legal ranges without violations', () => {
   const expectedStats=['str','agi','mind','vit'];
   for(const cls of Object.keys(game.STARTING_STAT_RANGES)){
     const ranges=game.STARTING_STAT_RANGES[cls],seen=Object.fromEntries(expectedStats.map(stat=>[stat,new Set()])),sums=Object.fromEntries(expectedStats.map(stat=>[stat,0]));
-    for(let i=0;i<10000;i++){const roll=game.rollStartingStats(cls);for(const stat of expectedStats){const [min,max]=ranges[stat];assert.ok(roll[stat]>=min&&roll[stat]<=max,`${cls}.${stat} out of range: ${roll[stat]}`);seen[stat].add(roll[stat]);sums[stat]+=roll[stat]}}
+    for(let i=0;i<50000;i++){const roll=game.rollStartingStats(cls);for(const stat of expectedStats){const [min,max]=ranges[stat];assert.ok(roll[stat]>=min&&roll[stat]<=max,`${cls}.${stat} out of range: ${roll[stat]}`);seen[stat].add(roll[stat]);sums[stat]+=roll[stat]}}
     for(const stat of expectedStats){const [min,max]=ranges[stat];assert.equal(Math.min(...seen[stat]),min);assert.equal(Math.max(...seen[stat]),max);assert.equal(seen[stat].size,max-min+1,`${cls}.${stat} missed a legal value`)}
     assert.deepEqual(game.rollStartingStats(cls,()=>0),Object.fromEntries(expectedStats.map(stat=>[stat,ranges[stat][0]])));
     assert.deepEqual(game.rollStartingStats(cls,()=>.999999),Object.fromEntries(expectedStats.map(stat=>[stat,ranges[stat][1]])));
-    console.log(`  ${cls}: ${expectedStats.map(stat=>`${stat} ${Math.min(...seen[stat])}–${Math.max(...seen[stat])}, avg ${(sums[stat]/10000).toFixed(2)}`).join('; ')}`)
+    console.log(`  ${cls}: ${expectedStats.map(stat=>`${stat} ${Math.min(...seen[stat])}–${Math.max(...seen[stat])}, avg ${(sums[stat]/50000).toFixed(2)}`).join('; ')}`)
   }
 });
 
-check('absurd character names stay usable and vary across 10,000 generated names', () => {
-  const report=inspectNameGenerator(10000);
-  assert.equal(report.generated,10000); assert.equal(report.invalidCount,0);
+check('absurd character names stay usable and vary across 50,000 generated names', () => {
+  const report=inspectNameGenerator(50000);
+  assert.equal(report.generated,50000); assert.equal(report.invalidCount,0);
   assert.ok(report.lengths.min>0&&report.lengths.max<=MAX_NAME_LENGTH);
   assert.ok(report.unique>3000,`name pool repeated too heavily: ${report.unique} unique`);
   assert.ok(report.ordinaryCount>0,'ordinary names should occur sometimes');
@@ -307,11 +320,11 @@ check('town market cycles persist stock and bounded sell demand without buyback 
   const first = makeMarketCycle(99123, 7, shopStock, items), same = makeMarketCycle(99123, 7, shopStock, items);
   assert.deepEqual(first, same, 'same seed and cycle must restore identical stock/prices');
   assert.equal(first.rotatingIds.length, 4);
-  const sim = simulateMarkets({ runs: 1000, seed: 7721, stockIds: shopStock, items });
-  assert.ok(Object.values(sim.appearances).every(count => count > 0), 'all rotating items should appear');
+  const sim = simulateMarkets({ runs: 10000, seed: 7721, stockIds: shopStock, items });
   assert.ok(sim.demandCounts.low > 0 && sim.demandCounts.normal > 0 && sim.demandCounts.high > 0);
   assert.ok(sim.everyCycleChangesSomeStock);
   assert.ok(sim.coreStockAlwaysPresent);
+  assert.ok(Object.values(sim.appearances).every(count=>count>0),'all rotating stock should be reachable over 10,000 cycles');
   assert.ok(sim.minSell >= 1 && sim.maxSell > sim.minSell);
   for (const item of Object.values(items).filter(item => item.sellValue > 0 && item.buyValue > 0)) {
     for (const state of ['low','normal','high']) {
@@ -334,7 +347,7 @@ check('town market cycles persist stock and bounded sell demand without buyback 
 });
 
 check('inn events require a paid partial rest; Well Rested boosts and consumes combat XP charges', () => {
-  const sim = simulateInnEvents(innEvents, 10000);
+  const sim = simulateInnEvents(innEvents, 25000);
   assert.ok(sim.observedRate > .23 && sim.observedRate < .27, `unexpected event rate ${sim.observedRate}`);
   assert.equal(sim.fullRestEvents, 0);
   assert.ok(Object.values(sim.counts).every(count => count > 0));
@@ -412,6 +425,17 @@ check('new content chains, existing-item readiness, trade history, and Inn rewar
   game.state.player.hp--;const snack=game.restAtInn('mystery-snack');assert.equal(snack.ok,true);assert.ok(game.countItem('healing-tonic')>=3);
 });
 
+check('unavailable or quota-limited local storage does not throw into gameplay',()=>{
+  const get=localStorage.getItem,set=localStorage.setItem;
+  try{localStorage.getItem=()=>{throw new Error('storage unavailable')};assert.equal(loadState(),null);localStorage.getItem=get;localStorage.setItem=()=>{throw new Error('quota exceeded')};assert.equal(saveState(freshState()),false)}finally{localStorage.getItem=get;localStorage.setItem=set}
+});
+
+check('quest-chain graph validation catches missing links, duplicate steps, and cycles',()=>{
+  assert.deepEqual(validateQuestGraph(),[],'current quest graph should be complete');
+  const invalid={a:{chain:'x',step:1,next:'b'},b:{chain:'x',step:2,next:'a'},c:{chain:'x',step:2,next:'missing'}};
+  const issues=validateQuestGraph(invalid).join(' ');assert.match(issues,/cycle/i);assert.match(issues,/duplicates step 2/i);assert.match(issues,/missing quest/i);
+});
+
 check('town button art has transparent cropped bounds and no rectangular image backing',()=>{
   for(const assets of Object.values(TOWN_ART_ASSETS))for(const path of Object.values(assets))inspectTransparentPng(resolve(path));
   const css=readFileSync(resolve('css/mechanics.css'),'utf8'),appSource=readFileSync(resolve('js/app.js'),'utf8');
@@ -482,19 +506,19 @@ check('tag-focused equipment, item interactions, and combat narration stay conci
   assert.ok(['air-quality-concern','apple-a-day','heart-health','pork-problem','spoon-certified'].every(id=>achievements.some(row=>row.id===id)));
 });
 
-check('expanded Inn event pool samples correctly across 10,000 eligible-rest attempts',()=>{
-  const report=simulateInnEvents(innEvents,10000);assert.equal(report.fullRestEvents,0);assert.ok(report.observedRate>.22&&report.observedRate<.28,`Inn event chance drifted: ${report.observedRate}`);
+check('expanded Inn event pool samples correctly across 25,000 eligible-rest attempts',()=>{
+  const report=simulateInnEvents(innEvents,25000);assert.equal(report.fullRestEvents,0);assert.ok(report.observedRate>.22&&report.observedRate<.28,`Inn event chance drifted: ${report.observedRate}`);
   assert.equal(Object.keys(report.counts).length,Object.keys(innEvents).length);assert.ok(Object.values(report.counts).every(count=>count>0));
   console.log(`  Inn events: ${report.eventCount}/${report.legitimateRests} eligible rests (${(report.observedRate*100).toFixed(1)}%); all ${Object.keys(report.counts).length} events appeared`);
 });
 
-check('10,000 encounter decisions per representative depth and 10,000 weighted loot rolls per depth stay varied',()=>{
+check('25,000 encounter decisions and loot rolls per representative depth stay varied',()=>{
   let seed=739391;const random=()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296};const encounterReport={},lootReport={};
   for(const floor of [1,3,5,10]){const categories={combat:0,event:0,quiet:0,npc:0},monstersSeen=new Map(),history=[];let emptySteps=0,streak=0,repeat=0,previous='';const rows=(floorEncounterTable[floor]||floorEncounterTable[3]).filter(row=>monsters[row.id]?.minDepth<=floor);
-    for(let i=0;i<10000;i++){const chance=paceEncounterChance({combat:floor===1?.13:.19,event:floor===1?.09:.13,emptySteps,encounterStreak:streak});if(random()<.035){categories.npc++;emptySteps=0;streak++}else{const category=chooseEncounterCategory(chance,random);categories[category]++;if(category==='combat'){const selected=selectWithHistory(rows,history,row=>monsters[row.id].id,random,.55);const id=selected.id;if(id===previous)repeat++;previous=id;monstersSeen.set(id,(monstersSeen.get(id)||0)+1);history.push({type:'monster',id:monsters[id].id});if(history.length>12)history.shift();emptySteps=0;streak++}else if(category==='event'){emptySteps=0;streak++}else{emptySteps++;streak=0}}}
-    const repeatRate=repeat/Math.max(1,categories.combat);assert.ok(categories.combat>600&&categories.event>400&&categories.quiet>1500&&categories.npc>100,`starved depth ${floor}: ${JSON.stringify(categories)}`);assert.ok(repeatRate<.25,`rapid monster repeats too common at ${floor}: ${repeatRate}`);encounterReport[floor]={categories:Object.fromEntries(Object.entries(categories).map(([k,v])=>[k,`${(100*v/10000).toFixed(1)}%`])),monsterImmediateRepeat:`${(repeatRate*100).toFixed(1)}%`,top:[...monstersSeen].sort((a,b)=>b[1]-a[1]).slice(0,3).map(([id,n])=>`${monsters[id].name} ${n}`)};
-    const rarityCounts={common:0,uncommon:0,rare:0,strange:0},itemCounts=new Map();for(let i=0;i<10000;i++){const row=selectWithHistory(rows,[],entry=>monsters[entry.id].id,random,.55),monster=monsters[row.id],table=lootTables[monster.lootTable]||[],rarityMultiplier=Math.min(2,1+(floor-1)*.06),adjusted=table.map(entry=>{const rarity=items[entry.item]?.rarity||'common',factor=( {common:62,uncommon:25,rare:10,strange:3}[rarity]||62)/62;return {...entry,rarity,weight:entry.weight*factor*(rarity==='rare'||rarity==='strange'?rarityMultiplier:1)}}),drop=weightedChoice(adjusted,random);if(drop){rarityCounts[drop.rarity]++;itemCounts.set(drop.item,(itemCounts.get(drop.item)||0)+1)}}
-    assert.ok(rarityCounts.strange<1200,`Strange loot too common at ${floor}`);assert.ok(Math.max(...itemCounts.values())<7000,`one item dominates drops at ${floor}`);lootReport[floor]={rarity:Object.fromEntries(Object.entries(rarityCounts).map(([k,v])=>[k,`${(100*v/10000).toFixed(1)}%`])),top:[...itemCounts].sort((a,b)=>b[1]-a[1]).slice(0,3).map(([id,n])=>`${items[id].name} ${n}`)};
+    for(let i=0;i<25000;i++){const chance=paceEncounterChance({combat:floor===1?.13:.19,event:floor===1?.09:.13,emptySteps,encounterStreak:streak});if(random()<.035){categories.npc++;emptySteps=0;streak++}else{const category=chooseEncounterCategory(chance,random);categories[category]++;if(category==='combat'){const selected=selectWithHistory(rows,history,row=>monsters[row.id].id,random,.55);const id=selected.id;if(id===previous)repeat++;previous=id;monstersSeen.set(id,(monstersSeen.get(id)||0)+1);history.push({type:'monster',id:monsters[id].id});if(history.length>12)history.shift();emptySteps=0;streak++}else if(category==='event'){emptySteps=0;streak++}else{emptySteps++;streak=0}}}
+    const repeatRate=repeat/Math.max(1,categories.combat);assert.ok(categories.combat>1500&&categories.event>1000&&categories.quiet>3750&&categories.npc>250,`starved depth ${floor}: ${JSON.stringify(categories)}`);assert.ok(repeatRate<.25,`rapid monster repeats too common at ${floor}: ${repeatRate}`);encounterReport[floor]={categories:Object.fromEntries(Object.entries(categories).map(([k,v])=>[k,`${(100*v/25000).toFixed(1)}%`])),monsterImmediateRepeat:`${(repeatRate*100).toFixed(1)}%`,top:[...monstersSeen].sort((a,b)=>b[1]-a[1]).slice(0,3).map(([id,n])=>`${monsters[id].name} ${n}`)};
+    const rarityCounts={common:0,uncommon:0,rare:0,strange:0},itemCounts=new Map();for(let i=0;i<25000;i++){const row=selectWithHistory(rows,[],entry=>monsters[entry.id].id,random,.55),monster=monsters[row.id],table=lootTables[monster.lootTable]||[],rarityMultiplier=Math.min(2,1+(floor-1)*.06),adjusted=table.map(entry=>{const rarity=items[entry.item]?.rarity||'common',factor=( {common:62,uncommon:25,rare:10,strange:3}[rarity]||62)/62;return {...entry,rarity,weight:entry.weight*factor*(rarity==='rare'||rarity==='strange'?rarityMultiplier:1)}}),drop=weightedChoice(adjusted,random);if(drop){rarityCounts[drop.rarity]++;itemCounts.set(drop.item,(itemCounts.get(drop.item)||0)+1)}}
+    assert.ok(rarityCounts.strange<3000,`Strange loot too common at ${floor}`);assert.ok(Math.max(...itemCounts.values())<17500,`one item dominates drops at ${floor}`);lootReport[floor]={rarity:Object.fromEntries(Object.entries(rarityCounts).map(([k,v])=>[k,`${(100*v/25000).toFixed(1)}%`])),top:[...itemCounts].sort((a,b)=>b[1]-a[1]).slice(0,3).map(([id,n])=>`${items[id].name} ${n}`)};
   }
   console.log(`  encounter decisions: ${JSON.stringify(encounterReport)}`);console.log(`  loot samples: ${JSON.stringify(lootReport)}`);
 });

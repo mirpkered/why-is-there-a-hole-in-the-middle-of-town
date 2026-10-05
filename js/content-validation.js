@@ -1,5 +1,5 @@
 import {items,monsters,monsterForId,quests,lootTables,dungeonEvents,roomTypes,dungeonNpcs,trades,floorEncounterTable,shopStock,merchantProfiles,innEvents} from './data.js?v=content-expansion-20261005a';
-import {roomProps,ROOM_PROP_ZONES} from './room-visuals.js?v=room-visuals-20261002d';
+import {roomProps,ROOM_PROP_ZONES} from './room-visuals.js?v=maintenance-20261006a';
 import {classAbilities,achievements,depthBands} from './progression.js?v=content-expansion-20261005a';
 import {questObjectiveTemplates} from './quest-templates.js?v=systems-20261002a';
 import {statusEffectDefinitions} from './status-effects.js?v=systems-20261002a';
@@ -9,6 +9,18 @@ import {TOWN_ART_ASSETS} from './town-art.js?v=town-service-signs-20261005a';
 const slots=new Set(['head','body','mainHand','offHand','feet','accessory']);
 const issue=(severity,code,message)=>({severity,code,message});
 const duplicates=values=>values.filter((value,index)=>values.indexOf(value)!==index);
+
+export function validateQuestGraph(definitions=quests){
+  const errors=[],byChain=new Map(),visiting=new Set(),visited=new Set();
+  for(const [id,quest] of Object.entries(definitions)){
+    if(quest.chain){const steps=byChain.get(quest.chain)||new Map();if(!Number.isInteger(quest.step)||quest.step<1)errors.push(`${id} has an invalid chain step.`);else if(steps.has(quest.step))errors.push(`${quest.chain} duplicates step ${quest.step} (${steps.get(quest.step)}, ${id}).`);else steps.set(quest.step,id);byChain.set(quest.chain,steps)}
+    if(quest.next&&!definitions[quest.next])errors.push(`${id} follows missing quest ${quest.next}.`);
+  }
+  for(const [chain,steps] of byChain){const ordered=[...steps].sort((a,b)=>a[0]-b[0]);for(let index=0;index<ordered.length;index++){const [step,id]=ordered[index];if(step!==index+1)errors.push(`${chain} is missing step ${index+1}.`);const next=ordered[index+1];if(next&&definitions[id]?.next!==next[1])errors.push(`${chain} step ${step} does not lead to step ${next[0]}.`)}}
+  function visit(id){if(visiting.has(id)){errors.push(`Quest follow-up cycle reaches ${id}.`);return}if(visited.has(id))return;visiting.add(id);const next=definitions[id]?.next;if(next&&definitions[next])visit(next);visiting.delete(id);visited.add(id)}
+  for(const id of Object.keys(definitions))visit(id);
+  return errors;
+}
 
 export function validateContent(){
   const errors=[],warnings=[],push=(severity,code,message)=>(severity==='error'?errors:warnings).push(issue(severity,code,message));
@@ -44,6 +56,7 @@ export function validateContent(){
     if(quest.type==='kill'&&quest.target!=='any'&&!monsterForId(quest.target))push('error','quest-monster',`${id} targets unknown monster ${quest.target}.`);
     if(quest.type==='discover'&&!eventIds.includes(quest.target)&&!['warm-wall','giant-stone-face'].includes(quest.target))push('warning','quest-discovery',`${id} discovery target ${quest.target} is not a registered event or landmark.`);
   }
+  for(const message of validateQuestGraph())push('error','quest-graph',message);
   const inspectOutcome=(eventId,outcome)=>{
     if(!outcome||typeof outcome!=='object')return;
     if(!['message','gold','item','removeItem','heal','damage','effect','flag','townReaction','unlockQuest','questProgress','discover','room','encounter','random','skillCheck'].includes(outcome.type))push('error','event-outcome',`${eventId} has unsupported outcome type ${outcome.type}.`);

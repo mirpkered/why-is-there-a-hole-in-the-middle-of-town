@@ -6,7 +6,7 @@ import {chooseEnemyAttack,chooseEncounterCategory,paceEncounterChance,recordEnco
 import {applyStatus,statusModifier,tickStatuses} from './status-effects.js?v=systems-20261002a';
 import {weightedChoice} from './random-utils.js?v=systems-20261002a';
 import {innEvents} from './data.js?v=content-expansion-20261005a';
-import {makeMarketCycle,currentSellValue,marketCondition,pickInnEvent,simulateMarkets,simulateInnEvents,MARKET_CORE_STOCK} from './town-economy.js?v=content-expansion-20261005a';
+import {makeMarketCycle,currentSellValue,marketCondition,pickInnEvent,simulateMarkets,simulateInnEvents,MARKET_CORE_STOCK} from './town-economy.js?v=maintenance-20261006a';
 export {threatAssessment};
 export function currentThreatAssessment(){return state.combat&&state.player?threatAssessment(state.combat,{...state.player,fireResistance:equippedEffect('fireResistance'),temporaryDefense:temporaryEffect('defense'),specialAttack:state.combat.monsterId==='kung-fu-goose'?equippedEffect('vsGoose'):0}):null}
 function applyPhysicalResistance(enemy,damage,magical=false){const resistance=enemy?.physicalResistanceReductionTurns>0?Math.max(0,(enemy?.physicalResistance||0)-.45):enemy?.physicalResistance||0;return Math.max(1,magical?Math.round(damage):Math.round(damage*(1-Math.max(0,Math.min(.9,resistance)))))}
@@ -162,8 +162,8 @@ export function qaClearInnEffects(){const inn=state.town.innEffects||{};for(cons
 export function qaSetWellRestedBattles(count){state.town.innEffects=state.town.innEffects||{};state.town.innEffects.wellRestedBattles=Math.max(0,Math.floor(Number(count)||0));state.town.innEffects.wellRestedPercent=10;state.town.innEffects.wellRestedRemainder=0;persist()}
 export function qaRestockMarket(){restockShop();return marketState()}
 export function qaSetMarketDemand(id,demand){const item=items[id];if(!item||!['low','normal','high'].includes(demand))return false;const shop=ensureMarket(),bounds={low:[.75,.9],normal:[.95,1.05],high:[1.1,1.3]}[demand];shop.demand[id]={state:demand,multiplier:(bounds[0]+bounds[1])/2};persist();return true}
-export function qaMarketSimulation(runs=1000){return simulateMarkets({runs,seed:state.dungeon.seed||1,stockIds:shopStock,items})}
-export function qaInnSimulation(runs=10000){return simulateInnEvents(innEvents,runs)}
+export function qaMarketSimulation(runs=10000){return simulateMarkets({runs,seed:state.dungeon.seed||1,stockIds:shopStock,items})}
+export function qaInnSimulation(runs=25000){return simulateInnEvents(innEvents,runs)}
 export function xpToNext(){return state.player.level*25-state.player.xp}
 
 // Development-only actions are also kept out of the regular game action paths.

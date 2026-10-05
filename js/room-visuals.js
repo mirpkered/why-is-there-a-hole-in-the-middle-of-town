@@ -34,7 +34,27 @@ roomProps['mushroom-cluster'].maxCount=2;roomProps['spoon-pile'].maxCount=2;
 function floorFingerprint(map){const walls=(map?.walls||[]).map(p=>Array.isArray(p)?`${p[0]},${p[1]}`:String(p)).sort().join(';');return `${map?.width||0}x${map?.height||0}|${walls}|u:${(map?.upStairs||[]).join(',')}|d:${(map?.downStairs||[]).join(',')}`}
 export function roomVisualSeed(map,floor,x,y,roomId,variation=0){const text=`${floorFingerprint(map)}|${floor}|${x},${y}|${roomId}|${variation}`;let hash=2166136261;for(let i=0;i<text.length;i++){hash^=text.charCodeAt(i);hash=Math.imul(hash,16777619)}return hash>>>0}
 function randomFrom(seed){let value=seed>>>0;return()=>{value=(value+0x6D2B79F5)>>>0;let n=value;n=Math.imul(n^(n>>>15),n|1);n^=n+Math.imul(n^(n>>>7),n|61);return ((n^(n>>>14))>>>0)/4294967296}}
-export function createRoomDecoration(room,map,floor,x,y,variation=0){if(!room?.visual)return {seed:roomVisualSeed(map,floor,x,y,room?.id||'ordinary',variation),props:[]};const seed=roomVisualSeed(map,floor,x,y,room.id,variation),rand=randomFrom(seed),pool=room.visual.propPool.map(id=>roomProps[id]).filter(Boolean),rules=room.visual.placementRules||ROOM_PROP_ZONES,desired=Math.max(1,room.visual.density||1),usedZones=new Set(),props=[];let available=[...pool];for(let i=0;i<desired&&pool.length;i++){if(!available.length)available=[...pool];let total=available.reduce((n,p)=>n+p.weight,0),roll=rand()*total,prop=available.find(p=>(roll-=p.weight)<0)||available[0];available=available.filter(p=>p.id!==prop.id);const zones=prop.zones.filter(zone=>rules.includes(zone)&&!usedZones.has(zone));if(!zones.length){zones=prop.zones.filter(zone=>rules.includes(zone))}if(!zones.length)continue;const copies=prop.minCount+Math.floor(rand()*(prop.maxCount-prop.minCount+1));for(let copy=0;copy<copies;copy++){const compatible=prop.zones.filter(zone=>rules.includes(zone)),unused=compatible.filter(zone=>!usedZones.has(zone)),zone=(unused.length?unused:compatible)[Math.floor(rand()*(unused.length||compatible.length))];if(!zone)continue;usedZones.add(zone);props.push({...prop,zone,scale:Number((prop.scale.min+rand()*(prop.scale.max-prop.scale.min)).toFixed(2)),flip:prop.flipAllowed&&rand()>.5,depth:zone.startsWith('foreground')?3:zone.startsWith('mid')?2:1})}}return {seed,props}}
+export function createRoomDecoration(room,map,floor,x,y,variation=0){
+  if(!room?.visual)return {seed:roomVisualSeed(map,floor,x,y,room?.id||'ordinary',variation),props:[]};
+  const seed=roomVisualSeed(map,floor,x,y,room.id,variation),rand=randomFrom(seed),pool=room.visual.propPool.map(id=>roomProps[id]).filter(Boolean),rules=room.visual.placementRules||ROOM_PROP_ZONES,desired=Math.max(1,room.visual.density||1),usedZones=new Set(),props=[];
+  let available=[...pool];
+  for(let i=0;i<desired&&pool.length;i++){
+    if(!available.length)available=[...pool];
+    let total=available.reduce((sum,prop)=>sum+prop.weight,0),roll=rand()*total;
+    const prop=available.find(candidate=>(roll-=candidate.weight)<0)||available[0];
+    available=available.filter(candidate=>candidate.id!==prop.id);
+    const compatibleZones=prop.zones.filter(zone=>rules.includes(zone));
+    if(!compatibleZones.length)continue;
+    const copies=prop.minCount+Math.floor(rand()*(prop.maxCount-prop.minCount+1));
+    for(let copy=0;copy<copies;copy++){
+      const unusedZones=compatibleZones.filter(zone=>!usedZones.has(zone)),choices=unusedZones.length?unusedZones:compatibleZones;
+      const zone=choices[Math.floor(rand()*choices.length)];
+      usedZones.add(zone);
+      props.push({...prop,zone,scale:Number((prop.scale.min+rand()*(prop.scale.max-prop.scale.min)).toFixed(2)),flip:prop.flipAllowed&&rand()>.5,depth:zone.startsWith('foreground')?3:zone.startsWith('mid')?2:1});
+    }
+  }
+  return {seed,props};
+}
 
 function placeholderSvg(type,ink){type=type.startsWith('mushrooms')?'mushrooms':type;const line=ink?'#171717':'#251d16',fill=ink?'#fffdf7':({'mushrooms':'#e7bd91','crate':'#b7793f','barrel':'#98613a','box':'#d0aa77','campfire-kettle':'#766f68','bedroll':'#73817a','pack':'#795a41','stall':'#b87943','basket':'#ae7741','sign':'#f0dfb2','shelf':'#6e4b37','books':'#9e633f','labeled-stone':'#aaa393','cabinet':'#777b7a','papers':'#e7dfc7','spoons':'#b9c4c5','spoon':'#c8d0d0','water-debris':'#a7c8c8','plank':'#a77a4d','altar':'#9a9285','candle':'#eee0a9','debris':'#857b6b'})[type]||'#aaa';const common=`fill="${fill}" stroke="${line}" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"`;
  const shapes={

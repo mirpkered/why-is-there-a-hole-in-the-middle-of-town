@@ -140,16 +140,7 @@
 .location small{align-self:start;color:var(--muted);font-weight:500;font-size:.7rem;line-height:1.15}
 .location-art{grid-row:1/3;grid-column:1;display:grid;place-items:center;width:36px;height:42px;border-radius:8px;background:#131815;color:var(--gold);font:900 1.45rem/1 Georgia,serif}
 .location-art>span{display:grid;place-items:center;width:100%;height:100%}
-.location-hole{grid-column:1/-1;min-height:96px;grid-template-columns:62px minmax(0,1fr);grid-template-rows:auto auto;background:radial-gradient(ellipse at 50% 110%,#9a6534 0,#44321e 35%,#252923 76%);border-color:#a17a48;box-shadow:inset 0 -14px 32px #090a09aa,0 5px 18px #0004}
-.location-hole{grid-template-columns:minmax(0,1fr) minmax(120px,42%)}
-.location-hole .location-art{grid-column:2;grid-row:1/3;width:100%;height:86px;border-radius:8px;font-size:2.4rem;background:radial-gradient(ellipse,#080a09 0 35%,#554127 38%,#29271f 68%,transparent 70%);color:#d29b56}
-.location-hole .location-art--illustration{background:#e7dfca;box-shadow:0 2px 8px #0005;overflow:hidden}
 .location-art--illustration img{display:block;width:100%;height:100%;object-fit:contain}
-.location-store,.location-inn,.location-quests{grid-template-columns:52px minmax(0,1fr)}
-.location-store .location-art--illustration,.location-inn .location-art--illustration,.location-quests .location-art--illustration{width:48px;height:38px;border-radius:5px;background:#e7dfca;overflow:hidden}
-.location-hole b,.location-hole small{grid-column:1}
-.location-hole b{font-size:1.14rem;letter-spacing:.08em}
-.location-hole small{font-size:.78rem}
 .location-store .location-art{color:#e4c87d}.location-inn .location-art{color:#cf9976}.location-quests .location-art{color:#b5cf9d}.location-character .location-art{color:#9fbfcb}.location-records .location-art,.location-achievements .location-art{color:#cfb181}.location-settings{min-height:56px;background:#202421}.location-settings .location-art{height:32px;color:#aaa}.location-settings b{font-size:.76rem}.location-settings small{font-size:.66rem}
 .town-hub-flavor{margin:.1rem 0 0;text-align:center;color:var(--muted);font-size:.78rem}
 .town-service-heading{display:flex;align-items:baseline;justify-content:space-between;gap:.6rem;flex-wrap:wrap;margin:.35rem 0 .55rem}
@@ -157,8 +148,7 @@
 .market-demand{display:block;font-size:.8rem;font-weight:700}.market-low{color:#e5c06a}.market-normal{color:var(--muted)}.market-high{color:#add39a}
 .inn-panel{max-width:620px}.inn-greeting{margin-top:0;color:var(--muted)}.inn-vitals{display:flex;flex-wrap:wrap;gap:.45rem;margin:.5rem 0}.inn-vitals span{flex:1 1 70px;padding:.5rem;border:1px solid var(--line);border-radius:8px;background:#171b19}.inn-effects,.inn-event{padding:.6rem .7rem;margin:.45rem 0;border-left:3px solid var(--gold);background:#171b19;color:var(--muted);font-size:.9rem}.inn-rest-button{width:100%;min-height:52px}.town-status-effect{color:#d8c389}
 .settings-group{margin:.5rem 0 .8rem;padding:.45rem .75rem .65rem;border:1px solid var(--line);border-radius:9px}.settings-group legend{padding:0 .35rem;color:var(--gold);font-size:.78rem;font-weight:800;text-transform:uppercase;letter-spacing:.08em}.settings-card .settings-group label{margin:.55rem 0}
-@media(max-width:360px){.shell:has(.town-hub){padding:.45rem .55rem calc(.75rem + env(safe-area-inset-bottom))}.town-hub{gap:.35rem}.hub-grid{gap:.35rem;grid-auto-rows:minmax(68px,auto)}.location{min-height:68px;grid-template-columns:32px minmax(0,1fr);column-gap:.4rem;padding:.38rem}.location-art{width:30px;height:36px;font-size:1.25rem}.location-hole{min-height:82px;grid-template-columns:minmax(0,1fr) minmax(100px,42%)}.location-hole .location-art{width:100%;height:70px}.location b{font-size:.72rem}.location small{font-size:.65rem}.location-hole b{font-size:1rem}.town-hub-heading .section-title{font-size:1.24rem}.town-hub-flavor{font-size:.69rem}}
-@media(max-width:360px){.location-store,.location-inn,.location-quests{grid-template-columns:46px minmax(0,1fr)}.location-store .location-art--illustration,.location-inn .location-art--illustration,.location-quests .location-art--illustration{width:42px;height:34px}}
+@media(max-width:360px){.shell:has(.town-hub){padding:.45rem .55rem calc(.75rem + env(safe-area-inset-bottom))}.town-hub{gap:.35rem}.hub-grid{gap:.35rem;grid-auto-rows:minmax(68px,auto)}.location{min-height:68px;grid-template-columns:32px minmax(0,1fr);column-gap:.4rem;padding:.38rem}.location-art{width:30px;height:36px;font-size:1.25rem}.location b{font-size:.72rem}.location small{font-size:.65rem}.town-hub-heading .section-title{font-size:1.24rem}.town-hub-flavor{font-size:.69rem}}
 
 /* The four signed destinations are themselves the primary Town controls. */
 .location--art-destination{min-width:0;min-height:132px;display:grid;grid-template-columns:minmax(0,1fr);grid-template-rows:68px auto auto;align-content:stretch;justify-items:stretch;gap:.18rem;padding:.5rem;text-align:center;border:1px solid #73694e;background:linear-gradient(145deg,#302f27,#202421);box-shadow:inset 0 1px #ffffff12,0 2px 7px #0004;transition:transform .12s ease,filter .12s ease,box-shadow .12s ease}

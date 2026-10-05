@@ -76,7 +76,7 @@ export function simulateMarkets({ runs = 1000, seed = 123456789, stockIds, items
       prices.push(currentSellValue(item, market, .2, buy));
     }
   }
-  return { runs, appearances, demandCounts: demands, minSell: Math.min(...prices), maxSell: Math.max(...prices), everyCycleChangesSomeStock: cycles.every((m, i) => i === 0 || m.rotatingIds.join('|') !== cycles[i - 1].rotatingIds.join('|')), coreStockAlwaysPresent: cycles.every(m => CORE.every(id => stockIds.includes(id))) };
+  return { runs, appearances, demandCounts: demands, minSell: prices.reduce((min,value)=>Math.min(min,value),Infinity), maxSell: prices.reduce((max,value)=>Math.max(max,value),-Infinity), everyCycleChangesSomeStock: cycles.every((m, i) => i === 0 || m.rotatingIds.join('|') !== cycles[i - 1].rotatingIds.join('|')), coreStockAlwaysPresent: cycles.every(m => CORE.every(id => stockIds.includes(id))) };
 }
 
 export function simulateInnEvents(events, runs = 10000, seed = 987654321) {
