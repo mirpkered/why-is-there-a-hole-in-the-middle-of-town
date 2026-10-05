@@ -127,6 +127,13 @@ check('hand-drawn mushroom cluster is paired, transparent, and assigned to Mushr
   assert.match(roomPropMarkup({props:[sample]},'colored'),/mushroom-cluster-colored\.png/);
 });
 
+check('hand-drawn tall mushroom replaces its placeholder with paired transparent art',()=>{
+  const tall=props['tall-mushrooms'];assert.ok(tall);assert.ok(tall.rooms.includes('mushroom-room'));assert.equal(tall.placeholder,'mushrooms tall');
+  for(const [style,path] of [['ink',tall.ink],['colored',tall.colored]]){assert.ok(path);const png=readFileSync(resolve(path));assert.equal(png.toString('hex',0,8),'89504e470d0a1a0a');assert.equal(png[25],6,`${style} tall mushroom must preserve PNG alpha`);assert.ok(png.readUInt32BE(16)<=700&&png.readUInt32BE(20)<=1400,'tall mushroom dimensions remain suitable for runtime use')}
+  assert.ok(existsSync(resolve('assets/source/room-props/tall-mushroom-original.jpg')),'original drawing photo remains archived');
+  const sample={...tall,flip:false,zone:'far-left',scale:1,depth:1};assert.match(roomPropMarkup({props:[sample]},'ink'),/tall-mushroom-ink\.png/);assert.match(roomPropMarkup({props:[sample]},'colored'),/tall-mushroom-colored\.png/);
+});
+
 check('weighted selection handles invalid rows and samples eligible entries', () => {
   assert.equal(validWeightedRows([{weight: 0}, {weight: -1}, {weight: 2}]).length, 1);
   assert.equal(weightedChoice([], () => 0), null);
