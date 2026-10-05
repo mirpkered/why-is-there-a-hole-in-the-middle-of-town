@@ -2,7 +2,7 @@
 export const ROOM_PROP_ZONES=['far-left','far-center','far-right','mid-left','mid-right','foreground-left','foreground-right','floor-center','wall-center'];
 
 export const roomProps={
-  'mushroom-cluster':{id:'mushroom-cluster',label:'Mushroom cluster',zones:['far-left','far-right','mid-left','mid-right'],flipAllowed:true,weight:3,rooms:['mushroom-room'],layer:'background',collisionRelevant:false,placeholder:'mushrooms'},
+  'mushroom-cluster':{id:'mushroom-cluster',label:'Mushroom cluster',zones:['far-left','far-right','mid-left','mid-right'],flipAllowed:true,weight:3,rooms:['mushroom-room'],layer:'background',collisionRelevant:false,placeholder:'mushrooms',ink:'assets/images/room-props/mushroom-cluster-ink.png',colored:'assets/images/room-props/mushroom-cluster-colored.png',scale:{min:.88,max:1.08}},
   'tall-mushrooms':{id:'tall-mushrooms',label:'Tall mushrooms',zones:['far-left','far-right','mid-left','mid-right'],flipAllowed:true,weight:1,rooms:['mushroom-room'],layer:'background',collisionRelevant:false,placeholder:'mushrooms tall'},
   'water-debris':{id:'water-debris',label:'Floating debris',zones:['floor-center','foreground-left','foreground-right'],flipAllowed:true,weight:2,rooms:['flooded-chamber'],layer:'background',collisionRelevant:false,placeholder:'water-debris'},
   'floating-plank':{id:'floating-plank',label:'Floating plank',zones:['floor-center','foreground-left','foreground-right'],flipAllowed:true,weight:1,rooms:['flooded-chamber'],layer:'background',collisionRelevant:false,placeholder:'plank'},

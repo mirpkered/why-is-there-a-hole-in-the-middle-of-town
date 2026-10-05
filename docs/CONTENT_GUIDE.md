@@ -30,7 +30,7 @@ Each `roomProps` entry declares stable ID, placeholder, compatible rooms, zones,
 
 ## Hand-drawn art
 
-Preserve user source art under `assets/source/` and put processed runtime pairs under `assets/images/`. Use transparent PNGs with modest padding, keeping the original black linework intact. Colored variants use flat fill below the protected ink. Register stable local asset paths in monster metadata, `roomProps`, or `js/town-art.js`. Town destination buttons remain flexible CSS controls; illustrations do not define card dimensions. Sprite Style selects Ink or Colored for enemies, town art, and props where a pair exists.
+Preserve user source art under `assets/source/` and put processed runtime pairs under `assets/images/`. Use transparent PNGs with modest padding, keeping the original black linework intact. Colored variants use flat fill below the protected ink. Register stable local asset paths in monster metadata, `roomProps`, or `js/town-art.js`. Town destination buttons remain flexible CSS controls; illustrations do not define card dimensions. Sprite Style selects Ink or Colored for enemies, town art, and props where a pair exists. Room props use `roomProps.rooms` and their room’s `visual.propPool`; paired artwork replaces the existing placeholder automatically.
 
 Do not use raw scans/source photos in runtime markup. See [Art Backlog](ART_BACKLOG.md) for current coverage and missing drawings.
 

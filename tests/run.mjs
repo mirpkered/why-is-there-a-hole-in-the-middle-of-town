@@ -118,6 +118,15 @@ check('hand-drawn wooden crate is registered as a paired storage-room prop',()=>
   assert.match(roomPropMarkup({props:[sample]},'colored'),/wooden-crate-colored\.png/);
 });
 
+check('hand-drawn mushroom cluster is paired, transparent, and assigned to Mushroom Room',()=>{
+  const cluster=props['mushroom-cluster'];assert.ok(cluster);assert.ok(cluster.rooms.includes('mushroom-room'));assert.equal(cluster.placeholder,'mushrooms');
+  for(const [style,path] of [['ink',cluster.ink],['colored',cluster.colored]]){assert.ok(path);const png=readFileSync(resolve(path));assert.equal(png.toString('hex',0,8),'89504e470d0a1a0a');assert.equal(png[25],6,`${style} mushroom art must preserve PNG alpha`);assert.ok(png.readUInt32BE(16)<=1200&&png.readUInt32BE(20)<=1300,'mushroom art dimensions remain tightly cropped for runtime use')}
+  assert.ok(existsSync(resolve('assets/source/room-props/mushroom-cluster-original.jpg')),'original drawing photo remains archived');
+  const sample={...cluster,flip:false,zone:'far-left',scale:1,depth:1};
+  assert.match(roomPropMarkup({props:[sample]},'ink'),/mushroom-cluster-ink\.png/);
+  assert.match(roomPropMarkup({props:[sample]},'colored'),/mushroom-cluster-colored\.png/);
+});
+
 check('weighted selection handles invalid rows and samples eligible entries', () => {
   assert.equal(validWeightedRows([{weight: 0}, {weight: -1}, {weight: 2}]).length, 1);
   assert.equal(weightedChoice([], () => 0), null);
