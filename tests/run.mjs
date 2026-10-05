@@ -69,6 +69,15 @@ check('all registered local runtime assets exist', () => {
   for (const path of new Set(refs.filter(Boolean))) assert.ok(existsSync(resolve(path)), `Missing asset: ${path}`);
 });
 
+check('shared municipal background and masthead use the local doodle sheet and responsive styles',()=>{
+  const css=readFileSync(resolve('css/mechanics.css'),'utf8');
+  assert.ok(existsSync(resolve('assets/images/ui/municipal-doodles.svg')),'municipal doodle background should exist locally');
+  assert.match(css,/url\('\.\.\/assets\/images\/ui\/municipal-doodles\.svg'\)/,'background should use the bundled SVG, not a remote image');
+  assert.match(css,/\.topbar\{[^}]*background:linear-gradient[^}]*box-shadow:/,'shared masthead should use the signboard treatment');
+  assert.match(css,/\.title-screen \.title-card::before[^}]*DELVERS[’'] OFFICE/i,'new-character/title screen should echo the municipal masthead');
+  assert.match(css,/@media\(max-width:360px\)\{\.topbar/,'masthead must have a narrow-phone layout');
+});
+
 check('5,001 floor layouts across playable depths are valid, varied, and deterministic', () => {
   const signatures = new Set(), entrances = new Set(), exits = new Set(); let minWalkable = Infinity, maxWalkable = 0, minRoute = Infinity, maxRoute = 0;
   for (let seed = 1; seed <= 1667; seed++) for (let floor = 1; floor <= 3; floor++) {
@@ -475,7 +484,7 @@ check('town button art has transparent cropped bounds and no rectangular image b
   assert.match(css,/\.town-hub \.location--art-destination\.location-hole:active|\.town-hub \.location--art-destination:active/,'art buttons should retain a pressed-state response');
   assert.match(css,/\.town-hub \.location--art-destination\.location-hole:focus-visible\{outline:/,'Hole should keep keyboard-visible focus treatment');
   assert.match(css,/\.town-hub \.location--art-destination:focus-visible\{[^}]*outline/);
-  assert.match(appSource,/assets\[style\].*hole-pure-art-20261005a/);
+  assert.match(appSource,/assets\[style\].*town-office-skin-20261005a/);
   const townBranch=appSource.match(/if\(screen==='town'\).*?if\(screen==='quests'\)/s)?.[0]||'';
   assert.ok(townBranch,'Town hub render branch should be present');
   for(const [target,name,slot] of [['dungeon','Enter the Hole','the-hole'],['store','General Store','general-store'],['inn','The Inn','inn'],['quests','Quest Board','quest-board'],['statistics','Statistics','statistics'],['character','Character','character'],['achievements','Achievements','achievements']])assert.match(townBranch,new RegExp(`data-art-slot="${slot}" data-go="${target}" aria-label="${name}"`),`${name} art button should keep its accessible name and navigation`);

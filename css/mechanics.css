@@ -190,6 +190,21 @@
 @media(max-width:360px){.town-hub .location--art-destination{height:92px;min-height:92px}.town-hub .location--art-destination.location-hole{height:148px;min-height:148px}}
 @media(prefers-reduced-motion:reduce){.town-hub .location--art-destination{transition:none}}
 
+/* Shared municipal-dungeon identity: quiet doodles stay behind opaque content. */
+body{background-color:#171918;background-image:radial-gradient(ellipse at 50% -8%,#51463466 0,transparent 43%),radial-gradient(ellipse at 4% 58%,#34433933 0,transparent 39%),linear-gradient(165deg,#1d241eaa,#171b18b8 54%,#111512c4),url('../assets/images/ui/municipal-doodles.svg');background-repeat:no-repeat,no-repeat,no-repeat,repeat;background-position:center top,left center,center,0 0;background-size:100% 620px,70% 880px,100% 100%,360px 360px}
+.topbar{position:relative;isolation:isolate;align-items:center;gap:.45rem;margin-bottom:.85rem;padding:.58rem .68rem;border:2px solid #9b7545;border-radius:8px 5px 10px 6px;background:linear-gradient(180deg,#765637,#5a3f2c 54%,#473424);box-shadow:inset 0 2px #d6b77b55,inset 0 -3px #2d211766,0 3px #281e15,0 6px 14px #0005}
+.topbar::before{position:absolute;z-index:0;inset:3px 4px auto;height:5px;content:"";background:radial-gradient(circle at 5px 2px,#dfc08a 0 2px,transparent 2.5px),radial-gradient(circle at calc(100% - 5px) 2px,#dfc08a 0 2px,transparent 2.5px);opacity:.8;pointer-events:none}
+.topbar>.brand,.topbar>.top-actions{position:relative;z-index:1}
+.topbar .brand{display:block;flex:1 1 auto;min-width:0;max-width:none;color:#f0d493;font-size:clamp(.72rem,2.5vw,.96rem);line-height:1.14;letter-spacing:.045em;text-shadow:1px 1px #392719,-1px 0 #392719;transform:rotate(-.55deg);overflow-wrap:anywhere}
+.topbar .top-actions{flex:0 0 auto;gap:.28rem}
+.topbar .top-actions button{min-height:40px;padding:.34rem .58rem;border-color:#c09a615c;border-radius:6px;background:#292821b8;color:#f5ebd0;font-size:.8rem;box-shadow:inset 0 1px #fff2}
+.topbar .top-actions button:hover{border-color:#f0d493;background:#332d23}
+.shell:has(.town-hub)>.topbar{margin-bottom:.45rem;padding:.5rem .65rem;border:2px solid #9b7545;border-radius:8px 5px 10px 6px;background:linear-gradient(180deg,#765637,#5a3f2c 54%,#473424);box-shadow:inset 0 2px #d6b77b55,inset 0 -3px #2d211766,0 3px #281e15,0 6px 14px #0005}
+.title-screen .title-card{position:relative;border-color:#88704c;background:linear-gradient(145deg,#242a24f2,#191e1af7);box-shadow:0 24px 90px #0008,inset 0 1px #d7c69a1c}
+.title-screen .title-card::before{display:inline-block;margin:0 auto .35rem;padding:.28rem .55rem;border:1px solid #9b754588;border-radius:5px 3px 6px 4px;background:#4a3929;color:#efd397;content:"MIRPWORKS · DELVERS’ OFFICE";font-size:.66rem;font-weight:900;letter-spacing:.11em;transform:rotate(-1deg)}
+@media(max-width:680px){.topbar{align-items:center}.topbar .brand{max-width:none;font-size:clamp(.68rem,3.1vw,.86rem)}.topbar .top-actions{gap:.18rem}.topbar .top-actions button{min-height:40px;padding:.3rem .42rem;font-size:.74rem}}
+@media(max-width:360px){.topbar{gap:.28rem;padding:.45rem .48rem}.topbar .brand{font-size:.67rem;letter-spacing:.015em}.topbar .top-actions{gap:.12rem}.topbar .top-actions button{padding:.28rem .32rem;font-size:.68rem}}
+
 /* Compact service navigation and one-screen character registration. */
 .town-status{position:sticky;top:env(safe-area-inset-top,0px);z-index:12;min-height:44px;flex-wrap:nowrap;gap:.25rem .7rem;margin:0 0 .5rem;padding:.28rem .45rem;border-radius:0 0 8px 8px;background:#171b19f7;backdrop-filter:blur(9px);font-size:.76rem}
 .town-return{min-height:44px;padding:.35rem .65rem;font-weight:800;white-space:nowrap}

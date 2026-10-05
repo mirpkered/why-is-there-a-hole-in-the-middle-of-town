@@ -34,6 +34,8 @@ Preserve user source art under `assets/source/` and put processed runtime pairs 
 
 Do not use raw scans/source photos in runtime markup. See [Art Backlog](ART_BACKLOG.md) for current coverage and missing drawings.
 
+The shared UI backdrop uses a low-contrast local SVG doodle tile (`assets/images/ui/municipal-doodles.svg`) beneath the dark gradients and content panels. The shared `.topbar` is styled as a hand-made municipal signboard; keep its text and controls legible at narrow widths and leave the dungeon scene itself unobstructed.
+
 ## Economy and Inn
 
 `town-economy.js` uses the run seed and market cycle to choose four rotating store items and saved demand states. The current cycle advances once on successful return to town; visiting or switching Buy/Sell does not reroll it. Core tonic, basic weapon, and basic armor remain guaranteed. Ordinary trade-good/junk demand multipliers remain within 0.75–1.30. Final buyback value is capped below the applicable purchase price to prevent immediate resale profit.

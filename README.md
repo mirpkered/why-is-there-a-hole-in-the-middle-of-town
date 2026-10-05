@@ -33,3 +33,5 @@ Append `?qa=1` to the live or local URL for development diagnostics and controls
 The site is static HTML, CSS, and native JavaScript modules hosted by GitHub Pages. `js/app.js` renders screens and handles delegated input; `js/game.js` resolves actions; `js/state.js` owns save shape, migrations, and map generation; `js/data.js` and `js/progression.js` hold content; focused modules provide audio, economy, encounter, status, room-art, and validation systems. See [Architecture](docs/ARCHITECTURE.md), [Game State](docs/GAME_STATE.md), [Content Guide](docs/CONTENT_GUIDE.md), [Art Backlog](docs/ART_BACKLOG.md), and [Roadmap](ROADMAP.md).
 
 Hand-drawn player artwork and performances are retained in `assets/source/`; processed paired art and runtime audio live separately. User linework and recordings remain canonical. No server, account, remote dependency, or generated artwork is required to run the game.
+
+The visual tone pairs a dark, lightly doodled municipal-office backdrop with a crooked wood-toned Delvers’ Office masthead. The SVG doodles stay behind the content panels, while the user-drawn town signs and monsters remain the foreground art.
