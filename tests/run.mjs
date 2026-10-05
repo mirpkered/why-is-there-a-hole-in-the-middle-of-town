@@ -177,6 +177,13 @@ check('hand-drawn melted candle replaces the Shrine placeholder',()=>{
   const sample={...candle,flip:false,zone:'far-center',scale:1,depth:1};assert.match(roomPropMarkup({props:[sample]},'ink'),/candle-ink\.png/);assert.match(roomPropMarkup({props:[sample]},'colored'),/candle-colored\.png/);
 });
 
+check('hand-drawn barrel replaces the Storage Room placeholder',()=>{
+  const barrel=props.barrel;assert.ok(barrel);assert.ok(barrel.rooms.includes('storage'));assert.ok(roomTypes.storage.visual.propPool.includes('barrel'));assert.equal(barrel.placeholder,'barrel');
+  for(const [style,path] of [['ink',barrel.ink],['colored',barrel.colored]]){assert.ok(path);const png=readFileSync(resolve(path));assert.equal(png.toString('hex',0,8),'89504e470d0a1a0a');assert.equal(png[25],6,`${style} barrel must preserve PNG alpha`);assert.ok(png.readUInt32BE(16)<=650&&png.readUInt32BE(20)<=750,'barrel dimensions remain compact for runtime use')}
+  assert.ok(existsSync(resolve('assets/source/room-props/barrel-original.jpg')),'original barrel photo remains archived');
+  const sample={...barrel,flip:false,zone:'far-left',scale:1,depth:1};assert.match(roomPropMarkup({props:[sample]},'ink'),/barrel-ink\.png/);assert.match(roomPropMarkup({props:[sample]},'colored'),/barrel-colored\.png/);
+});
+
 check('weighted selection handles invalid rows and samples eligible entries', () => {
   assert.equal(validWeightedRows([{weight: 0}, {weight: -1}, {weight: 2}]).length, 1);
   assert.equal(weightedChoice([], () => 0), null);

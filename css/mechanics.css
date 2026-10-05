@@ -73,6 +73,8 @@
 .room-prop[data-prop-id="bookshelf"] img{object-fit:contain}
 .room-prop[data-prop-id="candle"]{width:19%;height:34%}
 .room-prop[data-prop-id="candle"] img{object-fit:contain}
+.room-prop[data-prop-id="barrel"]{width:17%;height:36%}
+.room-prop[data-prop-id="barrel"] img{object-fit:contain}
 .room-prop-zone--far_left{left:18%;top:40%;width:12%;height:27%}
 .room-prop-zone--far_center{left:50%;top:39%;width:13%;height:28%}
 .room-prop-zone--far_right{left:82%;top:40%;width:12%;height:27%}

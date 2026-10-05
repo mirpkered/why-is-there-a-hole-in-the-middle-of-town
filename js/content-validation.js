@@ -1,5 +1,5 @@
 import {items,monsters,monsterForId,quests,lootTables,dungeonEvents,roomTypes,dungeonNpcs,trades,floorEncounterTable,shopStock,merchantProfiles,innEvents} from './data.js?v=content-expansion-20261005a';
-import {roomProps,ROOM_PROP_ZONES} from './room-visuals.js?v=melted-candle-20261005a';
+import {roomProps,ROOM_PROP_ZONES} from './room-visuals.js?v=barrel-20261005a';
 import {classAbilities,achievements,depthBands} from './progression.js?v=content-expansion-20261005a';
 import {questObjectiveTemplates} from './quest-templates.js?v=systems-20261002a';
 import {statusEffectDefinitions} from './status-effects.js?v=systems-20261002a';
