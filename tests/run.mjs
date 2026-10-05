@@ -550,9 +550,9 @@ await (async()=>{
   globalThis.document={baseURI:'https://game.test/',visibilityState:'visible',addEventListener(){}};globalThis.Audio=MockAudio;
   try{
     const {syncMusicContext,stopMusic,musicPlaybackDiagnostics,updateMusicPreferences}=await import('../js/audio.js?v=inn-music-20261005a');
-    const pool=LOCATION_MUSIC_POOLS.inn;pool.push({id:'test-inn-a',name:'Test Inn A',pool:'inn',src:'assets/audio/music/inn/test-a.mp3',gain:.5,loop:false},{id:'test-inn-b',name:'Test Inn B',pool:'inn',src:'assets/audio/music/inn/test-b.mp3',gain:.5,loop:false});
+    const pool=LOCATION_MUSIC_POOLS.inn;
     updateMusicPreferences({musicEnabled:true,musicVolume:.4});await syncMusicContext('inn',{musicEnabled:true,musicVolume:.4},true);
-    const firstTrack=musicPlaybackDiagnostics().selectedLocationTrack;assert.ok(['test-inn-a','test-inn-b'].includes(firstTrack));assert.equal(musicPlaybackDiagnostics().loop,false);assert.equal(musicPlaybackDiagnostics().effectiveGain,.2);
+    const firstTrack=musicPlaybackDiagnostics().selectedLocationTrack;assert.ok(pool.some(track=>track.id===firstTrack));assert.equal(musicPlaybackDiagnostics().loop,false);assert.equal(musicPlaybackDiagnostics().effectiveGain,.4);
     const channel=audios.find(audio=>audio.src.includes('/assets/audio/music/inn/'));assert.ok(channel,'location music channel should be created');const firstPlayCount=channel.playCount;
     await syncMusicContext('inn',{musicEnabled:true,musicVolume:.4},true);assert.equal(channel.playCount,firstPlayCount);assert.equal(musicPlaybackDiagnostics().playing,true);
     // Ending a one-shot service track must not trigger another play on the same visit.
@@ -560,7 +560,7 @@ await (async()=>{
     await syncMusicContext('town',{musicEnabled:true,musicVolume:.4},true);assert.equal(musicPlaybackDiagnostics().playing,false);
     await syncMusicContext('inn',{musicEnabled:true,musicVolume:.4},true);assert.notEqual(musicPlaybackDiagnostics().selectedLocationTrack,firstTrack);assert.ok(channel.playCount>firstPlayCount);
     updateMusicPreferences({musicEnabled:false,musicVolume:.4});assert.equal(musicPlaybackDiagnostics().playing,false);
-    stopMusic();pool.splice(0,2);
+    stopMusic();
   }finally{globalThis.document=previousDocument;globalThis.Audio=PreviousAudio}
 })();checks++;console.log('✓ location audio plays a service recording once, stays silent when ended, and cleans up on exit');
 
