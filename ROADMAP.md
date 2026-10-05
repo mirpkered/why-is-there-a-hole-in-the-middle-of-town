@@ -1,20 +1,26 @@
-# Development roadmap
+# Roadmap
 
-The canonical project roadmap named `WHY_IS_THERE_A_HOLE_IN_THE_MIDDLE_OF_TOWN_ROADMAP.md` was not present in the supplied workspace or its read-only `sources/` directory. This file preserves the direction and phase boundaries in the initial project brief until that canonical roadmap is available.
+This file records current project direction only. It does not reconstruct missing historical plans.
 
-## Foundation (current)
+## Currently playable
 
-- Static, mobile-first browser application suitable for a GitHub Pages project site.
-- Title, minimal character creation, town hub, quest board, store, inn, character sheet, and grid dungeon shell.
-- Versioned client-side save model and QA query mode.
-- Turn-based exploration, revealed map, one rat encounter, starter items, quest progress, and return-to-town loop.
+- Static GitHub Pages game with four classes and three playable procedural dungeon floors.
+- Exploration, separated battle scenes, twelve monsters, level-based attack pools, status effects, loot, equipment, quests, merchants, market cycles, Inn events, achievements, and local saves.
+- Compact town services, paired hand-drawn enemy/Town/prop art, player-performed dungeon and battle music, QA mode, and automated preflight.
 
-## Next phases
+## Next
 
-1. Confirm and merge the canonical roadmap without changing its product direction.
-2. Expand grid content into authored rooms, meaningful floor exits, and deeper-floor risk/reward.
-3. Build complete combat, ability, equipment, and loot loops with clear formulas and data-driven content.
-4. Develop town characters, quest variety, progression, and original visual/audio identity.
-5. Improve automated and device-level validation, then publish the stable static site through GitHub Pages.
+- Add user-drawn NPC, item, landmark, and room-prop art through the existing art registries.
+- Add authored content to the existing quests, events, room, and monster systems while keeping mobile readability and deterministic QA.
+- Continue device checks for iOS audio session behavior, safe-area layouts, and touch interactions as content changes.
+- Consider deeper floors only after persistent fixtures, encounter/economy progression, and multi-floor return routing are intentionally designed and tested.
 
-Backend features remain out of scope until a requirement needs server execution.
+## Later
+
+- Optional authored room and battle background images, registered independently from room props and enemy sprites.
+- Additional location-music recordings supplied by the user; the current service pools are intentionally empty.
+
+## Intentionally deferred
+
+- Floors beyond Floor 3, backend/cloud saves, multiplayer, crafting, durability, pets, bosses, procedural live quests, and framework migration.
+- Final town/NPC/item/landmark art not yet supplied by the user.

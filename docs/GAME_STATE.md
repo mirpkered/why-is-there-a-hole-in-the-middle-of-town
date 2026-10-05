@@ -1,28 +1,48 @@
 # Persisted game state
 
-The local storage key is `mirpworks-hole-town-save`. Current `saveVersion` is **8**. The immediately previous valid primary snapshot is stored at a separate backup key. A malformed or structurally invalid primary is copied to a recovery key before the backup is tried. The game does not silently erase that raw recovery copy.
+The character save uses local-storage key `mirpworks-hole-town-save` and current `saveVersion` **8**. Each successful save first keeps the previous valid primary under a backup key. If the primary cannot parse or validate, its raw text is retained under a recovery key before the backup is attempted. Failed storage access returns safely instead of stopping gameplay.
 
-- `player`: name, class, level, XP, HP/MP, base attributes, status effects, encounter-counted temporary effects, and turn count.
-- `inventory`: item ID and quantity; stackable goods share capacity slots in groups of ten.
-- `equipment`: equipped item IDs by the six equipment slots.
-- `town`: currency, short discovery reactions, recurring NPC visit counts, event-driven milestone flags, deterministic current shop rotation, optional Inn effects, and `tradeHistory` for completed trade objectives.
-- `quests`: available IDs, active ID/progress pairs, and completed IDs. Chain steps use stable quest IDs and unlock their next step at turn-in.
-- `career`: local counters for exploration, combat, spending/earnings, items, and unusual discoveries.
-- `achievements`: earned achievement IDs and unlock timestamps.
-- `dungeon`: current/deepest floor, coordinates, exploration, per-floor persisted maps and stair coordinates, run seed, NPCs, encounters, recent encounter history and pacing counters, loose loot, event choices/history/flags, per-cell room tags, and discovered landmark coordinates.
-- `combat`: current monster encounter snapshot or null. A snapshot stores monster ID, encounter floor/level, optional variant, max/current HP, defense, attacks and behavior, reward multipliers, and encounter coordinates.
-- `settings`: durable preferences for sprite style, enemy threat display, music, text size, high contrast automap, and reduced motion.
-- `meta`: creation and last-save timestamps.
+## Top-level fields
 
-Version 1–7 saves migrate sequentially to version 8. A v4 active encounter is converted to a floor-appropriate snapshot while preserving its health percentage and using no variant. Version 5 characters gain empty career/achievement records, empty NPC visit history, and default accessibility preferences. Version 7 added status-effect migration, encounter history/pacing, town flags, and shop rotation; version 8 adds market and Inn state. Existing version 3 characters retain their 7×7 legacy geometry and coordinates for floors already reached; later floors on those saves retain that legacy layout. New characters receive three generated 11×11 maps, saved by floor and reused on return or reload. Migration preserves player progress, inventory, equipment, quests, currency, and explored dungeon state. A saved event choice, status duration, and active combat snapshot remain intact after reload. Unknown versions are rejected rather than silently overwritten. `node tests/run.mjs` exercises each supported historical version and save recovery.
+- `player`: name, class, level/XP, current and maximum HP/MP, base attributes, turn count, statuses, and active temporary effects.
+- `inventory`: item IDs and positive quantities, with acquisition provenance on notable non-stackable instances where present.
+- `equipment`: item IDs keyed by `head`, `body`, `mainHand`, `offHand`, `feet`, and `accessory`.
+- `town`: gold, NPC visit/milestone state, deterministic market cycle/seed/stock/demand, Inn effects, and completed trade history.
+- `quests`: available IDs, active progress records, and completed IDs. Chain follow-ups unlock when their predecessor is turned in.
+- `dungeon`: current/deepest floor, coordinates/facing, run seed, saved map geometry per reached floor, explored/visited cells, room tags, landmarks, NPCs, event state/history, loose loot, recent encounter history, and return-related state.
+- `combat`: null or a spawn-time enemy snapshot containing current/max HP, encounter level, variant, defense, eligible/scaled attacks, behavior, reward multipliers, and relevant combat effects.
+- `career`: local counters used by statistics and achievement triggers.
+- `achievements`: unlocked IDs and timestamps.
+- `settings`: character-copied visual/audio/accessibility preferences. Music/SFX, threat display, and accessibility choices (text size, contrast, motion, handedness) also use separate local-storage keys; sprite style remains in the character settings.
+- `meta`: creation/update time and recovery annotations.
 
-The save loader repairs absent optional containers and rejects an invalid current map, out-of-bounds player position, malformed inventory row, or active encounter with no known monster. If the primary fails validation, it attempts the backup and exposes recovery details only in QA; the normal Continue flow gives a short in-world notice.
+Open tabs, active service subtabs, selected gear slot, scroll position, map-expanded state, toasts, and other temporary interface state are not persisted.
 
-Enemy abilities are definitions keyed by class and unlock level in `js/progression.js`; they use the existing MP value and do not need per-save cooldown state. The combat save snapshot retains enemy values; level and experience remain on the player. Defeat records store the lost gold, floor, and retained equipped gear until the recovery notice is acknowledged. Career records and achievements are local to this save and have no server counterpart.
+## Migration history
 
-Character creation rolls each starting attribute independently from the selected class's range. HP and MP are derived from class baselines and the rolled Vitality/Mind modifiers, then starting equipment is applied before current HP/MP are filled to their maxima. The chosen base attributes and final resources are saved in the existing player fields; the latest save version does not change for this feature.
+Migrations run one version at a time in `state.js`. A version must be recognized and validate before the loaded state is accepted.
 
+| Version | Change recorded by migration |
+| --- | --- |
+| 1 | Initial legacy save shape. |
+| 2 | Normalize old equipment fields, player progression defaults, dungeon coordinates, town/quest/settings containers, and the old rat-combat representation. |
+| 3 | Add town reactions and saved dungeon event, room, landmark, and event-history containers. |
+| 4 | Preserve the fixed 7×7 map for reached floors and mark the save as legacy geometry. |
+| 5 | Convert an active enemy into a scaled encounter snapshot while retaining its remaining-health ratio; normalize threat-display setting. |
+| 6 | Add career records, achievement storage, NPC visit history, and accessibility defaults. |
+| 7 | Add generalized status effects (including legacy burn conversion), encounter history/pacing, town flags, and the shop container. |
+| 8 | Add market demand/seed/flavor and Inn effect state, preserving the current shop cycle. |
 
-### Town market and Inn additions
+Version 8 is the current endpoint; new features should add a new sequential migration only when they add durable character data. The touch handedness and accessibility preferences currently default through their independent global settings store rather than a character-save migration.
 
-Save version 8 adds town.shop.cycle, marketSeed, rotating stock IDs, demand states/multipliers, and cycle flavor, plus town.innEffects for Well Rested XP charges, fractional XP carry, and temporary Inn effect keys. Version 7 and earlier characters migrate sequentially; current stock/demand are initialized deterministically and do not reroll on reload. A successful expedition return advances the market once. Inn rest benefits persist across reloads and decrement on their documented battle/encounter completion rules.
+## Geometry and combat persistence
+
+New characters store deterministic maps for the three currently playable floors. A generated floor is kept when revisited or loaded. Existing version 3-era 7×7 floor geometry remains intact for that character. The current playable cap is Floor 3; synthetic QA enemy levels do not unlock more floors.
+
+An enemy is scaled once when combat begins. The saved snapshot prevents reloads from rerolling its level, variant, HP, attacks, or rewards. Status durations advance only at their explicit combat timing hook; a page reload does not count as a turn.
+
+## Recovery and limits
+
+Validation rejects unsupported save versions, invalid current-map geometry/coordinates, malformed inventory rows, and unknown/invalid active combat. Missing optional containers are repaired to safe defaults. A corrupt main save is copied aside and the backup is tried. Unknown versions are left unaccepted; the game offers a clean new-game path without silently replacing the recoverable raw text.
+
+A representative synthetic long-play snapshot containing all item definitions, three explored floors, event history, quest progress, achievements, and an active fight serialized to about **25 KB** in the maintenance audit. A fresh state was about **3.5 KB**. These are fixtures, not a formal maximum; browser storage quota failures remain handled by the save API.

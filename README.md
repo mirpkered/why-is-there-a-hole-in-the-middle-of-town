@@ -1,48 +1,35 @@
 # Why Is There a Hole in the Middle of Town?
 
-An original, mobile-first, turn-based dungeon crawler by Mirpworks. The town treats the hole as a civic and economic matter. The things below remain dangerous.
+An original, mobile-first, turn-based dungeon crawler by Mirpworks. The town treats the Hole as a civic matter. The things below remain dangerous.
 
-**Status:** single-player mechanics pass. **Hosting:** static GitHub Pages project site.
+**Live game:** [mirpkered.github.io/why-is-there-a-hole-in-the-middle-of-town](https://mirpkered.github.io/why-is-there-a-hole-in-the-middle-of-town/)
 
-## Run locally
+## Play
 
-Serve this folder with any static HTTP server and open its address in a browser. ES modules require HTTP; opening `index.html` directly as a file is not supported. No build step or third-party runtime dependency is needed.
+Create or continue a character, take work from town, then descend through three playable floors of procedural rooms, combat, events, recurring merchants, and loot. Six equipment slots, four classes, class abilities, status effects, ten short quest chains, local achievements, and an evolving town market support repeat expeditions. Defeat sends the delver back to town with gear and discoveries intact, at 1 HP, after a 10% gold loss.
 
-## Current play loop
+The game is single-player and saves automatically in browser local storage. Saves do not sync between devices.
 
-New Game → town → accept jobs → explore three floors of combat and strange events → find and equip gear → meet recurring dungeon merchants → decide whether to descend or return. Four starting classes use distinct MP abilities, with new actions at levels 3 and 5. Five short quest chains link landmarks, objects, and recurring characters. Local career statistics and 15 achievements keep a record of each character’s odd decisions. Saves are automatic in browser local storage.
+## Controls and accessibility
 
-The town also provides a compact quest journal, statistics and achievement screens, shop/inn services, and presentation settings for Large text, high-contrast automapping, and reduced motion. Defeat triggers an Office rescue: the character keeps their gear and discoveries, returns at 1 HP, and loses 10% of carried gold.
+Use the on-screen directional pad on touch devices. Keyboard movement is W/Up, A/Left, S/Down, and D/Right. Handedness changes touch-control placement only. Settings include sprite style, threat display, music, text size, high-contrast map, reduced motion, and handedness.
 
-## Architecture
+## Develop and validate
 
-- `index.html`: static entry point; all asset paths are relative for project-site hosting.
-- `css/styles.css`: responsive dark stone and civic-paper presentation.
-- `js/app.js`: screen rendering, accessible controls, keyboard input, and QA tools.
-- `js/game.js`: combat, weighted event resolution, temporary effects, equipment, trade, loot, retreat, floors, and save-backed progression.
-- `js/state.js`: authoritative state shape, map helpers, inventory limits, and versioned save migration.
-- `js/data.js`: monster, gear, quest, NPC, trade, loot-table, room, and dungeon-event definitions.
-- `js/progression.js`: class ability kits, local achievements, and future depth-band guidance.
-- `assets/images/` and `assets/icons/`: source home-screen artwork and resized browser/mobile app icons; `site.webmanifest` defines the install experience.
-- `docs/`: state, architecture, and content conventions.
+Serve the repository with any local static HTTP server; opening `index.html` as a file does not support its ES modules. No build step or runtime dependency is needed.
 
-The app has no server API, account, or cloud save. See [ROADMAP.md](ROADMAP.md). The named canonical roadmap was not included in the supplied project files; its absence is recorded there.
+Run the deployment preflight before publishing:
 
-## Development preflight
+```sh
+node tests/run.mjs
+```
 
-Run `node tests/run.mjs` before publishing. It validates content and local asset references, checks save migrations and backup recovery, stress-generates 3,000 deterministic floors, samples encounter/loot selection across five depth bands, and exercises status, shop, save/load, and new-character flows. GitHub Pages runs the same bounded preflight before deployment.
+It validates content and runtime assets, historical save migrations and backup recovery, 5,001 seeded floor layouts, room prop placement, quest-chain links, and bounded gameplay simulations. The same command runs before GitHub Pages deployment.
 
-## Controls
+Append `?qa=1` to the live or local URL for development diagnostics and controls. QA state remains local to the browser.
 
-Use the dungeon directional pad to move north, east, south, or west one cell at a time; each successful step faces that direction. W/Up, D/Right, S/Down, and A/Left match the compass directions on a keyboard. A blocked move says “There's a wall there.” and does not consume a turn or advance encounters. During combat, open Abilities to see the current class kit. Inventory, Statistics, Achievements, and accessibility preferences are available from town.
+## Project shape
 
-Append `?qa=1` to the URL to show isolated development controls. QA options do not appear in ordinary play.
+The site is static HTML, CSS, and native JavaScript modules hosted by GitHub Pages. `js/app.js` renders screens and handles delegated input; `js/game.js` resolves actions; `js/state.js` owns save shape, migrations, and map generation; `js/data.js` and `js/progression.js` hold content; focused modules provide audio, economy, encounter, status, room-art, and validation systems. See [Architecture](docs/ARCHITECTURE.md), [Game State](docs/GAME_STATE.md), [Content Guide](docs/CONTENT_GUIDE.md), [Art Backlog](docs/ART_BACKLOG.md), and [Roadmap](ROADMAP.md).
 
-## Deployment
-
-The repository publishes the static site through GitHub Pages. All links and assets are relative; there is no client-side URL router. Live URL: https://mirpkered.github.io/why-is-there-a-hole-in-the-middle-of-town/.
-
-
-Town is a compact destination hub. Juniper's guaranteed essentials sit beside four seeded rotating items; selling eligible dungeon goods uses bounded, saved market demand. Sal's 5g full rest can rarely produce a modest temporary benefit, including Well Rested combat XP for three victories. These town systems are covered by the deployment preflight and save migration tests.
-
-Town services now share a sticky compact resource/navigation bar. The store uses separate Buy and Sell modes, while character creation opens with a ready-to-start name, class, and stat roll; its name pools are in js/name-generator.js.
+Hand-drawn player artwork and performances are retained in `assets/source/`; processed paired art and runtime audio live separately. User linework and recordings remain canonical. No server, account, remote dependency, or generated artwork is required to run the game.
