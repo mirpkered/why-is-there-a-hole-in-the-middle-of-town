@@ -12,16 +12,16 @@ Deadly Rat, Killer Rabbit, Kung Fungoose, Pocket Slime, Fire-Breathing Earthworm
 
 The Hole, General Store, The Inn, Quest Board, Statistics, Settings, and Character have paired transparent illustrations registered in `js/town-art.js`. The Hole is the featured Town button art. Statistics uses the supplied chart sign, Settings the twin-gear sign, and Character the television with two adventurers. The colored Quest Board sign uses muted wood tones. All source scans are retained under `assets/source/town/`.
 
-### Room props (8 of 28 definitions)
+### Room props (9 of 28 definitions)
 
-Campfire, Wooden Crate, Mushroom Cluster, Tall Mushroom, Leaning Tall Mushroom, Small Mushroom, Market Sign, and Very Small Door have paired Ink/Colored PNGs; original photos are retained under `assets/source/room-props/`. Other room props currently use CSS/SVG placeholder presentation.
+Campfire, Wooden Crate, Mushroom Cluster, Tall Mushroom, Leaning Tall Mushroom, Small Mushroom, Market Sign, Very Small Door, and Empty Bookshelf have paired Ink/Colored PNGs; original photos are retained under `assets/source/room-props/`. Other room props currently use CSS/SVG placeholder presentation.
 
 ## Needs art
 
 - **Enemies (3):** Kobold Toll-Taker, Skeleton on Break, Permit-Office Mimic. They currently use local SVG fallback sprites.
 - **NPCs (5 definitions):** town clerk, shopkeeper, innkeeper, kobold trader, and lost surveyor. No custom portraits are registered.
 - **Items (48 definitions):** no item-specific custom art is registered; item presentation remains text/fallback UI.
-- **Room props (20 definitions):** water debris, floating plank, small altar, candle, barrel, labeled box, campfire kettle, bedroll, abandoned pack, market stall, market basket, bookshelf, book stack, labeled stone, filing cabinet, archive box, paper stack, spoon pile, single spoon, and stone debris. These use CSS/SVG placeholders.
+- **Room props (19 definitions):** water debris, floating plank, small altar, candle, barrel, labeled box, campfire kettle, bedroll, abandoned pack, market stall, market basket, book stack, labeled stone, filing cabinet, archive box, paper stack, spoon pile, single spoon, and stone debris. These use CSS/SVG placeholders.
 - **Interactive objects/landmarks:** most discovery objects still use room atmosphere and placeholder props; the Very Small Door now has paired room art in library and records rooms.
 - **Other Town destinations:** Character, Statistics, Achievements, and Settings use simple UI emblems; custom drawings are not registered.
 

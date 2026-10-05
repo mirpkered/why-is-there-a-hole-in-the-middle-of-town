@@ -163,6 +163,13 @@ check('Very Small Door art appears only in its compatible room families',()=>{
   const sample={...door,flip:false,zone:'wall-center',scale:1,depth:1};assert.match(roomPropMarkup({props:[sample]},'ink'),/small-door-ink\.png/);assert.match(roomPropMarkup({props:[sample]},'colored'),/small-door-colored\.png/);
 });
 
+check('hand-drawn empty bookshelf replaces the Library placeholder',()=>{
+  const shelf=props.bookshelf;assert.ok(shelf);assert.ok(shelf.rooms.includes('library'));assert.ok(roomTypes.library.visual.propPool.includes('bookshelf'));assert.equal(shelf.placeholder,'shelf');
+  for(const [style,path] of [['ink',shelf.ink],['colored',shelf.colored]]){assert.ok(path);const png=readFileSync(resolve(path));assert.equal(png.toString('hex',0,8),'89504e470d0a1a0a');assert.equal(png[25],6,`${style} bookshelf must preserve PNG alpha`);assert.ok(png.readUInt32BE(16)<=650&&png.readUInt32BE(20)<=750,'bookshelf dimensions remain compact for runtime use')}
+  assert.ok(existsSync(resolve('assets/source/room-props/bookshelf-original.jpg')),'original bookshelf drawing remains archived');
+  const sample={...shelf,flip:false,zone:'wall-center',scale:1,depth:1};assert.match(roomPropMarkup({props:[sample]},'ink'),/bookshelf-ink\.png/);assert.match(roomPropMarkup({props:[sample]},'colored'),/bookshelf-colored\.png/);
+});
+
 check('weighted selection handles invalid rows and samples eligible entries', () => {
   assert.equal(validWeightedRows([{weight: 0}, {weight: -1}, {weight: 2}]).length, 1);
   assert.equal(weightedChoice([], () => 0), null);
