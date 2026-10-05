@@ -11,7 +11,7 @@ globalThis.localStorage = {
   removeItem: key => storage.delete(key)
 };
 
-const { SAVE_KEY, SAVE_BACKUP_KEY, SAVE_RECOVERY_KEY, SAVE_VERSION, freshState, generateFloorMap, validateFloorMap, analyzeFloorMap, saveState, loadState } = await import('../js/state.js?preflight');
+const { SAVE_KEY, SAVE_BACKUP_KEY, SAVE_RECOVERY_KEY, SAVE_VERSION, freshState, generateFloorMap, validateFloorMap, analyzeFloorMap, saveState, loadState, loadStateDetailed } = await import('../js/state.js?preflight');
 const { items, monsters, lootTables, floorEncounterTable, innEvents, shopStock, roomTypes, dungeonEvents } = await import('../js/data.js?preflight');
 const { makeMarketCycle, currentSellValue, simulateMarkets, simulateInnEvents } = await import('../js/town-economy.js?preflight');
 const { generateAbsurdName, inspectNameGenerator, MAX_NAME_LENGTH } = await import('../js/name-generator.js?preflight');
@@ -336,6 +336,27 @@ check('invalid primary save recovers from the last valid backup without discardi
   storage.set(SAVE_KEY, '{broken json'); const restored = loadState();
   assert.equal(restored.player.name, 'Backup'); assert.equal(restored.meta.recoveredFromBackup, true);
   assert.equal(storage.get(SAVE_RECOVERY_KEY), '{broken json'); assert.ok(storage.has(SAVE_BACKUP_KEY));
+});
+
+check('Continue candidate loading falls back when primary storage read fails and reports its source',()=>{
+  storage.clear();const backup=freshState();backup.player={name:'Backup After Read Error',class:'Fighter',hp:12,maxHp:20,mp:0,maxMp:0,effects:{}};storage.set(SAVE_BACKUP_KEY,JSON.stringify(backup));const get=localStorage.getItem;
+  try{localStorage.getItem=key=>{if(key===SAVE_KEY)throw new Error('temporary primary read failure');return get(key)};const result=loadStateDetailed();assert.equal(result.state.player.name,'Backup After Read Error');assert.equal(result.diagnostics.source,'backup');assert.ok(result.diagnostics.errors.some(error=>error.includes('temporary primary read failure')));assert.equal(result.state.meta.recoveredFromBackup,true)}finally{localStorage.getItem=get}
+});
+
+check('missing primary with valid backup and no recoverable save are distinguished',()=>{
+  storage.clear();let result=loadStateDetailed();assert.equal(result.state,null);assert.equal(result.diagnostics.lastError,'no recoverable save');const backup=freshState();backup.player={name:'Backup Only',class:'Rogue',hp:9,maxHp:19,mp:2,maxMp:6,effects:{}};storage.set(SAVE_BACKUP_KEY,JSON.stringify(backup));result=loadStateDetailed();assert.equal(result.state.player.name,'Backup Only');assert.equal(result.diagnostics.source,'backup');assert.equal(result.diagnostics.primaryPresent,false);assert.equal(result.diagnostics.backupPresent,true)
+});
+
+check('a newer malformed primary does not overwrite an existing raw recovery copy',()=>{
+  storage.clear();const prior='{older raw save}';storage.set(SAVE_RECOVERY_KEY,prior);storage.set(SAVE_KEY,'{newer raw save}');const result=loadStateDetailed();assert.equal(result.state,null);assert.equal(storage.get(SAVE_RECOVERY_KEY),prior);assert.ok([...storage.entries()].some(([key,value])=>key.startsWith(`${SAVE_RECOVERY_KEY}-`)&&value==='{newer raw save}'));assert.equal(result.diagnostics.recoveryCopyPreserved,true)
+});
+
+check('repeated valid Continue candidate reads are side-effect free and consistently recover',()=>{
+  storage.clear();const valid=freshState();valid.player={name:'Repeat Candidate',class:'Wizard',hp:8,maxHp:18,mp:5,maxMp:12,effects:{}};storage.set(SAVE_KEY,JSON.stringify(valid));for(let i=0;i<300;i++){const result=loadStateDetailed();assert.equal(result.state.player.name,'Repeat Candidate');assert.equal(result.diagnostics.source,'primary')}assert.equal(JSON.parse(storage.get(SAVE_KEY)).player.name,'Repeat Candidate')
+});
+
+check('Continue UI remains delegated, idempotent, reports load failure, and isolates audio errors',()=>{
+  const appSource=readFileSync(resolve('js/app.js'),'utf8');assert.match(appSource,/app\.addEventListener\('click'/);assert.match(appSource,/function continueGame\(button\)\{if\(continueLoadBusy\|\|screen!=='title'\)return/);assert.match(appSource,/continueError='Couldn’t load that save\.'/);assert.match(appSource,/try\{syncMusic\(\)\}catch\(error\)/)
 });
 
 check('missing optional save containers are repaired without losing core progress', () => {
