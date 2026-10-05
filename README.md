@@ -34,4 +34,4 @@ The site is static HTML, CSS, and native JavaScript modules hosted by GitHub Pag
 
 Hand-drawn player artwork and performances are retained in `assets/source/`; processed paired art and runtime audio live separately. User linework and recordings remain canonical. No server, account, remote dependency, or generated artwork is required to run the game.
 
-The visual tone pairs a dark, lightly doodled municipal-office backdrop with a crooked wood-toned Delvers’ Office masthead. The SVG doodles stay behind the content panels, while the user-drawn town signs and monsters remain the foreground art.
+The visual tone pairs a dark, lightly doodled municipal-office backdrop with a code-built title lockup: “WHY IS THERE A HOLE” above an attached “IN THE MIDDLE OF TOWN?” docket strip, with the Delvers’ Office imprint below. Its crooked typography and paper tag use the project’s own wood, ink, and parchment palette. The SVG doodles stay behind the content panels, while the user-drawn town signs and monsters remain the foreground art.

@@ -71,10 +71,17 @@ check('all registered local runtime assets exist', () => {
 
 check('shared municipal background and masthead use the local doodle sheet and responsive styles',()=>{
   const css=readFileSync(resolve('css/mechanics.css'),'utf8');
+  const app=readFileSync(resolve('js/app.js'),'utf8');
   assert.ok(existsSync(resolve('assets/images/ui/municipal-doodles.svg')),'municipal doodle background should exist locally');
   assert.match(css,/url\('\.\.\/assets\/images\/ui\/municipal-doodles\.svg'\)/,'background should use the bundled SVG, not a remote image');
   assert.match(css,/\.topbar\{[^}]*background:linear-gradient[^}]*box-shadow:/,'shared masthead should use the signboard treatment');
-  assert.match(css,/\.title-screen \.title-card::before[^}]*DELVERS[’'] OFFICE/i,'new-character/title screen should echo the municipal masthead');
+  assert.match(app,/function gameMasthead\(/,'shared masthead markup should be reusable');
+  assert.match(app,/WHY IS THERE A HOLE/,'masthead should show the main game title');
+  assert.match(app,/IN THE MIDDLE OF TOWN\?/,'masthead should show the attached subtitle strip');
+  assert.match(app,/gameMasthead\('h1','game-masthead--hero'\)/,'title screen should use the shared semantic h1 masthead');
+  assert.match(css,/\.masthead-ribbon[^}]*clip-path:/,'subtitle should be a distinct original paper-tag treatment');
+  assert.match(css,/\.game-masthead--hero/,'title screen should use the enlarged lockup');
+  assert.match(css,/\.topbar\{display:grid;grid-template-columns:minmax\(0,1fr\)/,'narrow layouts should give masthead and actions separate rows');
   assert.match(css,/@media\(max-width:360px\)\{\.topbar/,'masthead must have a narrow-phone layout');
 });
 
