@@ -9,7 +9,7 @@ The character save uses local-storage key `mirpworks-hole-town-save` and current
 - `equipment`: item IDs keyed by `head`, `body`, `mainHand`, `offHand`, `feet`, and `accessory`.
 - `town`: gold, NPC visit/milestone state, deterministic market cycle/seed/stock/demand, Inn effects, and completed trade history.
 - `quests`: available IDs, active progress records, and completed IDs. Chain follow-ups unlock when their predecessor is turned in.
-- `dungeon`: current/deepest floor, coordinates/facing, run seed, saved map geometry per reached floor, explored/visited cells, room tags, landmarks, NPCs, event state/history, loose loot, recent encounter history, and return-related state.
+- `dungeon`: current/deepest floor, coordinates/facing, run seed, per-floor presentation-only Dungeon Set IDs, saved map geometry per reached floor, explored/visited cells, room tags, landmarks, NPCs, event state/history, loose loot, recent encounter history, and return-related state.
 - `combat`: null or a spawn-time enemy snapshot containing current/max HP, encounter level, variant, defense, eligible/scaled attacks, behavior, reward multipliers, and relevant combat effects.
 - `career`: local counters used by statistics and achievement triggers.
 - `achievements`: unlocked IDs and timestamps.
@@ -45,8 +45,8 @@ An enemy is scaled once when combat begins. The saved snapshot prevents reloads 
 
 Validation rejects unsupported save versions, invalid current-map geometry/coordinates, malformed inventory rows, and unknown/invalid active combat. Missing optional containers are repaired to safe defaults. A corrupt main save is copied aside and the backup is tried. Unknown versions are left unaccepted; the game offers a clean new-game path without silently replacing the recoverable raw text.
 
-A representative synthetic long-play snapshot containing all item definitions, three explored floors, event history, quest progress, achievements, and an active fight serialized to about **25 KB** in the maintenance audit. A fresh state was about **3.5 KB**. These are fixtures, not a formal maximum; browser storage quota failures remain handled by the save API.
+The current preflight's synthetic Floors 1–7 expedition fixture serialized to **9,069 bytes**. A separate fresh-state sample serialized to about **3.5 KB**. These are different fixtures, not a formal maximum; save size grows with discovered maps and history, and browser storage quota failures remain handled by the save API.
 
 ## Presentation registries
 
-Content presentation registries are not part of the save. Room-background variants are selected from existing floor geometry, coordinates, and room ID with a deterministic visual seed; no asset path or variant choice is persisted. Town, prop, enemy, item, NPC, and interactive-object art metadata is also definition-only. This pass does not change save version 8 or require migration.
+Content presentation registries are not part of the save. Each run stores a stable set ID for each floor in optional `dungeon.visualSets`; choices are derived from the run seed with an isolated hash and do not consume gameplay RNG. Existing saves without this mapping get it repaired on load, with no version bump or migration step. The current floor’s map geometry and facing select the semantic front/left/right topology image at render time; filenames and display names are not persistence keys. Town, prop, enemy, item, NPC, and interactive-object art metadata remains definition-only.

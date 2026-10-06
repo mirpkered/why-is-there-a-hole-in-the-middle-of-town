@@ -6,7 +6,7 @@ import {statusEffectDefinitions} from './status-effects.js?v=systems-20261002a';
 import {validateLocationMusic} from './location-music.js?v=statistics-music-20261005a';
 import {TOWN_ART_ASSETS} from './town-art.js?v=town-service-signs-20261005a';
 import {INTERACTIVE_OBJECT_ART} from './interactive-art.js?v=floor4-release-prep-20261006a';
-import {ROOM_BACKGROUND_REGISTRY,BATTLE_BACKGROUND_REGISTRY,validateBackgroundRegistry} from './scene-backgrounds.js?v=floor4-release-prep-20261006a';
+import {ROOM_BACKGROUND_REGISTRY,BATTLE_BACKGROUND_REGISTRY,validateBackgroundRegistry,validateDungeonSetRegistry} from './scene-backgrounds.js?v=dungeon-sets-20261006a';
 import {validateArtEntries} from './art-assets.js?v=floor4-release-prep-20261006a';
 import {MASCOT_ART} from './mascots.js?v=mascot-penguin-20261006a';
 
@@ -88,6 +88,7 @@ export function validateContent(){
   for(const [slot,assets] of Object.entries(TOWN_ART_ASSETS)){if(!assets.ink||!assets.colored)push('error','town-art-pair',`${slot} must have both Ink and Colored assets.`);for(const path of [assets.ink,assets.colored])if(typeof path!=='string'||!path.startsWith('assets/'))push('error','town-art-path',`${slot} has an invalid local asset path.`)}
   for(const [name,registry,requirePair] of [['town',TOWN_ART_ASSETS,true],['props',roomProps,false],['interactive',INTERACTIVE_OBJECT_ART,false],['mascot',MASCOT_ART,false]]){const result=validateArtEntries(registry,{requirePair});for(const error of result.errors)push('error',`${name}-art`,error);for(const warning of result.warnings)push('warning',`${name}-art`,warning)}
   for(const [kind,registry] of [['room',ROOM_BACKGROUND_REGISTRY],['battle',BATTLE_BACKGROUND_REGISTRY]])for(const error of validateBackgroundRegistry(registry,roomIds).errors)push('error',`${kind}-background`,error);
+  for(const error of validateDungeonSetRegistry().errors)push('error','dungeon-background-set',error);
   for(const id of eventIds)if(!INTERACTIVE_OBJECT_ART[`event:${id}`])push('error','interactive-art',`Event ${id} has no optional-art/fallback registry entry.`);
   for(const id of ['warm-wall','giant-stone-face'])if(!INTERACTIVE_OBJECT_ART[`landmark:${id}`])push('error','interactive-art',`Landmark ${id} has no optional-art/fallback registry entry.`);
   for(const [id,item] of Object.entries(items))if(item.art){const result=validateArtEntries({[id]:{id,...item.art}});for(const error of result.errors)push('error','item-art',error)}

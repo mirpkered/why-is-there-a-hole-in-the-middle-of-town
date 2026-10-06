@@ -28,6 +28,21 @@ Normal play is capped at Floor 3 by `CURRENT_PLAYABLE_MAX_FLOOR` in `js/depth-co
 
 Each `roomProps` entry declares stable ID, placeholder, compatible rooms, zones, layer, weight, count, scale, CSS fallback, and optional paired assets. Add artwork without changing selection rules. `roomPropMarkup()` uses the shared art resolver for Original Ink/Colored. Exploration and battle backgrounds are separate registries in `scene-backgrounds.js`; register variants by room ID with `id`, local `path`, optional positive `weight`, focal positions, and overlay hint. Empty variants or a missing image retain the CSS scene. Background choice is stable for a given saved floor/cell/type and does not advance gameplay RNG.
 
+Exploration also has five run-assigned Dungeon Sets in `dungeon-themes.js`. One independent set ID is derived and persisted for each floor from the run seed; it is presentation-only and never consumes gameplay randomness. The authoritative map plus current facing determines `front`, `left`, and `right`, then selects a semantic topology ID. The eight required views are:
+
+| ID | Front | Left | Right | Canonical topology |
+| --- | --- | --- | --- | --- |
+| 01 | Wall | Open | Wall | `front-wall-left-open-right-wall` |
+| 02 | Wall | Wall | Open | `front-wall-left-wall-right-open` |
+| 03 | Wall | Open | Open | `front-wall-left-open-right-open` |
+| 04 | Open | Open | Wall | `front-open-left-open-right-wall` |
+| 05 | Open | Wall | Open | `front-open-left-wall-right-open` |
+| 06 | Open | Open | Open | `front-open-left-open-right-open` |
+| 07 | Open | Wall | Wall | `front-open-left-wall-right-wall` |
+| 08 | Wall | Wall | Wall | `front-wall-left-wall-right-wall` |
+
+The rear passage is deliberately omitted from the view, so a cell whose only passage is behind the player uses 08. Register a new set by adding all eight PNGs under `assets/images/dungeon-sets/<stable-id>/` and one entry to `DUNGEON_SETS`; keep the ZIP/source material under `assets/source/dungeon-sets/`. Run the canonical preflight, then use `?qa=1` to temporarily preview the five sets and inspect all eight views. Runtime preparation preloads only the selected floor’s eight images. Missing or undecodable files restore the CSS scene. Props, landmarks, and visitors remain separate layers above the environment; battle uses its separate battle CSS background without exploration props.
+
 ## Hand-drawn art
 
 Preserve user source art under `assets/source/` and put processed runtime pairs under `assets/images/`. Use transparent PNGs with modest padding, keeping the original black linework intact. Colored variants use flat fill below the protected ink. Register stable local asset paths in monster metadata, `roomProps`, or `js/town-art.js`. Town destination buttons remain flexible CSS controls; illustrations do not define card dimensions. Sprite Style selects Ink or Colored for enemies, town art, and props where a pair exists. Room props use `roomProps.rooms` and their room’s `visual.propPool`; paired artwork replaces the existing placeholder automatically.
@@ -75,6 +90,7 @@ Run `node tests/run.mjs`. It checks content references and local asset paths, hi
 - **NPC portrait:** add optional `art.ink` / `art.colored` metadata to the NPC definition. The portrait slot resolves automatically where the NPC screen renders.
 - **Item art:** add optional art metadata to the item; inventory item pills retain their text if no art exists.
 - **Room background:** add an image under `assets/images/rooms/` and a weighted variant in that room’s exploration entry. Use `focal`/`mobileFocal` when its crop needs guidance. No room-specific renderer or CSS rule is needed.
+- **Dungeon environment set:** supply eight images for the exact Front/Left/Right combinations in the table above, map each semantic ID to its file in `DUNGEON_SETS`, then run `node tests/run.mjs` and preview every topology in `?qa=1`. A complete set becomes eligible for deterministic per-floor run assignment automatically.
 - **Battle background:** register it independently under `BATTLE_BACKGROUND_REGISTRY`, either for one room type or as a default. Exploration props are never part of the battle layer.
 - **Location audio:** add a local processed clip and pool entry in `location-music.js`, then record its master mapping in `audio-sources.js`. No audio-manager branch is needed.
 

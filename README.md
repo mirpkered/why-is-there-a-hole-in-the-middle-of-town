@@ -6,7 +6,7 @@ An original, mobile-first, turn-based dungeon crawler by Mirpworks. The town tre
 
 ## Play
 
-Create or continue a character, take work from town, then descend through three playable floors of procedural rooms, combat, events, recurring merchants, and loot. Six equipment slots, four classes, class abilities, status effects, ten short quest chains, local achievements, and an evolving town market support repeat expeditions. Floors 4–7 are Old Foundations QA previews only and are not playable through normal descent. Defeat sends the delver back to town with gear and discoveries intact, at 1 HP, after a 10% gold loss.
+Create or continue a character, take work from town, then descend through three playable floors of procedural rooms, combat, events, recurring merchants, and loot. Six equipment slots, four classes, class abilities, status effects, 35 quest definitions across 12 named chains and standalone quests, local achievements, and an evolving town market support repeat expeditions. Floors 4–7 are Old Foundations QA previews only and are not playable through normal descent. Defeat sends the delver back to town with gear and discoveries intact, at 1 HP, after a 10% gold loss.
 
 The game is single-player and saves automatically in browser local storage. Saves do not sync between devices.
 
@@ -30,7 +30,7 @@ Append `?qa=1` to the live or local URL for development diagnostics and controls
 
 ## Project shape
 
-The site is static HTML, CSS, and native JavaScript modules hosted by GitHub Pages. `js/app.js` renders screens and handles delegated input; `js/ui/town.js` owns Town destination metadata/rendering; `js/screen-presentation.js` holds shared screen policies; `js/game.js` resolves actions; `js/state.js` owns save shape, migrations, and map generation; `js/data.js` holds gameplay content; `js/depth-config.js` owns the playable cap, QA preview limit, and depth bands. `scene-backgrounds.js` separates exploration and battle background registries, and `art-assets.js` resolves paired variants consistently. See [Architecture](docs/ARCHITECTURE.md), [Game State](docs/GAME_STATE.md), [Content Guide](docs/CONTENT_GUIDE.md), [Floor 4–7 Readiness](docs/FLOOR_4_7_READINESS.md), [Art Backlog](docs/ART_BACKLOG.md), [Audio Inventory](docs/AUDIO_INVENTORY.md), and [Roadmap](ROADMAP.md).
+The site is static HTML, CSS, and native JavaScript modules hosted by GitHub Pages. `js/app.js` renders screens and handles delegated input; `js/ui/town.js` owns Town destination metadata/rendering; `js/screen-presentation.js` holds shared screen policies; `js/game.js` resolves actions; `js/state.js` owns save shape, migrations, and map generation; `js/data.js` holds gameplay content; `js/depth-config.js` owns the playable cap, QA preview limit, and depth bands. `dungeon-themes.js` registers the five exploration image sets and maps actual front/left/right openings to eight semantic views. `scene-backgrounds.js` separates exploration and battle presentation, and `art-assets.js` resolves paired variants consistently. See [Architecture](docs/ARCHITECTURE.md), [Game State](docs/GAME_STATE.md), [Content Guide](docs/CONTENT_GUIDE.md), [Floor 4–7 Readiness](docs/FLOOR_4_7_READINESS.md), [Art Backlog](docs/ART_BACKLOG.md), [Audio Inventory](docs/AUDIO_INVENTORY.md), and [Roadmap](ROADMAP.md).
 
 ## Adding new content
 

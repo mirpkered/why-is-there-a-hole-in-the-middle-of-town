@@ -18,6 +18,7 @@
 .dungeon-main .scene:before,.dungeon-main .scene:after{display:none}
 .scene-view{position:relative;width:min(100%,620px);height:100%;min-height:inherit;overflow:hidden;perspective:650px;background:linear-gradient(#4e4536,#252521 72%,#151918)}
 .scene-image-layer{position:absolute;inset:0;z-index:0;pointer-events:none;background-image:linear-gradient(#0000,#0000),var(--scene-image);background-size:cover;background-position:var(--scene-focal,50% 50%);filter:brightness(calc(1 - var(--scene-overlay,.12)));}
+.qa-topology-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr));gap:.75rem;margin-block:.75rem}.qa-topology-grid figure{min-width:0;margin:0}.qa-topology-grid img{display:block;width:100%;aspect-ratio:16/10;object-fit:cover;border-radius:.4rem;background:#181818}.qa-topology-grid figcaption{font-size:.78rem;overflow-wrap:anywhere;padding:.25rem 0}
 .scene-ceiling,.scene-side,.scene-far,.scene-floor,.scene-light{z-index:1}
 @media(max-width:680px){.scene-image-layer{background-position:var(--scene-mobile-focal,var(--scene-focal,50% 50%))}}
 .content-art{object-fit:contain;max-width:100%;height:auto;transform:scale(var(--content-art-scale,1))}.item-art-inline{width:1.35em;height:1.35em;vertical-align:middle;object-fit:contain;margin-right:.3em}.npc-portrait{display:inline-block;width:2.5em;height:2.5em;vertical-align:middle;object-fit:contain;margin-right:.45em}.interactive-art-slot{position:absolute;inset:0;display:grid;place-items:center;pointer-events:none}.interactive-object-art{width:72%;height:72%;object-fit:contain}
@@ -73,8 +74,16 @@
 .room-prop[data-prop-id="market-sign"] img{object-fit:contain}
 .room-prop[data-prop-id="small-door"]{width:12%;height:31%}
 .room-prop[data-prop-id="small-door"] img{object-fit:contain}
+.room-prop[data-prop-id="arched-small-door"]{width:30%;height:31%}
+.room-prop[data-prop-id="arched-small-door"] img{object-fit:contain}
 .room-prop[data-prop-id="bookshelf"]{width:20%;height:47%}
 .room-prop[data-prop-id="bookshelf"] img{object-fit:contain}
+.room-prop[data-prop-id="bookshelf-books"]{width:20%;height:47%}
+.room-prop[data-prop-id="bookshelf-books"] img{object-fit:contain}
+.room-prop[data-prop-id="bookshelf-full"]{width:20%;height:47%}
+.room-prop[data-prop-id="bookshelf-full"] img{object-fit:contain}
+.room-prop[data-prop-id="bookshelf-packed"]{width:20%;height:47%}
+.room-prop[data-prop-id="bookshelf-packed"] img{object-fit:contain}
 .room-prop[data-prop-id="candle"]{width:19%;height:34%}
 .room-prop[data-prop-id="candle"] img{object-fit:contain}
 .room-prop[data-prop-id="barrel"]{width:17%;height:36%}
@@ -391,7 +400,7 @@ body{background-color:#171918;background-image:radial-gradient(ellipse at 50% -8
 .scene--market .scene-light{background:#eca64f;opacity:.34}
 .scene--spoons .scene-floor{background:radial-gradient(ellipse at 50% 18%,#a3a39166,transparent 46%),repeating-linear-gradient(166deg,transparent 0 22%,#14161466 22.5% 24%,transparent 24.5% 48%),linear-gradient(#55574f,#222520 80%)}
 .scene--spoons .scene-light{background:#d8e4dc;opacity:.24}
-.scene-view--image{background:transparent}.scene-view--image .scene-ceiling,.scene-view--image .scene-side,.scene-view--image .scene-far,.scene-view--image .scene-floor{opacity:.2}.scene-view--image .scene-light{opacity:.12}.scene-view--image .room-props,.scene-view--image .scene-landmark-object,.scene-view--image .scene-event-object,.scene-view--image .scene-npc-object{z-index:3}
+.scene-view--image{background:transparent}.scene-view--image .scene-ceiling,.scene-view--image .scene-side,.scene-view--image .scene-far,.scene-view--image .scene-floor,.scene-view--image .scene-light{opacity:0}.scene-view--image .room-props,.scene-view--image .scene-landmark-object,.scene-view--image .scene-event-object,.scene-view--image .scene-npc-object{z-index:3}
 .scene-landmark-object,.scene-event-object,.scene-npc-object{filter:drop-shadow(0 6px 8px #0008)}
 
 /* Battle uses a clean stage with only a subtle echo of the room's palette. */

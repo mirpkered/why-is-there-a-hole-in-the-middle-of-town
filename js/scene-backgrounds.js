@@ -1,5 +1,6 @@
 import {roomTypes} from './data.js?v=floor4-release-prep-20261006a';
 import {roomVisualSeed} from './room-visuals.js?v=paper-stack-20261005a';
+import {DUNGEON_SETS,DUNGEON_SET_IDS,DUNGEON_TOPOLOGIES,getFloorVisualSet} from './dungeon-themes.js?v=dungeon-sets-20261006a';
 
 // Empty variant lists intentionally use the existing CSS scene. Visual choice is derived from
 // saved room identity and never consumes gameplay, combat, encounter, or loot randomness.
@@ -17,12 +18,49 @@ export function selectBackgroundVariant(entry,seed=0){
   return variants.find(v=>(n-=Number(v.weight??1))<0)||variants.at(-1);
 }
 
-export function backgroundForRoom({roomType='ordinary',map,floor=1,x=0,y=0,kind='exploration',registry}={}){
+export function backgroundForRoom({roomType='ordinary',map,floor=1,x=0,y=0,kind='exploration',registry,setId,topologyId}={}){
   const source=registry||(kind==='battle'?BATTLE_BACKGROUND_REGISTRY:ROOM_BACKGROUND_REGISTRY);
   const specific=source[roomType],generic=kind==='battle'?source.default:null;
   const entry=kind==='battle'?(specific?.variants?.length?specific:generic?.variants?.length?generic:specific||generic):(specific||source.ordinary);
   const seed=roomVisualSeed(map,floor,x,y,roomType,kind==='battle'?9173:0);
-  return {kind,roomType,entry,variant:selectBackgroundVariant(entry,seed),seed,fallback:entry?.fallback||(kind==='battle'?'battle-css':'css')};
+  const roomVariant=selectBackgroundVariant(entry,seed);
+  if(kind==='exploration'&&!roomVariant&&topologyId){
+    const selectedSet=DUNGEON_SETS[setId]||getFloorVisualSet({seed:map?.seed,visualSets:{}},floor);
+    const variant=selectedSet.backgrounds[topologyId]||null;
+    if(variant)return {kind,roomType,entry,variant,seed,fallback:'css',setId:selectedSet.id,topologyId};
+  }
+  return {kind,roomType,entry,variant:roomVariant,seed,fallback:entry?.fallback||(kind==='battle'?'battle-css':'css'),setId:null,topologyId:topologyId||null};
+}
+
+let previewSetOverride=null;
+export function setDungeonSetPreviewOverride(id=null){previewSetOverride=DUNGEON_SETS[id]?id:null;return previewSetOverride}
+export function dungeonSetPreviewOverride(){return previewSetOverride}
+export function activeDungeonSet(dungeon,floor){return DUNGEON_SETS[previewSetOverride]||getFloorVisualSet(dungeon,floor)}
+
+const preloadCache=new Map();
+export function dungeonBackgroundAssetStatus(path){return preloadCache.get(path)?.status||'not-preloaded'}
+export function preloadDungeonSet(setId){
+  const set=DUNGEON_SETS[setId];if(!set||typeof Image==='undefined')return Promise.resolve([]);
+  const paths=Object.values(set.backgrounds).map(background=>background.path);
+  return Promise.all(paths.map(path=>{
+    if(preloadCache.has(path))return preloadCache.get(path).promise;
+    const image=new Image();image.decoding='async';
+    const entry={status:'loading',promise:null};
+    entry.promise=new Promise(resolve=>{let settled=false;const finish=status=>{if(settled)return;settled=true;entry.status=status;resolve({path,status})};image.onload=async()=>{try{if(image.decode)await image.decode();finish(image.naturalWidth>0?'loaded':'failed')}catch{finish(image.naturalWidth>0?'loaded':'failed')}};image.onerror=()=>finish('failed');image.src=path;if(image.complete&&image.naturalWidth)image.onload()});
+    preloadCache.set(path,entry);return entry.promise;
+  }));
+}
+export function validateDungeonSetRegistry(registry=DUNGEON_SETS,{exists=()=>true}={}){
+  const errors=[],seen=new Set();
+  for(const [key,set] of Object.entries(registry||{})){
+    if(!set?.id||set.id!==key)errors.push(`${key} has an unstable or mismatched set id`);
+    if(seen.has(set?.id))errors.push(`duplicate dungeon set id: ${set?.id}`);seen.add(set?.id);
+    if(!set?.name)errors.push(`${key} is missing a display name`);
+    for(const topology of DUNGEON_TOPOLOGIES){const variant=set?.backgrounds?.[topology.id];if(!variant){errors.push(`${key} is missing topology ${topology.id}`);continue}if(variant.topologyId!==topology.id)errors.push(`${key}/${topology.id} has mismatched topology metadata`);if(!/^assets\/images\/dungeon-sets\/[\w-]+\/0[1-8]-[\w-]+\.png$/.test(variant.path||''))errors.push(`${key}/${topology.id} has an invalid asset path`);else if(!exists(variant.path))errors.push(`${key}/${topology.id} asset does not exist: ${variant.path}`)}
+    for(const topologyId of Object.keys(set?.backgrounds||{}))if(!DUNGEON_TOPOLOGIES.some(topology=>topology.id===topologyId))errors.push(`${key} has unknown topology ${topologyId}`);
+  }
+  for(const id of DUNGEON_SET_IDS)if(!registry?.[id])errors.push(`missing dungeon set ${id}`);
+  return {valid:errors.length===0,errors};
 }
 
 // A missing image simply leaves the CSS scene below it visible. Paths are local validated asset paths.
@@ -32,7 +70,7 @@ export function backgroundLayerMarkup(selection){
   const safeFocal=value=>/^(?:(?:\d{1,3}%|left|center|right)\s+(?:\d{1,3}%|top|center|bottom))$/i.test(value||'')?value:'50% 50%';
   const focal=safeFocal(variant.focal),mobile=safeFocal(variant.mobileFocal||focal);
   const overlay=Number.isFinite(variant.overlay)?Math.max(0,Math.min(1,variant.overlay)):.12;
-  return `<span class="scene-image-layer" aria-hidden="true" data-background-id="${variant.id||selection.roomType}" style="--scene-image:url('${variant.path}');--scene-focal:${focal};--scene-mobile-focal:${mobile};--scene-overlay:${overlay}"></span>`;
+  return `<span class="scene-image-layer" aria-hidden="true" data-background-id="${variant.id||selection.roomType}" data-background-path="${variant.path}" style="--scene-image:url('${variant.path}');--scene-focal:${focal};--scene-mobile-focal:${mobile};--scene-overlay:${overlay}"></span>`;
 }
 
 export function validateBackgroundRegistry(registry,roomIds=Object.keys(roomTypes)){

@@ -11,18 +11,20 @@ globalThis.localStorage = {
   removeItem: key => storage.delete(key)
 };
 
-const { SAVE_KEY, SAVE_BACKUP_KEY, SAVE_RECOVERY_KEY, SAVE_VERSION, freshState, generateFloorMap, validateFloorMap, analyzeFloorMap, saveState, loadState, loadStateDetailed } = await import('../js/state.js?preflight');
+const { SAVE_KEY, SAVE_BACKUP_KEY, SAVE_RECOVERY_KEY, SAVE_VERSION, freshState, generateFloorMap, validateFloorMap, analyzeFloorMap, saveState, loadState, loadStateDetailed, wallAt } = await import('../js/state.js?preflight');
 const { items, monsters, lootTables, floorEncounterTable, innEvents, shopStock, roomTypes, roomDepthPresentation, dungeonEvents, townNpcs, dungeonNpcs, quests } = await import('../js/data.js?preflight');
 const { makeMarketCycle, currentSellValue, simulateMarkets, simulateInnEvents } = await import('../js/town-economy.js?preflight');
 const { generateAbsurdName, inspectNameGenerator, MAX_NAME_LENGTH } = await import('../js/name-generator.js?preflight');
 const { roomProps: props, createRoomDecoration, roomPropMarkup } = await import('../js/room-visuals.js?preflight');
 const { TOWN_ART_ASSETS } = await import('../js/town-art.js?preflight');
 const {resolveArtVariant,validateArtEntries}=await import('../js/art-assets.js?preflight');
-const {ROOM_BACKGROUND_REGISTRY,BATTLE_BACKGROUND_REGISTRY,backgroundForRoom,backgroundLayerMarkup,selectBackgroundVariant,validateBackgroundRegistry}=await import('../js/scene-backgrounds.js?preflight');
+const {ROOM_BACKGROUND_REGISTRY,BATTLE_BACKGROUND_REGISTRY,backgroundForRoom,backgroundLayerMarkup,selectBackgroundVariant,validateBackgroundRegistry,validateDungeonSetRegistry}=await import('../js/scene-backgrounds.js?preflight');
+const {DUNGEON_SETS,DUNGEON_SET_IDS,DUNGEON_TOPOLOGIES,topologyIdForOpenings,openingsForFacing,ensureDungeonVisualSets,assignedDungeonSetId}=await import('../js/dungeon-themes.js?preflight');
 const {INTERACTIVE_OBJECT_ART}=await import('../js/interactive-art.js?preflight');
 const {MASCOT_ART}=await import('../js/mascots.js?preflight');
 const {SCREEN_PRESENTATION}=await import('../js/screen-presentation.js?preflight');
 const {TOWN_DESTINATIONS,renderTownDestinations}=await import('../js/ui/town.js?preflight');
+const {renderCharacterScreen}=await import('../js/ui/character.js?preflight');
 const { validateContent, validateQuestGraph } = await import('../js/content-validation.js?preflight');
 const { achievements } = await import('../js/progression.js?preflight');
 const { validateQuestTemplate, questObjectiveTemplates } = await import('../js/quest-templates.js?preflight');
@@ -48,9 +50,9 @@ function inspectTransparentPng(path) {
   const bytes=readFileSync(path);assert.equal(bytes.toString('hex',0,8),'89504e470d0a1a0a');
   const width=bytes.readUInt32BE(16),height=bytes.readUInt32BE(20);assert.equal(bytes[24],8);assert.equal(bytes[25],6,'Town art must be RGBA');
   const chunks=[];let offset=8;while(offset<bytes.length){const length=bytes.readUInt32BE(offset),type=bytes.toString('ascii',offset+4,offset+8);if(type==='IDAT')chunks.push(bytes.subarray(offset+8,offset+8+length));offset+=12+length;if(type==='IEND')break;}
-  const raw=inflateSync(Buffer.concat(chunks)),stride=width*4;assert.equal(raw.length,(stride+1)*height);let x0=width,y0=height,x1=-1,y1=-1;
-  for(let y=0;y<height;y++){assert.equal(raw[y*(stride+1)],0,'processed Town art PNG rows use the lossless no-filter encoding');for(let x=0;x<width;x++)if(raw[y*(stride+1)+1+x*4+3]>=8){x0=Math.min(x0,x);x1=Math.max(x1,x);y0=Math.min(y0,y);y1=Math.max(y1,y);}}
-  const alphaAt=(x,y)=>raw[y*(stride+1)+1+x*4+3];assert.equal(alphaAt(0,0),0);assert.equal(alphaAt(width-1,0),0);assert.equal(alphaAt(0,height-1),0);assert.equal(alphaAt(width-1,height-1),0);
+  const raw=inflateSync(Buffer.concat(chunks)),stride=width*4;assert.equal(raw.length,(stride+1)*height);const pixels=Buffer.alloc(stride*height),paeth=(a,b,c)=>{const p=a+b-c,pa=Math.abs(p-a),pb=Math.abs(p-b),pc=Math.abs(p-c);return pa<=pb&&pa<=pc?a:pb<=pc?b:c};let x0=width,y0=height,x1=-1,y1=-1;
+  for(let y=0;y<height;y++){const row=y*stride,rawRow=y*(stride+1),filter=raw[rawRow];assert.ok(filter<=4,`unsupported PNG row filter ${filter}`);for(let x=0;x<stride;x++){const left=x>=4?pixels[row+x-4]:0,up=y?pixels[row-stride+x]:0,upperLeft=y&&x>=4?pixels[row-stride+x-4]:0,predictor=filter===0?0:filter===1?left:filter===2?up:filter===3?Math.floor((left+up)/2):paeth(left,up,upperLeft);pixels[row+x]=(raw[rawRow+1+x]+predictor)&255;}for(let x=0;x<width;x++)if(pixels[row+x*4+3]>=8){x0=Math.min(x0,x);x1=Math.max(x1,x);y0=Math.min(y0,y);y1=Math.max(y1,y);}}
+  const alphaAt=(x,y)=>pixels[y*stride+x*4+3];assert.equal(alphaAt(0,0),0);assert.equal(alphaAt(width-1,0),0);assert.equal(alphaAt(0,height-1),0);assert.equal(alphaAt(width-1,height-1),0);
   assert.ok(x0<=12&&y0<=12&&width-1-x1<=12&&height-1-y1<=12,`Town image should be closely cropped: ${path}`);
   return {width,height};
 }
@@ -59,6 +61,18 @@ check('content definitions have no critical validation errors', () => {
   const report = validateContent();
   assert.equal(report.errorCount, 0, JSON.stringify(report.errors));
   assert.equal(report.warningCount, 0, JSON.stringify(report.warnings));
+});
+
+check('character renderer preserves gear, pack, stats, slot, and accessible controls',()=>{
+  const characterState={player:{name:'<Mira>',class:'Fighter',level:2,xp:12,str:4,agi:2,mind:1,vit:4,attack:6,defense:3,hp:14,maxHp:18,mp:5,maxMp:6},inventory:[{id:'rusty-sword',quantity:1},{id:'apprentice-staff',quantity:1},{id:'healing-tonic',quantity:2}],equipment:{head:null,body:null,mainHand:'rusty-sword',offHand:null,feet:null,accessory:null},combat:null};
+  const inventory=characterState.inventory.map(entry=>({id:entry.id,item:items[entry.id],quantity:entry.quantity,provenance:[]}));
+  const esc=value=>String(value).replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
+  const render=(overrides={})=>renderCharacterScreen({state:characterState,header:()=>'<header></header>',townStatus:()=>'<nav></nav>',esc,stats:()=>'<div>Stat summary</div>',groupedInventory:()=>inventory,items,equipmentSlots:['head','body','mainHand','offHand','feet','accessory'],canEquipItem:(id,slot)=>items[id]?.slot===slot,itemMods:()=> 'No stat change',compareMarkup:()=>'<div>Comparison</div>',compareEquipment:()=>({deltas:{attack:2}}),inventoryUsed:()=>4,inventoryCapacity:()=>16,questReservedQuantity:()=>0,innEffectSummary:()=>['Well Rested · 2 fights'],...overrides});
+  const gear=render();assert.match(gear,/aria-label="Choose Main Hand gear"/);assert.match(gear,/data-gear-slot="mainHand"/);assert.match(gear,/1 alternative/);assert.match(gear,/data-character-mode="pack"/);
+  const pack=render({characterMode:'pack'});assert.match(pack,/Pack · 4\/16 slots/);assert.match(pack,/data-inspect="healing-tonic"/);assert.match(pack,/data-use="healing-tonic"/);
+  const stats=render({characterMode:'stats'});assert.match(stats,/&lt;Mira&gt; · Level 2 Fighter/);assert.match(stats,/Well Rested · 2 fights/);
+  const slot=render({gearSlot:'mainHand'});assert.match(slot,/aria-label="Back to Gear"/);assert.match(slot,/data-unequip="mainHand"/);assert.match(slot,/data-equip="apprentice-staff"/);
+  const appSource=readFileSync(resolve('js/app.js'),'utf8');assert.equal((appSource.match(/renderCharacterPanel\(/g)||[]).length,1);assert.doesNotMatch(appSource,/inventoryViewMarkup|function renderCharacterScreen/,'the superseded character renderer must not stay in the app module');
 });
 
 check('all registered local runtime assets exist', () => {
@@ -101,6 +115,7 @@ check('background registries support empty, single, weighted, stable variants an
   assert.deepEqual(backgroundForRoom({roomType:'ordinary',map,floor:2,x:4,y:5}),backgroundForRoom({roomType:'ordinary',map,floor:2,x:4,y:5}));
   assert.equal(backgroundForRoom({roomType:'ordinary',map,floor:2,x:4,y:5}).fallback,'css');
   assert.equal(backgroundForRoom({roomType:'ordinary',map,floor:2,x:4,y:5,kind:'battle'}).fallback,'battle-css');
+  const topology='front-wall-left-wall-right-wall',theme=backgroundForRoom({roomType:'ordinary',map,floor:2,x:4,y:5,setId:'dungeon-set-3',topologyId:topology});assert.equal(theme.variant.path,DUNGEON_SETS['dungeon-set-3'].backgrounds[topology].path);assert.equal(theme.variant.topologyId,topology);assert.equal(theme.setId,'dungeon-set-3');
   const battleRegistry={default:{id:'default',variants:[{id:'generic',path:'assets/images/rooms/battle.webp'}]},ordinary:{id:'ordinary',variants:[]}};
   assert.equal(backgroundForRoom({roomType:'ordinary',map,floor:2,x:4,y:5,kind:'battle',registry:battleRegistry}).variant.id,'generic');
   assert.equal(backgroundLayerMarkup({variant:null}),'');
@@ -108,6 +123,44 @@ check('background registries support empty, single, weighted, stable variants an
   assert.match(backgroundLayerMarkup({roomType:'ordinary',variant:{id:'room',path:'assets/images/rooms/room.webp',mobileFocal:'bad'}}),/--scene-mobile-focal:50% 50%/);
   assert.equal(validateBackgroundRegistry({ordinary:{id:'ordinary',variants:[],fallback:'css'}},['ordinary']).valid,true);
   assert.equal(validateBackgroundRegistry({ordinary:{id:'ordinary',variants:[{id:'bad',path:'https://example.invalid/bg.webp'}]}},['ordinary']).valid,false);
+});
+
+check('five dungeon sets include all forty registered topology backgrounds',()=>{
+  assert.equal(DUNGEON_SET_IDS.length,5);assert.equal(DUNGEON_TOPOLOGIES.length,8);
+  const validation=validateDungeonSetRegistry(DUNGEON_SETS,{exists:path=>existsSync(resolve(path))});assert.equal(validation.valid,true,validation.errors.join('\n'));
+  const paths=DUNGEON_SET_IDS.flatMap(id=>DUNGEON_TOPOLOGIES.map(topology=>DUNGEON_SETS[id].backgrounds[topology.id].path));assert.equal(new Set(paths).size,40);assert.equal(paths.length,40);
+  for(const path of paths){const bytes=readFileSync(resolve(path));assert.equal(bytes.subarray(0,8).toString('hex'),'89504e470d0a1a0a',path);assert.ok(bytes.length>1_000_000,path)}
+  assert.equal(DUNGEON_SETS['dungeon-set-1'].name,'Wet Stone Dungeon');assert.equal(DUNGEON_SETS['dungeon-set-5'].name,'Impossible Dungeon');
+});
+
+check('all eight semantic openings map correctly for all four facings, including a back-only exit',()=>{
+  const center=[3,3],directions=[[0,-1],[1,0],[0,1],[-1,0]];
+  for(const topology of DUNGEON_TOPOLOGIES)for(let facing=0;facing<4;facing++){
+    const [fx,fy]=directions[facing],[lx,ly]=directions[(facing+3)%4],[rx,ry]=directions[(facing+1)%4],[bx,by]=directions[(facing+2)%4],allowed=new Set([`${center[0]},${center[1]}`]);
+    if(topology.front)allowed.add(`${center[0]+fx},${center[1]+fy}`);if(topology.left)allowed.add(`${center[0]+lx},${center[1]+ly}`);if(topology.right)allowed.add(`${center[0]+rx},${center[1]+ry}`);
+    if(topology.id==='front-wall-left-wall-right-wall')allowed.add(`${center[0]+bx},${center[1]+by}`);
+    const result=openingsForFacing({width:7,height:7,walls:[]},...center,facing,(x,y)=>allowed.has(`${x},${y}`));
+    assert.equal(result.topologyId,topology.id,`facing ${facing}, ${topology.id}`);assert.equal(result.front,topology.front);assert.equal(result.left,topology.left);assert.equal(result.right,topology.right);
+  }
+  assert.equal(topologyIdForOpenings(false,false,false),'front-wall-left-wall-right-wall');
+});
+
+check('generated map openings select matching topology from assigned set for every cell and facing',()=>{
+  for(let seed=1;seed<=24;seed++)for(let floor=1;floor<=7;floor++){
+    const map=generateFloorMap(seed,floor),setId=assignedDungeonSetId(seed,floor);assert.ok(DUNGEON_SETS[setId]);
+    for(let y=0;y<map.height;y++)for(let x=0;x<map.width;x++)if(!wallAt({map},x,y))for(let facing=0;facing<4;facing++){
+      const view=openingsForFacing(map,x,y,facing),asset=DUNGEON_SETS[setId].backgrounds[view.topologyId];assert.equal(asset.topologyId,view.topologyId);
+    }
+  }
+});
+
+check('per-floor visual themes stay deterministic, independent, and backward-compatible',()=>{
+  const first=freshState(),assignments=first.dungeon.visualSets;assert.equal(Object.keys(assignments).length,7);for(const id of Object.values(assignments))assert.ok(DUNGEON_SETS[id]);
+  const previous=assignments['1'];ensureDungeonVisualSets(first.dungeon,7);assert.equal(assignments['1'],previous);assert.deepEqual(ensureDungeonVisualSets({seed:first.dungeon.seed},7),assignments);
+  assert.notEqual(assignedDungeonSetId(first.dungeon.seed,1),assignedDungeonSetId(first.dungeon.seed,2),'floor choices are keyed independently');
+  const used=new Set(Array.from({length:250},(_,index)=>assignedDungeonSetId(index+1,1)));assert.equal(used.size,5,'all registered sets can be assigned');
+  assert.equal(ensureDungeonVisualSets({seed:55,visualSets:{'1':'invalid'}},1)['1'],assignedDungeonSetId(55,1));
+  const prior={...first.dungeon};delete prior.visualSets;const saved={...first,dungeon:prior};saveState(saved);const restored=loadState();assert.deepEqual(restored.dungeon.visualSets,assignments);assert.deepEqual(restored.dungeon.maps,first.dungeon.maps);
 });
 
 check('exploration and combat render distinct background and prop layers',()=>{
@@ -118,8 +171,10 @@ check('exploration and combat render distinct background and prop layers',()=>{
   assert.doesNotMatch(battle,/room-props|landmarkOverlay|npcLayer/);
   assert.match(source,/propMarkup=combat\?'':roomPropMarkup/);
   assert.match(source,/kind:combat\?'battle':'exploration'/);
-  assert.match(css,/\.scene-view--image \.scene-ceiling[^}]*opacity:\.2/);
+  assert.match(css,/\.scene-view--image \.scene-ceiling[^}]*opacity:0/);
   assert.match(css,/\.battle-scene--image:before\{opacity:\.18\}/);
+  assert.match(source,/openingsForFacing\(d\.map,d\.x,d\.y,facing,open\)/,'scene topology must come from the actual map and facing');
+  assert.match(source,/data-qa="set-visual-set"/);assert.match(source,/Preview all eight views/);assert.match(source,/dungeonBackgroundAssetStatus/);
 });
 
 check('shared art resolver handles Colored, Ink, alternate style and fallback',()=>{
@@ -191,6 +246,64 @@ check('hand-drawn wooden crate is registered as a paired storage-room prop',()=>
   const sample={...crate,flip:false,zone:'far-left',scale:1,depth:1};
   assert.match(roomPropMarkup({props:[sample]},'ink'),/wooden-crate-ink\.png/);
   assert.match(roomPropMarkup({props:[sample]},'colored'),/wooden-crate-colored\.png/);
+});
+
+check('hand-drawn spoon replaces the single-spoon fallback and preserves its source',()=>{
+  const spoon=props['single-spoon'];assert.ok(spoon);assert.ok(spoon.rooms.includes('spoons'));assert.ok(roomTypes.spoons.visual.propPool.includes('single-spoon'));assert.equal(spoon.placeholder,'spoon');
+  for(const [style,path] of [['ink',spoon.ink],['colored',spoon.colored]]){assert.ok(path);const png=readFileSync(resolve(path));assert.equal(png.toString('hex',0,8),'89504e470d0a1a0a');assert.equal(png[25],6,`${style} spoon must preserve PNG alpha`);assert.ok(png.readUInt32BE(16)<=900&&png.readUInt32BE(20)<=900,'spoon image dimensions remain suitable for runtime use')}
+  assert.ok(existsSync(resolve('assets/source/room-props/spoon-original.jpg')),'original spoon drawing remains archived');
+  const sample={...spoon,flip:false,zone:'floor-center',scale:1,depth:3};assert.match(roomPropMarkup({props:[sample]},'ink'),/spoon-ink\.png/);assert.match(roomPropMarkup({props:[sample]},'colored'),/spoon-colored\.png/);
+});
+
+check('hand-drawn empty box is registered as a paired storage-room prop',()=>{
+  const box=props['empty-box'];assert.ok(box);assert.ok(box.rooms.includes('storage'));assert.ok(roomTypes.storage.visual.propPool.includes('empty-box'));assert.equal(box.placeholder,'box');
+  for(const [style,path] of [['ink',box.ink],['colored',box.colored]]){assert.ok(path);const png=readFileSync(resolve(path));assert.equal(png.toString('hex',0,8),'89504e470d0a1a0a');assert.equal(png[25],6,`${style} box must preserve PNG alpha`);assert.ok(png.readUInt32BE(16)<=1400&&png.readUInt32BE(20)<=1100,'empty box art dimensions remain suitable for runtime use')}
+  assert.ok(existsSync(resolve('assets/source/room-props/empty-box-original.jpg')),'original empty-box drawing remains archived');
+  const sample={...box,flip:false,zone:'far-left',scale:1,depth:1};assert.match(roomPropMarkup({props:[sample]},'ink'),/empty-box-ink\.png/);assert.match(roomPropMarkup({props:[sample]},'colored'),/empty-box-colored\.png/);
+});
+
+check('Arcon record is registered as paired Municipal Records Room art',()=>{
+  const record=props['arcon-record'];assert.ok(record);assert.ok(record.rooms.includes('records'));assert.ok(roomTypes.records.visual.propPool.includes('arcon-record'));assert.equal(record.placeholder,'papers');
+  for(const [style,path] of [['ink',record.ink],['colored',record.colored]]){assert.ok(path);const png=readFileSync(resolve(path));assert.equal(png.toString('hex',0,8),'89504e470d0a1a0a');assert.equal(png[25],6,`${style} record art must preserve PNG alpha`);assert.ok(png.readUInt32BE(16)<=1100&&png.readUInt32BE(20)<=900,'record art dimensions remain suitable for runtime use')}
+  assert.ok(existsSync(resolve('assets/source/room-props/arcon-record-ink-cutout.png')),'cleaned line-art source reference remains archived');
+  const sample={...record,flip:false,zone:'far-left',scale:1,depth:1};assert.match(roomPropMarkup({props:[sample]},'ink'),/arcon-record-ink\.png/);assert.match(roomPropMarkup({props:[sample]},'colored'),/arcon-record-colored\.png/);
+});
+
+check('hand-drawn warning sign is paired transparent art across compatible room types',()=>{
+  const sign=props['warning-sign'];assert.ok(sign);assert.equal(sign.placeholder,'sign');
+  for(const room of sign.rooms)assert.ok(roomTypes[room].visual.propPool.includes('warning-sign'),`${room} includes warning sign`);
+  for(const [style,path] of [['ink',sign.ink],['colored',sign.colored]]){assert.ok(path);const png=readFileSync(resolve(path));assert.equal(png.toString('hex',0,8),'89504e470d0a1a0a');assert.equal(png[25],6,`${style} warning sign preserves PNG alpha`);assert.ok(png.readUInt32BE(16)<=800&&png.readUInt32BE(20)<=1000,'warning sign remains mobile-friendly size')}
+  assert.ok(existsSync(resolve('assets/source/room-props/warning-sign-ink-cutout.png')),'cleaned line-art source reference remains archived');
+  const sample={...sign,flip:false,zone:'far-left',scale:1,depth:1};assert.match(roomPropMarkup({props:[sample]},'ink'),/warning-sign-ink\.png/);assert.match(roomPropMarkup({props:[sample]},'colored'),/warning-sign-colored\.png/);
+});
+
+check('second small door is registered as a distinct Library and Records prop',()=>{
+  const door=props['arched-small-door'];assert.ok(door);assert.ok(door.rooms.includes('library')&&door.rooms.includes('records'));assert.equal(door.placeholder,'door');
+  for(const room of door.rooms)assert.ok(roomTypes[room].visual.propPool.includes('arched-small-door'),`${room} includes arched door`);
+  for(const [style,path] of [['ink',door.ink],['colored',door.colored]]){assert.ok(path);const png=readFileSync(resolve(path));assert.equal(png.toString('hex',0,8),'89504e470d0a1a0a');assert.equal(png[25],6,`${style} arched door preserves PNG alpha`);assert.ok(png.readUInt32BE(16)<=850&&png.readUInt32BE(20)<=700,'arched door remains mobile-friendly size')}
+  assert.ok(existsSync(resolve('assets/source/room-props/arched-small-door-ink-cutout.png')),'cleaned line-art source reference remains archived');
+  const sample={...door,flip:false,zone:'wall-center',scale:1,depth:1};assert.match(roomPropMarkup({props:[sample]},'ink'),/arched-small-door-ink\.png/);assert.match(roomPropMarkup({props:[sample]},'colored'),/arched-small-door-colored\.png/);
+});
+
+check('partially filled bookshelf is paired transparent Library art',()=>{
+  const shelf=props['bookshelf-books'];assert.ok(shelf);assert.ok(shelf.rooms.includes('library'));assert.ok(roomTypes.library.visual.propPool.includes('bookshelf-books'));assert.equal(shelf.placeholder,'shelf');
+  for(const [style,path] of [['ink',shelf.ink],['colored',shelf.colored]]){assert.ok(path);const png=readFileSync(resolve(path));assert.equal(png.toString('hex',0,8),'89504e470d0a1a0a');assert.equal(png[25],6,`${style} bookshelf preserves PNG alpha`);assert.ok(png.readUInt32BE(16)<=750&&png.readUInt32BE(20)<=900,'bookshelf art remains mobile-friendly size')}
+  assert.ok(existsSync(resolve('assets/source/room-props/bookshelf-books-ink-cutout.png')),'cleaned line-art source reference remains archived');
+  const sample={...shelf,flip:false,zone:'wall-center',scale:1,depth:1};assert.match(roomPropMarkup({props:[sample]},'ink'),/bookshelf-books-ink\.png/);assert.match(roomPropMarkup({props:[sample]},'colored'),/bookshelf-books-colored\.png/);
+});
+
+check('full bookshelf is a separate paired transparent Library variant',()=>{
+  const shelf=props['bookshelf-full'];assert.ok(shelf);assert.ok(shelf.rooms.includes('library'));assert.ok(roomTypes.library.visual.propPool.includes('bookshelf-full'));assert.equal(shelf.placeholder,'shelf');
+  for(const [style,path] of [['ink',shelf.ink],['colored',shelf.colored]]){assert.ok(path);const png=readFileSync(resolve(path));assert.equal(png.toString('hex',0,8),'89504e470d0a1a0a');assert.equal(png[25],6,`${style} full bookshelf preserves PNG alpha`);assert.ok(png.readUInt32BE(16)<=750&&png.readUInt32BE(20)<=1000,'full bookshelf art remains mobile-friendly size')}
+  assert.ok(existsSync(resolve('assets/source/room-props/bookshelf-full-ink-cutout.png')),'cleaned line-art source reference remains archived');
+  const sample={...shelf,flip:false,zone:'wall-center',scale:1,depth:1};assert.match(roomPropMarkup({props:[sample]},'ink'),/bookshelf-full-ink\.png/);assert.match(roomPropMarkup({props:[sample]},'colored'),/bookshelf-full-colored\.png/);
+});
+
+check('packed bookshelf is a separate paired transparent Library variant',()=>{
+  const shelf=props['bookshelf-packed'];assert.ok(shelf);assert.ok(shelf.rooms.includes('library'));assert.ok(roomTypes.library.visual.propPool.includes('bookshelf-packed'));assert.equal(shelf.placeholder,'shelf');
+  for(const [style,path] of [['ink',shelf.ink],['colored',shelf.colored]]){assert.ok(path);const png=readFileSync(resolve(path));assert.equal(png.toString('hex',0,8),'89504e470d0a1a0a');assert.equal(png[25],6,`${style} packed bookshelf preserves PNG alpha`);assert.ok(png.readUInt32BE(16)<=750&&png.readUInt32BE(20)<=1000,'packed bookshelf art remains mobile-friendly size')}
+  assert.ok(existsSync(resolve('assets/source/room-props/bookshelf-packed-ink-cutout.png')),'cleaned line-art source reference remains archived');
+  const sample={...shelf,flip:false,zone:'wall-center',scale:1,depth:1};assert.match(roomPropMarkup({props:[sample]},'ink'),/bookshelf-packed-ink\.png/);assert.match(roomPropMarkup({props:[sample]},'colored'),/bookshelf-packed-colored\.png/);
 });
 
 check('hand-drawn mushroom cluster is paired, transparent, and assigned to Mushroom Room',()=>{

@@ -36,6 +36,8 @@ jobs:
           cp -R assets/audio/music _site/assets/audio/
           test -f _site/js/app.js
           test -f _site/assets/images/town/the-hole-colored.png
+          test -f _site/assets/images/dungeon-sets/dungeon-set-1/08-true-dead-end.png
+          test -f _site/assets/images/dungeon-sets/dungeon-set-5/06-forward-left-right-openings.png
           test -f _site/assets/audio/music/battle-theme.mp3
           test ! -d _site/assets/source
       - uses: actions/configure-pages@v6
