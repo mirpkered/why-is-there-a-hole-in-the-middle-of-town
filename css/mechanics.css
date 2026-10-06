@@ -162,6 +162,7 @@
 .location-art--illustration img{display:block;width:100%;height:100%;object-fit:contain}
 .location-store .location-art{color:#e4c87d}.location-inn .location-art{color:#cf9976}.location-quests .location-art{color:#b5cf9d}.location-character .location-art{color:#9fbfcb}.location-records .location-art,.location-achievements .location-art{color:#cfb181}.location-settings{min-height:56px;background:#202421}.location-settings .location-art{height:32px;color:#aaa}.location-settings b{font-size:.76rem}.location-settings small{font-size:.66rem}
 .town-hub-flavor{margin:.1rem 0 0;text-align:center;color:var(--muted);font-size:.78rem}
+.town-deepest-note{color:var(--gold);font-weight:800}
 .town-service-heading{display:flex;align-items:baseline;justify-content:space-between;gap:.6rem;flex-wrap:wrap;margin:.35rem 0 .55rem}
 .town-service-heading .eyebrow{margin:0;font-size:.65rem}.town-service-heading .section-title{font-size:clamp(1.25rem,4vw,1.7rem);margin:0}
 .market-demand{display:block;font-size:.8rem;font-weight:700}.market-low{color:#e5c06a}.market-normal{color:var(--muted)}.market-high{color:#add39a}
@@ -230,16 +231,13 @@
 .town-hub .location--art-destination.location-character::before,.town-hub .location--art-destination.location-records::before{background:radial-gradient(ellipse at 50% 46%,#f8fff0 0 40%,#c3e0bd 63%,#72aa9b66 76%,transparent 86%)}
 .town-hub .location--art-destination.location-achievements::before{background:radial-gradient(ellipse at 50% 46%,#fffbe8 0 40%,#ffe38d 63%,#f39c4b66 76%,transparent 86%)}
 .town-hub .location--art-destination.location-settings::before{background:radial-gradient(ellipse at 50% 46%,#f8ffff 0 40%,#bbdef0 63%,#659fc266 76%,transparent 86%)}
-.town-hub .location--art-destination:not(.location-hole) .location-art--illustration{inset:0 0 27px}
-.town-hub .location--art-destination.location-hole .location-art--illustration{inset:0 0 40px}
+.town-hub .location--art-destination:not(.location-hole) .location-art--illustration{inset:0}
+.town-hub .location--art-destination.location-hole .location-art--illustration{inset:0}
 .town-hub .location--art-destination .location-art--illustration img{filter:drop-shadow(0 1px 1px #fff7df) drop-shadow(0 3px 2px #352016a8)}
 .town-hub .location--art-destination.location-hole .location-art--illustration img{filter:drop-shadow(0 1px 1px #fff7df) drop-shadow(0 3px 2px #352016a8)}
 .town-hub .location--art-destination .location-art--illustration img.town-art-image--ink{filter:drop-shadow(0 0 1px #fff) drop-shadow(0 0 3px #fff8df) drop-shadow(0 3px 2px #352016a8)}
-.town-destination-label{position:absolute;z-index:2;right:50%;bottom:2px;display:grid;place-items:center;min-width:44px;min-height:26px;padding:.25rem .7rem;border:1.5px solid #fff1c6;border-radius:999px;background:#38271feF;color:#fff4d4;font-family:"Trebuchet MS","Arial Rounded MT Bold",system-ui,sans-serif;font-size:.72rem;font-weight:1000;letter-spacing:.07em;line-height:1.05;text-shadow:0 1px #21150f;box-shadow:0 2px 0 #160f0c,0 0 0 2px #452d2070;transform:translateX(50%) rotate(-.6deg);white-space:nowrap;pointer-events:none}
-.town-destination-label--featured{bottom:1px;min-height:36px;gap:.05rem;padding:.22rem .85rem;border-width:2px;background:#38271ff2;font-size:.78rem;letter-spacing:.08em;transform:translateX(50%) rotate(.5deg)}
-.town-destination-label--featured small{color:#ffe2a0;font-size:.62rem;font-weight:800;letter-spacing:.03em}
 .town-hub .location--art-destination.location-hole::before{inset:2% 13% 13%;background:radial-gradient(ellipse at 50% 47%,#fff9e9 0 43%,#ffe6aa 64%,#f2c77860 77%,transparent 88%)}
-@media(max-width:360px){.town-hub .location--art-destination:not(.location-hole) .location-art--illustration{inset:0 0 25px}.town-hub .location--art-destination.location-hole .location-art--illustration{inset:0 0 38px}.town-destination-label{font-size:.68rem}.town-destination-label--featured{font-size:.73rem}}
+@media(max-width:360px){.town-hub .location--art-destination:not(.location-hole) .location-art--illustration,.town-hub .location--art-destination.location-hole .location-art--illustration{inset:0}}
 
 /* Shared municipal-dungeon identity: quiet doodles stay behind opaque content. */
 body{background-color:#171918;background-image:radial-gradient(ellipse at 50% -8%,#51463466 0,transparent 43%),radial-gradient(ellipse at 4% 58%,#34433933 0,transparent 39%),linear-gradient(165deg,#1d241eaa,#171b18b8 54%,#111512c4),url('../assets/images/ui/municipal-doodles.svg');background-repeat:no-repeat,no-repeat,no-repeat,repeat;background-position:center top,left center,center,0 0;background-size:100% 620px,70% 880px,100% 100%,360px 360px}

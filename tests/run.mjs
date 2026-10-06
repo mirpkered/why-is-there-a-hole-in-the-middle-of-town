@@ -672,12 +672,13 @@ check('town button art has transparent cropped bounds and no rectangular image b
   const townBranch=appSource.match(/if\(screen==='town'\).*?if\(screen==='quests'\)/s)?.[0]||'';
   assert.ok(townBranch,'Town hub render branch should be present');
   assert.match(townBranch,/renderTownDestinations\(\{artMarkup:townArtMarkup/,'Town destinations are rendered from the shared registry');
-  const townMarkup=renderTownDestinations({artMarkup:(slot,fallback)=>`<art data-slot="${slot}">${fallback}</art>`,deepestFloor:3});
+  const townMarkup=renderTownDestinations({artMarkup:(slot,fallback)=>`<art data-slot="${slot}">${fallback}</art>`});
   assert.equal(TOWN_DESTINATIONS.length,8);
   for(const [target,name,slot] of [['dungeon','Enter the Hole','the-hole'],['store','General Store','general-store'],['inn','The Inn','inn'],['quests','Quest Board','quest-board'],['statistics','Statistics','statistics'],['character','Character','character'],['achievements','Achievements','achievements']])assert.match(townMarkup,new RegExp(`data-art-slot="${slot}" data-go="${target}" aria-label="${name}"`),`${name} art button should keep its accessible name and navigation`);
   assert.match(townMarkup,/data-art-slot="settings" data-action="settings" aria-label="Settings"/,'Settings art button should keep its accessible name and action');
-  assert.match(townMarkup,/<span class="town-destination-label town-destination-label--featured"><b>ENTER THE HOLE<\/b><small>Deepest: Floor 3/,'Hole should pair the prominent drawing with clear title and floor progress');
-  assert.match(townMarkup,/<button class="location location-hole location--art-destination" data-art-slot="the-hole" data-go="dungeon" aria-label="Enter the Hole">\<art/,'Hole drawing should remain inside its full-tile dungeon navigation button');
+  assert.match(townMarkup,/<button class="location location-hole location--art-destination" data-art-slot="the-hole" data-go="dungeon" aria-label="Enter the Hole"><art/,'Hole drawing should remain inside its full-tile dungeon navigation button');
+  assert.doesNotMatch(townMarkup,/town-destination-label|ENTER THE HOLE|GENERAL STORE|THE INN|QUEST BOARD|CHARACTER|STATISTICS|ACHIEVEMENTS|SETTINGS|Deepest:/,'art-backed destinations should not render visible caption bubbles');
+  assert.match(townBranch,/town-deepest-note[^<]*Deepest recorded: Floor/,'deepest-floor information stays in a separate Town note, outside the Hole button');
   assert.match(appSource,/function townArtMarkup\(slot,fallback,service=false\)/,'Town artwork keeps its single shared renderer');
   assert.match(appSource,/image\.parentElement\.classList\.add\('is-missing-art'\)/,'Missing Town art should fall back without losing navigation');
   assert.doesNotMatch(townMarkup,/Market cycle|HP \d|new notices|ready to turn in/,'art-led Town destinations should omit redundant status lines');
@@ -746,8 +747,12 @@ check('400 deep-floor return routes, safe returns, and interrupted-route resumpt
   assert.equal(game.qaSetFloor(8),false);
 });
 
-check('all Town art buttons have visible labels and the featured Hole keeps floor progress',()=>{
-  const appSource=readFileSync(resolve('js/app.js'),'utf8'),css=readFileSync(resolve('css/mechanics.css'),'utf8'),townMarkup=renderTownDestinations({artMarkup:()=>'<art>',deepestFloor:2});for(const label of ['ENTER THE HOLE','GENERAL STORE','THE INN','QUEST BOARD','CHARACTER','STATISTICS','SETTINGS','ACHIEVEMENTS'])assert.ok(townMarkup.includes(`>${label}</span>`)||townMarkup.includes(`>${label}</b>`),`missing visible Town label: ${label}`);assert.match(townMarkup,/Deepest: Floor 2/);assert.match(appSource,/renderTownDestinations/);assert.match(css,/town-hub \.location--art-destination::before\{[^}]*#fff9e8/);assert.match(css,/town-destination-label\{position:absolute/);assert.match(css,/town-art-image--ink/)
+check('art-backed Town buttons are label-free, accessible, and keep full-tile navigation',()=>{
+  const appSource=readFileSync(resolve('js/app.js'),'utf8'),css=readFileSync(resolve('css/mechanics.css'),'utf8'),townMarkup=renderTownDestinations({artMarkup:(slot)=>`<img data-slot="${slot}">`});
+  assert.equal(TOWN_DESTINATIONS.length,8);
+  for(const destination of TOWN_DESTINATIONS){assert.match(townMarkup,new RegExp(`aria-label="${destination.ariaLabel}"`),`${destination.id} keeps its semantic name`);assert.match(townMarkup,new RegExp(`data-art-slot="${destination.slot}"`),`${destination.id} keeps its art registration`);if(destination.route)assert.match(townMarkup,new RegExp(`data-go="${destination.route}"`),`${destination.id} keeps navigation`);else assert.match(townMarkup,new RegExp(`data-action="${destination.action}"`),`${destination.id} keeps its action`)}
+  assert.doesNotMatch(townMarkup,/town-destination-label|ENTER THE HOLE|GENERAL STORE|THE INN|QUEST BOARD|CHARACTER|STATISTICS|ACHIEVEMENTS|SETTINGS|Deepest:/);
+  assert.match(appSource,/renderTownDestinations/);assert.match(css,/town-hub \.location--art-destination::before\{[^}]*#fff9e8/);assert.doesNotMatch(css,/town-destination-label/);assert.match(css,/\.town-hub \.location--art-destination:not\(\.location-hole\) \.location-art--illustration\{inset:0\}/);assert.match(css,/\.town-hub \.location--art-destination\.location-hole \.location-art--illustration\{inset:0\}/);assert.match(css,/town-art-image--ink/)
 });
 
 check('ambient audio session uses feature detection and never selects playback mode', () => {
