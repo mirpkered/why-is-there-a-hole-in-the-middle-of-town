@@ -1,6 +1,11 @@
 /* Lightweight room-prop registry and deterministic placement for the faux-3D scene. */
 import {resolveArtVariant} from './art-assets.js?v=content-scalability-20261006a';
 export const ROOM_PROP_ZONES=['far-left','far-center','far-right','mid-left','mid-right','foreground-left','foreground-right','floor-center','wall-center'];
+const ROOM_PROP_ZONE_LAYOUT={
+  'far-left':{x:18,y:65,width:12,height:27,anchor:'floor'},'far-center':{x:50,y:65,width:13,height:28,anchor:'floor'},'far-right':{x:82,y:65,width:12,height:27,anchor:'floor'},
+  'mid-left':{x:27,y:82,width:17,height:38,anchor:'floor'},'mid-right':{x:73,y:82,width:17,height:38,anchor:'floor'},
+  'foreground-left':{x:18,y:96,width:25,height:45,anchor:'floor'},'foreground-right':{x:82,y:96,width:25,height:45,anchor:'floor'},'floor-center':{x:50,y:96,width:20,height:40,anchor:'floor'},'wall-center':{x:50,y:69,width:18,height:37,anchor:'wall'}
+};
 
 export const roomProps={
   'mushroom-cluster':{id:'mushroom-cluster',label:'Mushroom cluster',zones:['far-left','far-right','mid-left','mid-right'],flipAllowed:true,weight:3,rooms:['mushroom-room'],layer:'background',collisionRelevant:false,placeholder:'mushrooms',ink:'assets/images/room-props/mushroom-cluster-ink.png',colored:'assets/images/room-props/mushroom-cluster-colored.png',scale:{min:.88,max:1.08}},
@@ -41,11 +46,12 @@ export const roomProps={
 };
 for(const [id,prop] of Object.entries(roomProps)){prop.id=id;prop.colored=prop.colored||null;prop.ink=prop.ink||null;prop.scale=prop.scale||{min:.72,max:1.2};prop.anchorZones=prop.anchorZones||prop.zones;prop.rarity=prop.rarity||'common';prop.minCount=prop.minCount??1;prop.maxCount=prop.maxCount??1;prop.fallback=prop.fallback||{type:'css',placeholder:prop.placeholder};prop.accessibilityLabel=prop.label;prop.weight=prop.weight||1;prop.layer=prop.layer||'background'}
 roomProps['mushroom-cluster'].maxCount=2;roomProps['spoon-pile'].maxCount=2;
+for(const id of ['mushroom-cluster','tall-mushrooms','leaning-tall-mushroom','wooden-crate','empty-box','barrel','market-stall','bookshelf','bookshelf-books','bookshelf-full','bookshelf-packed','filing-cabinet','small-door','arched-small-door'])roomProps[id].footprint='large';
 
 function floorFingerprint(map){const walls=(map?.walls||[]).map(p=>Array.isArray(p)?`${p[0]},${p[1]}`:String(p)).sort().join(';');return `${map?.width||0}x${map?.height||0}|${walls}|u:${(map?.upStairs||[]).join(',')}|d:${(map?.downStairs||[]).join(',')}`}
 export function roomVisualSeed(map,floor,x,y,roomId,variation=0){const text=`${floorFingerprint(map)}|${floor}|${x},${y}|${roomId}|${variation}`;let hash=2166136261;for(let i=0;i<text.length;i++){hash^=text.charCodeAt(i);hash=Math.imul(hash,16777619)}return hash>>>0}
 function randomFrom(seed){let value=seed>>>0;return()=>{value=(value+0x6D2B79F5)>>>0;let n=value;n=Math.imul(n^(n>>>15),n|1);n^=n+Math.imul(n^(n>>>7),n|61);return ((n^(n>>>14))>>>0)/4294967296}}
-export function createRoomDecoration(room,map,floor,x,y,variation=0){
+export function createRoomDecoration(room,map,floor,x,y,variation=0,openings=null){
   if(!room?.visual)return {seed:roomVisualSeed(map,floor,x,y,room?.id||'ordinary',variation),props:[]};
   const seed=roomVisualSeed(map,floor,x,y,room.id,variation),rand=randomFrom(seed),pool=room.visual.propPool.map(id=>roomProps[id]).filter(Boolean),rules=room.visual.placementRules||ROOM_PROP_ZONES,desired=Math.max(1,room.visual.density||1),usedZones=new Set(),props=[];
   let available=[...pool];
@@ -54,14 +60,18 @@ export function createRoomDecoration(room,map,floor,x,y,variation=0){
     let total=available.reduce((sum,prop)=>sum+prop.weight,0),roll=rand()*total;
     const prop=available.find(candidate=>(roll-=candidate.weight)<0)||available[0];
     available=available.filter(candidate=>candidate.id!==prop.id);
-    const compatibleZones=prop.zones.filter(zone=>rules.includes(zone));
+    const availableZones=prop.zones.filter(zone=>rules.includes(zone));
+    const leftOpen=openings?.left??openings?.leftOpen,rightOpen=openings?.right??openings?.rightOpen;
+    const blocked=zone=>prop.footprint==='large'&&((openings?.front&&(zone==='far-center'||zone==='wall-center'))||(leftOpen&&(zone==='far-left'||zone==='mid-left'))||(rightOpen&&(zone==='far-right'||zone==='mid-right')));
+    const compatibleZones=availableZones.filter(zone=>!blocked(zone));
     if(!compatibleZones.length)continue;
     const copies=prop.minCount+Math.floor(rand()*(prop.maxCount-prop.minCount+1));
     for(let copy=0;copy<copies;copy++){
       const unusedZones=compatibleZones.filter(zone=>!usedZones.has(zone)),choices=unusedZones.length?unusedZones:compatibleZones;
-      const zone=choices[Math.floor(rand()*choices.length)];
+      const zone=choices[Math.floor(rand()*choices.length)],layout=ROOM_PROP_ZONE_LAYOUT[zone];
       usedZones.add(zone);
-      props.push({...prop,zone,scale:Number((prop.scale.min+rand()*(prop.scale.max-prop.scale.min)).toFixed(2)),flip:prop.flipAllowed&&rand()>.5,depth:zone.startsWith('foreground')?3:zone.startsWith('mid')?2:1});
+      const scale=Number((prop.scale.min+rand()*(prop.scale.max-prop.scale.min)).toFixed(2)),depth=zone.startsWith('foreground')||zone.startsWith('floor-')?3:zone.startsWith('mid')?2:1,depthScale=(zone.startsWith('far-')||zone==='wall-center') ? .78 : zone.startsWith('mid') ? .9 : 1;
+      props.push({...prop,zone,x:layout.x,y:layout.y,width:layout.width,height:layout.height,anchor:layout.anchor,scale,flip:prop.flipAllowed&&rand()>.5,depth,depthScale,perspectiveScale:Number((scale*depthScale).toFixed(2))});
     }
   }
   return {seed,props};
@@ -79,4 +89,4 @@ function placeholderSvg(type,ink){type=type.startsWith('mushrooms')?'mushrooms':
   'labeled-stone':`<path ${common} d="M23 76l8-42 20-17 29 9 12 50-31 12z"/><path d="M43 48h34M45 57h27" stroke="${line}" stroke-width="3"/>`,cabinet:`<path ${common} d="M26 9h61v82H26zM26 35h61M26 62h61"/><path d="M49 23h16M49 49h16M49 76h16" stroke="${line}" stroke-width="3"/>`,papers:`<path ${common} d="M27 30h57v53H27zM21 22h57v53M34 14h57v53"/><path d="M41 31h36M41 40h36M41 49h36" stroke="${line}" stroke-width="3"/>`,
   spoons:`<g fill="none" stroke="${ink?'#171717':'#9eafb0'}" stroke-width="7" stroke-linecap="round"><path d="M28 72L78 24M48 82L91 40M68 86l36-39"/></g><g fill="${ink?'none':'#dbe3e1'}" stroke="${line}" stroke-width="3"><ellipse cx="82" cy="21" rx="9" ry="13"/><ellipse cx="95" cy="37" rx="9" ry="13"/><ellipse cx="108" cy="45" rx="9" ry="13"/></g>`,spoon:`<path d="M38 72l43-44" stroke="${ink?'#171717':'#9eafb0'}" stroke-width="7" stroke-linecap="round"/><ellipse cx="87" cy="22" rx="10" ry="14" ${common}/>`,'water-debris':`<path ${common} d="M18 66h91l-13 8H30zM57 62q0-10 9-10t9 10"/>`,plank:`<path ${common} d="M14 54l89-16 8 20-89 16z"/>`,altar:`<path ${common} d="M28 40h63v14H28zM35 54h49l9 34H26zM41 31h36v9H41z"/>`,candle:`<path ${common} d="M45 39h23v48H45z"/><path d="M56 37q-12-12 0-24 12 13 0 24" fill="${ink?'none':'#e7ae42'}" stroke="${line}" stroke-width="3"/>`,debris:`<path ${common} d="M20 78l18-27 17 17 19-36 23 46z"/>`};return `<svg viewBox="0 0 120 100" focusable="false" aria-hidden="true">${shapes[type]||shapes.box}</svg>`}
 
-export function roomPropMarkup(decoration,spriteStyle='colored',showZones=false){return decoration.props.map(prop=>{const source=resolveArtVariant(prop,spriteStyle,prop.fallback?.[spriteStyle]||null).src;const flip=prop.flip?'scaleX(-1)':'';const style=`--prop-scale:${prop.scale};--prop-depth:${prop.depth};transform:translate(-50%,-50%) scale(${prop.scale}) ${flip}`;const zoneClass=prop.zone.replaceAll('-','_');return `<span class="room-prop room-prop--${prop.placeholder.replaceAll(' ','-')} room-prop-zone--${zoneClass} room-prop-layer--${prop.layer}${showZones?' room-prop--show-zone':''}" data-prop-id="${prop.id}" data-prop-zone="${prop.zone}" style="${style}" aria-hidden="true">${source?`<img src="${source}" alt="">`:placeholderSvg(prop.placeholder,spriteStyle==='ink')}</span>`}).join('')}
+export function roomPropMarkup(decoration,spriteStyle='colored',showZones=false){return decoration.props.map(prop=>{const source=resolveArtVariant(prop,spriteStyle,prop.fallback?.[spriteStyle]||null).src,flip=prop.flip?'scaleX(-1)':'',zoneClass=prop.zone.replaceAll('-','_'),transform=prop.anchor==='floor'?'translate(-50%,-100%)':'translate(-50%,-50%)';const style=`--prop-scale:${prop.scale};--prop-perspective-scale:${prop.perspectiveScale??prop.scale};--prop-depth:${prop.depth};--prop-x:${prop.x??50}%;--prop-y:${prop.y??50}%;--prop-width:${prop.width??17}%;--prop-height:${prop.height??40}%;transform:${transform} scale(var(--prop-perspective-scale)) ${flip}`;return `<span class="room-prop room-prop--${prop.placeholder.replaceAll(' ','-')} room-prop-zone--${zoneClass} room-prop-layer--${prop.layer}${showZones?' room-prop--show-zone':''}" data-prop-id="${prop.id}" data-prop-zone="${prop.zone}" data-prop-x="${prop.x??50}" data-prop-y="${prop.y??50}" data-prop-depth="${prop.depth}" data-prop-depth-scale="${prop.depthScale??1}" data-prop-scale="${prop.scale}" data-prop-final-scale="${prop.perspectiveScale??prop.scale}" data-prop-perspective-scale="${prop.perspectiveScale??prop.scale}" data-prop-anchor="${prop.anchor||'center'}" style="${style}" aria-hidden="true">${source?`<img src="${source}" alt="">`:placeholderSvg(prop.placeholder,spriteStyle==='ink')}</span>`}).join('')}

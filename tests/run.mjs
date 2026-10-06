@@ -18,7 +18,7 @@ const { generateAbsurdName, inspectNameGenerator, MAX_NAME_LENGTH } = await impo
 const { roomProps: props, createRoomDecoration, roomPropMarkup } = await import('../js/room-visuals.js?preflight');
 const { TOWN_ART_ASSETS } = await import('../js/town-art.js?preflight');
 const {resolveArtVariant,validateArtEntries}=await import('../js/art-assets.js?preflight');
-const {ROOM_BACKGROUND_REGISTRY,BATTLE_BACKGROUND_REGISTRY,backgroundForRoom,backgroundLayerMarkup,selectBackgroundVariant,validateBackgroundRegistry,validateDungeonSetRegistry}=await import('../js/scene-backgrounds.js?preflight');
+const {ROOM_BACKGROUND_REGISTRY,BATTLE_BACKGROUND_REGISTRY,backgroundForRoom,backgroundLayerMarkup,sceneImagePresentation,selectBackgroundVariant,validateBackgroundRegistry,validateDungeonSetRegistry}=await import('../js/scene-backgrounds.js?preflight');
 const {DUNGEON_SETS,DUNGEON_SET_IDS,DUNGEON_TOPOLOGIES,topologyIdForOpenings,openingsForFacing,ensureDungeonVisualSets,assignedDungeonSetId}=await import('../js/dungeon-themes.js?preflight');
 const {INTERACTIVE_OBJECT_ART}=await import('../js/interactive-art.js?preflight');
 const {MASCOT_ART}=await import('../js/mascots.js?preflight');
@@ -119,8 +119,13 @@ check('background registries support empty, single, weighted, stable variants an
   const battleRegistry={default:{id:'default',variants:[{id:'generic',path:'assets/images/rooms/battle.webp'}]},ordinary:{id:'ordinary',variants:[]}};
   assert.equal(backgroundForRoom({roomType:'ordinary',map,floor:2,x:4,y:5,kind:'battle',registry:battleRegistry}).variant.id,'generic');
   assert.equal(backgroundLayerMarkup({variant:null}),'');
+  assert.match(backgroundLayerMarkup({roomType:'ordinary',variant:{id:'room',path:'assets/images/rooms/room.webp',focal:'left center',mobileFocal:'bad'}}),/<img class="scene-image-layer"/);
   assert.match(backgroundLayerMarkup({roomType:'ordinary',variant:{id:'room',path:'assets/images/rooms/room.webp',focal:'left center',mobileFocal:'bad'}}),/--scene-focal:left center/);
   assert.match(backgroundLayerMarkup({roomType:'ordinary',variant:{id:'room',path:'assets/images/rooms/room.webp',mobileFocal:'bad'}}),/--scene-mobile-focal:50% 50%/);
+  assert.doesNotMatch(backgroundLayerMarkup({roomType:'ordinary',variant:{id:'room',path:'assets/images/rooms/room.webp'}}),/is-loaded/,'an unconfirmed image must leave the CSS scene visible');
+  assert.match(backgroundLayerMarkup({roomType:'ordinary',variant:{id:'room',path:'assets/images/rooms/room.webp'}},{loaded:true}),/is-loaded/);
+  assert.deepEqual(sceneImagePresentation('loaded'),{imageVisible:true,fallbackVisible:false,imageClass:'is-loaded',viewClass:'scene-view--image'});
+  for(const status of ['loading','failed','missing'])assert.deepEqual(sceneImagePresentation(status),{imageVisible:false,fallbackVisible:true,imageClass:'',viewClass:''});
   assert.equal(validateBackgroundRegistry({ordinary:{id:'ordinary',variants:[],fallback:'css'}},['ordinary']).valid,true);
   assert.equal(validateBackgroundRegistry({ordinary:{id:'ordinary',variants:[{id:'bad',path:'https://example.invalid/bg.webp'}]}},['ordinary']).valid,false);
 });
@@ -171,10 +176,39 @@ check('exploration and combat render distinct background and prop layers',()=>{
   assert.doesNotMatch(battle,/room-props|landmarkOverlay|npcLayer/);
   assert.match(source,/propMarkup=combat\?'':roomPropMarkup/);
   assert.match(source,/kind:combat\?'battle':'exploration'/);
-  assert.match(css,/\.scene-view--image \.scene-ceiling[^}]*opacity:0/);
+  assert.match(css,/\.scene-view--image>\.scene-ceiling[^}]*display:none/);
+  assert.match(css,/\.scene-image-layer\.is-loaded\{opacity:1\}/);
   assert.match(css,/\.battle-scene--image:before\{opacity:\.18\}/);
+  assert.match(source,/app\.addEventListener\('load',e=>[\s\S]*scene-image-layer/);
+  assert.match(source,/data-qa-bg-metrics/);
+  assert.match(source,/data-qa-props/);
+  assert.match(source,/toggle-css-fallback/);
   assert.match(source,/openingsForFacing\(d\.map,d\.x,d\.y,facing,open\)/,'scene topology must come from the actual map and facing');
   assert.match(source,/data-qa="set-visual-set"/);assert.match(source,/Preview all eight views/);assert.match(source,/dungeonBackgroundAssetStatus/);
+});
+
+check('large room props avoid open passages and use anchored perspective coordinates',()=>{
+  const room=roomTypes.storage,map={width:11,height:11,walls:[[0,0]],upStairs:[1,1],downStairs:[9,9]};
+  for(const topology of DUNGEON_TOPOLOGIES){
+    const openings={front:topology.front,leftOpen:topology.left,rightOpen:topology.right};
+    for(let variation=0;variation<30;variation++){
+      const decoration=createRoomDecoration(room,map,4,5,5,variation,openings);
+      for(const prop of decoration.props.filter(candidate=>candidate.footprint==='large')){
+        assert.equal(topology.front&&(prop.zone==='far-center'||prop.zone==='wall-center'),false,`${topology.id} blocks front prop ${prop.id}`);
+        assert.equal(topology.left&&(prop.zone==='far-left'||prop.zone==='mid-left'),false,`${topology.id} blocks left prop ${prop.id}`);
+        assert.equal(topology.right&&(prop.zone==='far-right'||prop.zone==='mid-right'),false,`${topology.id} blocks right prop ${prop.id}`);
+        assert.ok(Number.isFinite(prop.x)&&Number.isFinite(prop.y)&&prop.x>=0&&prop.x<=100&&prop.y>=0&&prop.y<=100);
+        assert.ok(prop.perspectiveScale>0&&prop.depth>=1&&['floor','wall'].includes(prop.anchor));
+        if(prop.anchor==='floor')assert.ok(prop.y>=60,`${prop.id} floor anchor is above the visible ground plane`);
+      }
+    }
+  }
+  const sample=createRoomDecoration(room,map,4,5,5,3,{front:true,leftOpen:true,rightOpen:false}).props[0];
+  if(sample){const markup=roomPropMarkup({props:[sample]});assert.match(markup,/data-prop-x=/);assert.match(markup,/data-prop-depth=/);assert.match(markup,/data-prop-depth-scale=/);assert.match(markup,/data-prop-scale=/);assert.match(markup,/data-prop-final-scale=/);assert.match(markup,/translate\(-50%,-100%\)|translate\(-50%,-50%\)/)}
+  const floorProp=createRoomDecoration(roomTypes.storage,map,4,5,5,0,{front:false,leftOpen:false,rightOpen:false}).props.find(prop=>prop.anchor==='floor');
+  if(floorProp)assert.match(roomPropMarkup({props:[floorProp]}),/translate\(-50%,-100%\)/,'floor objects are bottom anchored');
+  const wallProp={...props.bookshelf,zone:'wall-center',x:50,y:69,width:18,height:37,anchor:'wall',scale:1,perspectiveScale:.78,depth:1,flip:false};
+  assert.match(roomPropMarkup({props:[wallProp]}),/translate\(-50%,-50%\)/,'wall objects use their wall anchor');
 });
 
 check('shared art resolver handles Colored, Ink, alternate style and fallback',()=>{
