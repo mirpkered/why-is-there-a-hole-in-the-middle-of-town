@@ -5,10 +5,12 @@ import {roomProps} from '../js/room-visuals.js';
 import {TOWN_ART_ASSETS} from '../js/town-art.js';
 import {INTERACTIVE_OBJECT_ART} from '../js/interactive-art.js';
 import {ROOM_BACKGROUND_REGISTRY,BATTLE_BACKGROUND_REGISTRY} from '../js/scene-backgrounds.js';
+import {MASCOT_ART} from '../js/mascots.js';
 
 const state=(art,hasFallback=false)=>{
   if(art?.ink&&art?.colored)return `CUSTOM · ${existsSync(resolve(art.ink))&&existsSync(resolve(art.colored))?'paired assets present':'registered pair has missing files'}`;
   if(art?.ink||art?.colored)return 'CUSTOM · partial pair';
+  if(art?.src)return `CUSTOM · ${existsSync(resolve(art.src))?'single asset present':'registered asset has missing file'}`;
   return hasFallback?'FALLBACK · CSS/text renderer':'MISSING OPTIONAL ART';
 };
 const section=(title,rows)=>['### '+title,'',...rows.map(([label,value])=>'- '+label+': '+value),''].join('\n');
@@ -17,6 +19,7 @@ const rows={
   Town:Object.entries(TOWN_ART_ASSETS).map(([id,a])=>[(a.accessibilityLabel||id)+' ('+id+')',state(a,true)]),
   'Room props':Object.entries(roomProps).map(([id,p])=>[p.label+' ('+id+')',state(p,true)]),
   NPCs:Object.entries({...townNpcs,...dungeonNpcs}).map(([id,n])=>[n.name+' ('+id+')',state(n.art,true)]),
+  Mascots:Object.entries(MASCOT_ART).map(([id,a])=>[`${a.name} (${id}; ${a.role})`,state(a,a.fallback==='text')]),
   Items:Object.entries(items).map(([id,item])=>[item.name+' ('+id+')',state(item.art,false)]),
   Landmarks:Object.entries(INTERACTIVE_OBJECT_ART).filter(([,a])=>a.kind==='landmark').map(([,a])=>[a.contentId,state(a,true)]),
   'Interactive objects':Object.entries(INTERACTIVE_OBJECT_ART).filter(([,a])=>a.kind==='event').map(([,a])=>[(dungeonEvents[a.contentId]?.title||a.contentId)+' ('+a.contentId+')',state(a,true)]),

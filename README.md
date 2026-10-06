@@ -6,7 +6,7 @@ An original, mobile-first, turn-based dungeon crawler by Mirpworks. The town tre
 
 ## Play
 
-Create or continue a character, take work from town, then descend through three playable floors of procedural rooms, combat, events, recurring merchants, and loot. Six equipment slots, four classes, class abilities, status effects, ten short quest chains, local achievements, and an evolving town market support repeat expeditions. Defeat sends the delver back to town with gear and discoveries intact, at 1 HP, after a 10% gold loss.
+Create or continue a character, take work from town, then descend through three playable floors of procedural rooms, combat, events, recurring merchants, and loot. Six equipment slots, four classes, class abilities, status effects, ten short quest chains, local achievements, and an evolving town market support repeat expeditions. Floors 4–7 are Old Foundations QA previews only and are not playable through normal descent. Defeat sends the delver back to town with gear and discoveries intact, at 1 HP, after a 10% gold loss.
 
 The game is single-player and saves automatically in browser local storage. Saves do not sync between devices.
 
@@ -24,13 +24,13 @@ Run the deployment preflight before publishing:
 node tests/run.mjs
 ```
 
-It validates content and runtime assets, art/audio inventory freshness, historical save migrations and backup recovery, 5,001 seeded floor layouts, room prop placement, quest-chain links, and bounded gameplay simulations. Refresh generated inventories after registry edits with `node tools/art-report.mjs --write` and `node tools/audio-report.mjs --write`.
+It validates content and runtime assets, art/audio inventory freshness, historical save migrations and backup recovery, 5,001 current-depth plus 10,000 Old Foundations floor layouts, 400 deeper return-route cases, quest-chain links, and bounded gameplay simulations. The Floor 4–7 generation/room/encounter/loot/combat readiness results are in [docs/FLOOR_4_7_READINESS.md](docs/FLOOR_4_7_READINESS.md). Refresh generated inventories after registry edits with `node tools/art-report.mjs --write` and `node tools/audio-report.mjs --write`.
 
-Append `?qa=1` to the live or local URL for development diagnostics and controls. QA state remains local to the browser.
+Append `?qa=1` to the live or local URL for development diagnostics and controls, including explicit Floor 1–7 previews. Floors above the playable cap are labeled QA-only and do not overwrite the playable save.
 
 ## Project shape
 
-The site is static HTML, CSS, and native JavaScript modules hosted by GitHub Pages. `js/app.js` renders screens and handles delegated input; `js/ui/town.js` owns Town destination metadata/rendering; `js/screen-presentation.js` holds shared screen policies; `js/game.js` resolves actions; `js/state.js` owns save shape, migrations, and map generation; `js/data.js` and `js/progression.js` hold gameplay content. `scene-backgrounds.js` separates exploration and battle background registries, and `art-assets.js` resolves paired variants consistently. See [Architecture](docs/ARCHITECTURE.md), [Game State](docs/GAME_STATE.md), [Content Guide](docs/CONTENT_GUIDE.md), [Art Backlog](docs/ART_BACKLOG.md), [Audio Inventory](docs/AUDIO_INVENTORY.md), and [Roadmap](ROADMAP.md).
+The site is static HTML, CSS, and native JavaScript modules hosted by GitHub Pages. `js/app.js` renders screens and handles delegated input; `js/ui/town.js` owns Town destination metadata/rendering; `js/screen-presentation.js` holds shared screen policies; `js/game.js` resolves actions; `js/state.js` owns save shape, migrations, and map generation; `js/data.js` holds gameplay content; `js/depth-config.js` owns the playable cap, QA preview limit, and depth bands. `scene-backgrounds.js` separates exploration and battle background registries, and `art-assets.js` resolves paired variants consistently. See [Architecture](docs/ARCHITECTURE.md), [Game State](docs/GAME_STATE.md), [Content Guide](docs/CONTENT_GUIDE.md), [Floor 4–7 Readiness](docs/FLOOR_4_7_READINESS.md), [Art Backlog](docs/ART_BACKLOG.md), [Audio Inventory](docs/AUDIO_INVENTORY.md), and [Roadmap](ROADMAP.md).
 
 ## Adding new content
 

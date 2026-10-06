@@ -37,7 +37,7 @@ Version 8 is the current endpoint; new features should add a new sequential migr
 
 ## Geometry and combat persistence
 
-New characters store deterministic maps for the three currently playable floors. A generated floor is kept when revisited or loaded. Existing version 3-era 7×7 floor geometry remains intact for that character. The current playable cap is Floor 3; synthetic QA enemy levels do not unlock more floors.
+New characters store deterministic maps for the three currently playable floors. A generated floor is kept when revisited or loaded. Existing version 3-era 7×7 floor geometry remains intact for that character. `CURRENT_PLAYABLE_MAX_FLOOR` in `js/depth-config.js` is 3. Floors 4–7 are generated only through QA preview; preview-only state does not write over the playable save. Continuing a legacy or externally edited save whose active floor is beyond the cap resumes safely in Town while preserving the stored maps and history. No save migration is needed for depth readiness.
 
 An enemy is scaled once when combat begins. The saved snapshot prevents reloads from rerolling its level, variant, HP, attacks, or rewards. Status durations advance only at their explicit combat timing hook; a page reload does not count as a turn.
 

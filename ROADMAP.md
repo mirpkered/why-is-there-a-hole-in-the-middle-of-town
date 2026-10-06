@@ -16,7 +16,7 @@ This file records current project direction only. It does not reconstruct missin
 - Add authored exploration and battle background variants independently as images become available.
 - Add authored content to the existing quests, events, room, and monster systems while keeping mobile readability and deterministic QA.
 - Continue device checks for iOS audio session behavior, safe-area layouts, and touch interactions as content changes.
-- Consider deeper floors only after persistent fixtures, encounter/economy progression, and multi-floor return routing are intentionally designed and tested.
+- Floors 4–7 have a QA-only Old Foundations readiness configuration; normal play remains capped at Floor 3. See [Floor 4–7 Readiness](docs/FLOOR_4_7_READINESS.md) for release gates and current simulation results.
 
 ## Later
 
@@ -24,5 +24,5 @@ This file records current project direction only. It does not reconstruct missin
 
 ## Intentionally deferred
 
-- Floors beyond Floor 3, backend/cloud saves, multiplayer, crafting, durability, pets, bosses, procedural live quests, and framework migration.
+- Public Floors 4–7 release until each floor has authored content and passes its staged release checks; backend/cloud saves, multiplayer, crafting, durability, pets, bosses, procedural live quests, and framework migration.
 - Final town/NPC/item/landmark art not yet supplied by the user.

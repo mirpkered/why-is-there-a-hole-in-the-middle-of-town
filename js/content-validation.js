@@ -8,6 +8,7 @@ import {TOWN_ART_ASSETS} from './town-art.js?v=town-service-signs-20261005a';
 import {INTERACTIVE_OBJECT_ART} from './interactive-art.js?v=content-scalability-20261006a';
 import {ROOM_BACKGROUND_REGISTRY,BATTLE_BACKGROUND_REGISTRY,validateBackgroundRegistry} from './scene-backgrounds.js?v=content-scalability-20261006a';
 import {validateArtEntries} from './art-assets.js?v=content-scalability-20261006a';
+import {MASCOT_ART} from './mascots.js?v=mascot-penguin-20261006a';
 
 const slots=new Set(['head','body','mainHand','offHand','feet','accessory']);
 const issue=(severity,code,message)=>({severity,code,message});
@@ -85,7 +86,7 @@ export function validateContent(){
   for(const [id,trade] of Object.entries(trades)){if(!dungeonNpcs[trade.npcId])push('error','trade-npc',`${id} references missing NPC.`);if(!Number.isFinite(trade.gold)||trade.gold<0)push('error','trade-gold',`${id} has invalid gold cost.`);for(const row of [...(trade.gives||[]),...(trade.requires||[])])if(!items[row.item]||!Number.isInteger(row.quantity)||row.quantity<1)push('error','trade-item',`${id} has invalid item quantity/reference.`)}
   for(const [id,prop] of Object.entries(roomProps)){for(const room of prop.rooms||[])if(!roomIds.includes(room))push('error','prop-room',`${id} is assigned to missing room ${room}.`);for(const zone of prop.zones||[])if(!ROOM_PROP_ZONES.includes(zone))push('error','prop-zone',`${id} uses unknown placement zone ${zone}.`);if((prop.ink&&!prop.colored)||(prop.colored&&!prop.ink))push('warning','prop-pair',`${id} has only one sprite-style asset.`)}
   for(const [slot,assets] of Object.entries(TOWN_ART_ASSETS)){if(!assets.ink||!assets.colored)push('error','town-art-pair',`${slot} must have both Ink and Colored assets.`);for(const path of [assets.ink,assets.colored])if(typeof path!=='string'||!path.startsWith('assets/'))push('error','town-art-path',`${slot} has an invalid local asset path.`)}
-  for(const [name,registry,requirePair] of [['town',TOWN_ART_ASSETS,true],['props',roomProps,false],['interactive',INTERACTIVE_OBJECT_ART,false]]){const result=validateArtEntries(registry,{requirePair});for(const error of result.errors)push('error',`${name}-art`,error);for(const warning of result.warnings)push('warning',`${name}-art`,warning)}
+  for(const [name,registry,requirePair] of [['town',TOWN_ART_ASSETS,true],['props',roomProps,false],['interactive',INTERACTIVE_OBJECT_ART,false],['mascot',MASCOT_ART,false]]){const result=validateArtEntries(registry,{requirePair});for(const error of result.errors)push('error',`${name}-art`,error);for(const warning of result.warnings)push('warning',`${name}-art`,warning)}
   for(const [kind,registry] of [['room',ROOM_BACKGROUND_REGISTRY],['battle',BATTLE_BACKGROUND_REGISTRY]])for(const error of validateBackgroundRegistry(registry,roomIds).errors)push('error',`${kind}-background`,error);
   for(const id of eventIds)if(!INTERACTIVE_OBJECT_ART[`event:${id}`])push('error','interactive-art',`Event ${id} has no optional-art/fallback registry entry.`);
   for(const id of ['warm-wall','giant-stone-face'])if(!INTERACTIVE_OBJECT_ART[`landmark:${id}`])push('error','interactive-art',`Landmark ${id} has no optional-art/fallback registry entry.`);

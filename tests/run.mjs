@@ -20,6 +20,7 @@ const { TOWN_ART_ASSETS } = await import('../js/town-art.js?preflight');
 const {resolveArtVariant,validateArtEntries}=await import('../js/art-assets.js?preflight');
 const {ROOM_BACKGROUND_REGISTRY,BATTLE_BACKGROUND_REGISTRY,backgroundForRoom,backgroundLayerMarkup,selectBackgroundVariant,validateBackgroundRegistry}=await import('../js/scene-backgrounds.js?preflight');
 const {INTERACTIVE_OBJECT_ART}=await import('../js/interactive-art.js?preflight');
+const {MASCOT_ART}=await import('../js/mascots.js?preflight');
 const {SCREEN_PRESENTATION}=await import('../js/screen-presentation.js?preflight');
 const {TOWN_DESTINATIONS,renderTownDestinations}=await import('../js/ui/town.js?preflight');
 const { validateContent, validateQuestGraph } = await import('../js/content-validation.js?preflight');
@@ -31,6 +32,7 @@ const { LOCATION_MUSIC_POOLS, LOCATION_MUSIC_CONTEXTS, chooseLocationTrack, vali
 const {BATTLE_THEME,DUNGEON_TRACKS}=await import('../js/audio-catalog.js?preflight');
 const { configureAmbientAudioSession, audioSessionDiagnostics } = await import('../js/audio-session.js?preflight');
 const { scaleEnemy } = await import('../js/enemy-scaling.js?preflight');
+const {CURRENT_PLAYABLE_MAX_FLOOR,QA_PREVIEW_MAX_FLOOR,depthBandFor,roomWeightForDepth,encounterWeightForDepth,lootRarityWeightForDepth}=await import('../js/depth-config.js?preflight');
 const { selectWithHistory, paceEncounterChance, chooseEncounterCategory, chooseEnemyAttack, monsterFamilies } = await import('../js/encounter-director.js?preflight');
 const game = await import('../js/game.js?preflight');
 
@@ -39,7 +41,7 @@ function check(name, fn) { fn(); checks++; console.log(`✓ ${name}`); }
 
 check('all runtime JavaScript modules pass Node syntax validation',()=>{
   const sources=dir=>readdirSync(dir,{withFileTypes:true}).flatMap(entry=>entry.isDirectory()?sources(resolve(dir,entry.name)):[resolve(dir,entry.name)]);
-  for(const file of [...sources(resolve('js')).filter(path=>path.endsWith('.js')),...['tools/art-report.mjs','tools/audio-report.mjs'].map(path=>resolve(path))]){const result=spawnSync(process.execPath,['--check',file],{encoding:'utf8'});assert.equal(result.status,0,`${file}: ${result.stderr||result.stdout}`)}
+  for(const file of [...sources(resolve('js')).filter(path=>path.endsWith('.js')),...['tools/art-report.mjs','tools/audio-report.mjs','tools/process-mascot-cutout.mjs'].map(path=>resolve(path))]){const result=spawnSync(process.execPath,['--check',file],{encoding:'utf8'});assert.equal(result.status,0,`${file}: ${result.stderr||result.stdout}`)}
 });
 
 function inspectTransparentPng(path) {
@@ -67,6 +69,7 @@ check('all registered local runtime assets exist', () => {
   for(const item of Object.values(items))refs.push(item.art?.ink,item.art?.colored);
   for(const registry of [ROOM_BACKGROUND_REGISTRY,BATTLE_BACKGROUND_REGISTRY])for(const entry of Object.values(registry))for(const variant of entry.variants||[])refs.push(variant.path);
   for(const entry of Object.values(INTERACTIVE_OBJECT_ART))refs.push(entry.ink,entry.colored);
+  for(const entry of Object.values(MASCOT_ART))refs.push(entry.src,entry.ink,entry.colored);
   for(const npc of [...Object.values(townNpcs),...Object.values(dungeonNpcs)])refs.push(npc.art?.ink,npc.art?.colored);
   for (const path of ['assets/icons/favicon-16.png', 'assets/icons/favicon-32.png', 'assets/icons/apple-touch-icon.png', 'assets/icons/icon-192.png', 'assets/icons/icon-512.png']) refs.push(path);
   const manifest = JSON.parse(readFileSync(resolve('site.webmanifest'), 'utf8'));
@@ -78,6 +81,12 @@ check('all registered local runtime assets exist', () => {
   refs.push(BATTLE_THEME,...DUNGEON_TRACKS.map(track=>track.src));
   for (const track of Object.values(LOCATION_MUSIC_POOLS).flat()) refs.push(track.src);
   for (const path of new Set(refs.filter(Boolean))) assert.ok(existsSync(resolve(path)), `Missing asset: ${path}`);
+});
+
+check('DJ Penguin mascot registration and cutout preserve source art and transparent crop',()=>{
+  const mascot=MASCOT_ART['dj-penguin'];assert.ok(mascot);assert.equal(mascot.id,'dj-penguin');assert.equal(mascot.role,'trivia-generator');assert.equal(mascot.src,'assets/images/mascots/dj-penguin.png');assert.equal(resolveArtVariant(mascot,'ink').src,mascot.src);
+  assert.ok(existsSync(resolve('assets/source/mascots/dj-penguin.jpg')),'original mascot source should remain archived');
+  const {width,height}=inspectTransparentPng(mascot.src);assert.ok(width<753&&height<1280,'runtime art should be cropped from the original scan');
 });
 
 check('background registries support empty, single, weighted, stable variants and CSS fallback',()=>{
@@ -422,7 +431,7 @@ check('repeated valid Continue candidate reads are side-effect free and consiste
 });
 
 check('Continue UI remains delegated, idempotent, reports load failure, and isolates audio errors',()=>{
-  const appSource=readFileSync(resolve('js/app.js'),'utf8');assert.match(appSource,/app\.addEventListener\('click'/);assert.match(appSource,/function continueGame\(button\)\{if\(continueLoadBusy\|\|screen!=='title'\)return/);assert.match(appSource,/continueError='Couldn’t load that save\.'/);assert.match(appSource,/try\{syncMusic\(\)\}catch\(error\)/)
+  const appSource=readFileSync(resolve('js/app.js'),'utf8');assert.match(appSource,/app\.addEventListener\('click'/);assert.match(appSource,/function continueGame\(button\)\{if\(continueLoadBusy\|\|screen!=='title'\)return/);assert.match(appSource,/continueError='Couldn’t load that save\.'/);assert.match(appSource,/if\(!qa&&\(saved\.dungeon\?\.floor\|\|1\)>CURRENT_PLAYABLE_MAX_FLOOR\)/,'normal Continue must route over-cap saves safely to Town');assert.match(appSource,/dungeon\.maps\?\.\['1'\]/,'over-cap save records remain available when clamping the active session');assert.match(appSource,/try\{syncMusic\(\)\}catch\(error\)/)
 });
 
 check('missing optional save containers are repaired without losing core progress', () => {
@@ -674,6 +683,56 @@ check('town button art has transparent cropped bounds and no rectangular image b
   assert.doesNotMatch(townMarkup,/Market cycle|HP \d|new notices|ready to turn in/,'art-led Town destinations should omit redundant status lines');
 });
 
+check('Old Foundations configuration keeps the release cap sealed and preserves all room types',()=>{
+  assert.equal(CURRENT_PLAYABLE_MAX_FLOOR,3);assert.equal(QA_PREVIEW_MAX_FLOOR,7);
+  for(let floor=4;floor<=7;floor++)assert.equal(depthBandFor(floor).id,'old-foundations');
+  for(const room of Object.values(roomTypes))assert.ok(roomWeightForDepth(room,4)>0,`${room.id} remains eligible`);
+  assert.ok(lootRarityWeightForDepth('uncommon',4)>1);assert.equal(lootRarityWeightForDepth('strange',7),1);
+  assert.ok(encounterWeightForDepth({weight:1},monsters.heartAttack,4)>1);
+});
+
+check('QA preview controls are opt-in, visibly marked and bounded by configured preview depth',()=>{
+  const app=readFileSync(resolve('js/app.js'),'utf8');assert.match(app,/qaPanel=qa\?`/);assert.match(app,/name="previewFloor"/);assert.match(app,/PREVIEW \/ QA ONLY/);assert.match(app,/d\.floor>CURRENT_PLAYABLE_MAX_FLOOR/);assert.match(app,/descend\(\{qaPreview:qa\}\)/);assert.match(app,/qa\?QA_PREVIEW_MAX_FLOOR:CURRENT_PLAYABLE_MAX_FLOOR/);
+});
+
+check('10,000 Old Foundations floor generations are connected, deterministic and within bounds',()=>{
+  const totals={};
+  for(let floor=4;floor<=7;floor++){let minWalkable=Infinity,maxPath=0,totalWalkable=0;
+    for(let sample=0;sample<2500;sample++){const seed=(sample*7919+floor*104729)>>>0,map=generateFloorMap(seed,floor),again=generateFloorMap(seed,floor),report=validateFloorMap(map);
+      assert.ok(report.valid,`floor ${floor}, sample ${sample}: ${report.errors.join(', ')}`);
+      assert.deepEqual(map,again,`floor ${floor} seed ${seed} is deterministic`);assert.equal(map.width,11);assert.equal(map.height,11);
+      minWalkable=Math.min(minWalkable,report.metrics.walkable);maxPath=Math.max(maxPath,report.metrics.shortestStairPath);totalWalkable+=report.metrics.walkable;
+    }
+    totals[floor]={samples:2500,minWalkable,meanWalkable:Number((totalWalkable/2500).toFixed(1)),maxStairPath:maxPath};
+  }
+  console.log(`  Floors 4–7 generation: ${JSON.stringify(totals)}`);
+});
+
+check('400 deep-floor return routes, safe returns, and interrupted-route resumptions work; Floor 3 remains sealed',()=>{
+  let safeReturns=0,interrupted=0,resumed=0;const chances={4:[],5:[],6:[],7:[]};let deepSaveBytes=0;
+  for(let floor=4;floor<=7;floor++)for(let sample=1;sample<=100;sample++){
+    game.setState(freshState());game.startGame('Deep QA','Fighter');const d=game.state.dungeon,seed=(sample*3571+floor*104729)>>>0;
+    d.seed=seed;d.maps=Object.fromEntries(Array.from({length:floor},(_,i)=>i+1).map(n=>[n,generateFloorMap(seed,n)]));d.map=d.maps['1'];
+    assert.equal(game.qaSetFloor(floor),true,`QA Floor ${floor} should load`);assert.equal(d.floor,floor);assert.equal(validateFloorMap(d.map).valid,true);
+    const plan=game.returnPlan();assert.ok(plan.ok,`Floor ${floor}, seed ${seed} return route`);assert.equal(plan.route.at(-1).floor,1);chances[floor].push(plan.chancePercent);
+    if(sample%10===0){const result=game.attemptReturn('interrupt');assert.equal(result.interrupted,true);assert.ok(game.state.combat);interrupted++;
+      game.state.combat=null;const resumedPlan=game.returnPlan();assert.ok(resumedPlan.ok,`Floor ${floor} seed ${seed} resumes a known route after interruption`);const returned=game.attemptReturn('safe');assert.equal(returned.ok,true);assert.equal(d.inDungeon,false);resumed++;
+    }else{const returned=game.attemptReturn('safe');assert.equal(returned.ok,true);assert.equal(d.inDungeon,false);safeReturns++}
+  }
+  assert.equal(safeReturns,360);assert.equal(interrupted,40);assert.equal(resumed,40);
+  deepSaveBytes=Buffer.byteLength(JSON.stringify(game.state));
+  console.log(`  return odds by floor (min/mean/max): ${JSON.stringify(Object.fromEntries(Object.entries(chances).map(([floor,values])=>[floor,[Math.min(...values),Number((values.reduce((a,b)=>a+b,0)/values.length).toFixed(1)),Math.max(...values)]])))}; synthetic Floors 1–7 state ${deepSaveBytes} bytes`);
+  game.setState(freshState());game.startGame('Cap Check','Fighter');assert.equal(game.qaSetFloor(3),true);
+  const map=game.state.dungeon.map,d=game.state.dungeon;d.x=map.downStairs[0];d.y=map.downStairs[1];
+  assert.match(game.descend(),/sealed municipal door/);assert.equal(d.floor,3);
+  assert.equal(game.qaSetFloor(4),true);d.x=d.map.downStairs[0];d.y=d.map.downStairs[1];assert.match(game.descend(),/sealed municipal door/);assert.equal(d.floor,4);
+  assert.match(game.descend({qaPreview:true}),/level 5/i);assert.equal(d.floor,5);
+  assert.equal(game.qaSetFloor(7),true);d.x=d.map.downStairs[0];d.y=d.map.downStairs[1];assert.match(game.descend({qaPreview:true}),/QA preview ends/);assert.equal(d.floor,7);
+  assert.equal(game.state.dungeon.qaPreviewOnly,true,'preview state is clearly marked in memory');
+  const savedBeforePreview=storage.get(SAVE_KEY);assert.equal(game.qaSetFloor(3),true);assert.equal(game.state.dungeon.qaPreviewOnly,true,'returning the selector to a playable-depth map does not clear the preview-session save guard');game.persist();assert.equal(storage.get(SAVE_KEY),savedBeforePreview,'preview-only state must not overwrite the playable save');
+  assert.equal(game.qaSetFloor(8),false);
+});
+
 check('all Town art buttons have visible labels and the featured Hole keeps floor progress',()=>{
   const appSource=readFileSync(resolve('js/app.js'),'utf8'),css=readFileSync(resolve('css/mechanics.css'),'utf8'),townMarkup=renderTownDestinations({artMarkup:()=>'<art>',deepestFloor:2});for(const label of ['ENTER THE HOLE','GENERAL STORE','THE INN','QUEST BOARD','CHARACTER','STATISTICS','SETTINGS','ACHIEVEMENTS'])assert.ok(townMarkup.includes(`>${label}</span>`)||townMarkup.includes(`>${label}</b>`),`missing visible Town label: ${label}`);assert.match(townMarkup,/Deepest: Floor 2/);assert.match(appSource,/renderTownDestinations/);assert.match(css,/town-hub \.location--art-destination::before\{[^}]*#fff9e8/);assert.match(css,/town-destination-label\{position:absolute/);assert.match(css,/town-art-image--ink/)
 });
@@ -745,12 +804,44 @@ check('expanded Inn event pool samples correctly across 25,000 eligible-rest att
   console.log(`  Inn events: ${report.eventCount}/${report.legitimateRests} eligible rests (${(report.observedRate*100).toFixed(1)}%); all ${Object.keys(report.counts).length} events appeared`);
 });
 
-check('25,000 encounter decisions and loot rolls per representative depth stay varied',()=>{
+check('25,000 room-weight choices per Old Foundations floor retain full room variety',()=>{
+  let seed=28201;const random=()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296},report={};
+  for(let floor=4;floor<=7;floor++){const counts=new Map(),rows=Object.values(roomTypes).filter(room=>(room.minDepth||1)<=floor).map(room=>({...room,weight:roomWeightForDepth(room,floor)}));
+    for(let i=0;i<25000;i++){const room=weightedChoice(rows,random);assert.ok(room);counts.set(room.id,(counts.get(room.id)||0)+1)}
+    for(const room of rows)assert.ok(counts.get(room.id)>0,`${room.id} appeared at floor ${floor}`);
+    report[floor]=Object.fromEntries([...counts].map(([id,count])=>[id,`${(100*count/25000).toFixed(1)}%`]));
+  }
+  console.log(`  deep room selection: ${JSON.stringify(report)}`);
+});
+
+check('1,000 encounter economy samples per Old Foundations floor stay within the existing reward curve',()=>{
+  const report={};for(let floor=4;floor<=7;floor++){const estimate=game.qaEconomySimulation(1000,floor);assert.equal(estimate.runs,1000);assert.ok(estimate.averageGold>0&&estimate.averageGold<80);assert.ok(estimate.averageXp>0&&estimate.averageXp<100);assert.ok(estimate.averageIncomingDamagePerEnemyAction>0);report[floor]=estimate}
+  console.log(`  deep encounter economy: ${JSON.stringify(report)}`);
+});
+
+check('four-class no-counter combat sample stays winnable across every Old Foundations depth',()=>{
+  const summary={},classes=['Fighter','Wizard','Rogue','Cleric'];
+  for(let floor=4;floor<=7;floor++){let fights=0,wins=0,losses=0,roundTotal=0,damageTotal=0,maxRounds=0;
+    const rows=(floorEncounterTable[3]||[]).filter(row=>monsters[row.id]?.minDepth<=floor);
+    for(let classIndex=0;classIndex<classes.length;classIndex++)for(const row of rows)for(let sample=0;sample<10;sample++){
+      game.setState(freshState());game.startGame('Combat sample',classes[classIndex]);const d=game.state.dungeon;d.seed=(floor*1000003+classIndex*10007+sample*97+rows.indexOf(row))>>>0;
+      assert.equal(game.qaSetFloor(floor),true);game.qaSetLevel(floor+1);assert.equal(game.qaSpawnMonster(row.id,floor),true);
+      let rounds=0,damage=0;while(game.state.combat&&game.state.player.hp>0&&rounds<60){const before=game.state.player.hp;game.attack();damage+=before-game.state.player.hp;rounds++}
+      fights++;roundTotal+=rounds;damageTotal+=damage;maxRounds=Math.max(maxRounds,rounds);
+      if(game.state.dungeon.lastDefeat?.pending)losses++;else wins++;
+    }
+    assert.equal(fights,classes.length*rows.length*10);assert.ok(wins>0,`no-counter combat produced no wins at floor ${floor}`);assert.ok(maxRounds<60);
+    summary[floor]={fights,wins,losses,winRate:`${(wins/fights*100).toFixed(1)}%`,meanRounds:Number((roundTotal/fights).toFixed(1)),meanDamageTaken:Number((damageTotal/fights).toFixed(1)),maxRounds};
+  }
+  console.log(`  deep combat baseline: ${JSON.stringify(summary)}`);
+});
+
+check('25,000 encounter decisions and loot rolls per representative depth stay varied, including each Old Foundations floor',()=>{
   let seed=739391;const random=()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296};const encounterReport={},lootReport={};
-  for(const floor of [1,3,5,10]){const categories={combat:0,event:0,quiet:0,npc:0},monstersSeen=new Map(),history=[];let emptySteps=0,streak=0,repeat=0,previous='';const rows=(floorEncounterTable[floor]||floorEncounterTable[3]).filter(row=>monsters[row.id]?.minDepth<=floor);
-    for(let i=0;i<25000;i++){const chance=paceEncounterChance({combat:floor===1?.13:.19,event:floor===1?.09:.13,emptySteps,encounterStreak:streak});if(random()<.035){categories.npc++;emptySteps=0;streak++}else{const category=chooseEncounterCategory(chance,random);categories[category]++;if(category==='combat'){const selected=selectWithHistory(rows,history,row=>monsters[row.id].id,random,.55);const id=selected.id;if(id===previous)repeat++;previous=id;monstersSeen.set(id,(monstersSeen.get(id)||0)+1);history.push({type:'monster',id:monsters[id].id});if(history.length>12)history.shift();emptySteps=0;streak++}else if(category==='event'){emptySteps=0;streak++}else{emptySteps++;streak=0}}}
+  for(const floor of [1,3,4,5,6,7,10]){const categories={combat:0,event:0,quiet:0,npc:0},monstersSeen=new Map(),history=[];let emptySteps=0,streak=0,repeat=0,previous='';const rows=(floorEncounterTable[floor]||floorEncounterTable[3]).filter(row=>monsters[row.id]?.minDepth<=floor).map(row=>({...row,weight:encounterWeightForDepth(row,monsters[row.id],floor)}));
+    for(let i=0;i<25000;i++){const chance=paceEncounterChance({combat:({1:.13,2:.19,3:.25})[floor]||.27,event:({1:.09,2:.13,3:.18})[floor]||.2,emptySteps,encounterStreak:streak});if(random()<.035){categories.npc++;emptySteps=0;streak++}else{const category=chooseEncounterCategory(chance,random);categories[category]++;if(category==='combat'){const selected=selectWithHistory(rows,history,row=>monsters[row.id].id,random,.55);const id=selected.id;if(id===previous)repeat++;previous=id;monstersSeen.set(id,(monstersSeen.get(id)||0)+1);history.push({type:'monster',id:monsters[id].id});if(history.length>12)history.shift();emptySteps=0;streak++}else if(category==='event'){emptySteps=0;streak++}else{emptySteps++;streak=0}}}
     const repeatRate=repeat/Math.max(1,categories.combat);assert.ok(categories.combat>1500&&categories.event>1000&&categories.quiet>3750&&categories.npc>250,`starved depth ${floor}: ${JSON.stringify(categories)}`);assert.ok(repeatRate<.25,`rapid monster repeats too common at ${floor}: ${repeatRate}`);encounterReport[floor]={categories:Object.fromEntries(Object.entries(categories).map(([k,v])=>[k,`${(100*v/25000).toFixed(1)}%`])),monsterImmediateRepeat:`${(repeatRate*100).toFixed(1)}%`,top:[...monstersSeen].sort((a,b)=>b[1]-a[1]).slice(0,3).map(([id,n])=>`${monsters[id].name} ${n}`)};
-    const rarityCounts={common:0,uncommon:0,rare:0,strange:0},itemCounts=new Map();for(let i=0;i<25000;i++){const row=selectWithHistory(rows,[],entry=>monsters[entry.id].id,random,.55),monster=monsters[row.id],table=lootTables[monster.lootTable]||[],rarityMultiplier=Math.min(2,1+(floor-1)*.06),adjusted=table.map(entry=>{const rarity=items[entry.item]?.rarity||'common',factor=( {common:62,uncommon:25,rare:10,strange:3}[rarity]||62)/62;return {...entry,rarity,weight:entry.weight*factor*(rarity==='rare'||rarity==='strange'?rarityMultiplier:1)}}),drop=weightedChoice(adjusted,random);if(drop){rarityCounts[drop.rarity]++;itemCounts.set(drop.item,(itemCounts.get(drop.item)||0)+1)}}
+    const rarityCounts={common:0,uncommon:0,rare:0,strange:0},itemCounts=new Map();for(let i=0;i<25000;i++){const row=selectWithHistory(rows,[],entry=>monsters[entry.id].id,random,.55),monster=monsters[row.id],table=lootTables[monster.lootTable]||[],rarityMultiplier=Math.min(2,1+(floor-1)*.06),adjusted=table.map(entry=>{const rarity=items[entry.item]?.rarity||'common',factor=({common:62,uncommon:25,rare:10,strange:3}[rarity]||62)/62;return {...entry,rarity,weight:entry.weight*factor*lootRarityWeightForDepth(rarity,floor)*(rarity==='rare'||rarity==='strange'?rarityMultiplier:1)}}),drop=weightedChoice(adjusted,random);if(drop){rarityCounts[drop.rarity]++;itemCounts.set(drop.item,(itemCounts.get(drop.item)||0)+1)}}
     assert.ok(rarityCounts.strange<3000,`Strange loot too common at ${floor}`);assert.ok(Math.max(...itemCounts.values())<17500,`one item dominates drops at ${floor}`);lootReport[floor]={rarity:Object.fromEntries(Object.entries(rarityCounts).map(([k,v])=>[k,`${(100*v/25000).toFixed(1)}%`])),top:[...itemCounts].sort((a,b)=>b[1]-a[1]).slice(0,3).map(([id,n])=>`${items[id].name} ${n}`)};
   }
   console.log(`  encounter decisions: ${JSON.stringify(encounterReport)}`);console.log(`  loot samples: ${JSON.stringify(lootReport)}`);
