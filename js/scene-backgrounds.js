@@ -1,4 +1,4 @@
-import {roomTypes} from './data.js?v=content-expansion-20261005a';
+import {roomTypes} from './data.js?v=floor4-release-prep-20261006a';
 import {roomVisualSeed} from './room-visuals.js?v=paper-stack-20261005a';
 
 // Empty variant lists intentionally use the existing CSS scene. Visual choice is derived from

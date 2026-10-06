@@ -4,9 +4,9 @@ export const SAVE_RECOVERY_KEY=`${SAVE_KEY}-recovery-copy`;
 export const SAVE_VERSION=8;
 export const INVENTORY_CAPACITY=16;
 export const EQUIPMENT_SLOTS=['head','body','mainHand','offHand','feet','accessory'];
-import {monsters,monsterForId} from './data.js?v=content-expansion-20261005a';
+import {monsters,monsterForId} from './data.js?v=floor4-release-prep-20261006a';
 import {scaleEnemy} from './enemy-scaling.js?v=enemy-depth-20261002';
-import {CURRENT_PLAYABLE_MAX_FLOOR} from './depth-config.js?v=depth-readiness-20261006a';
+import {CURRENT_PLAYABLE_MAX_FLOOR} from './depth-config.js?v=floor4-release-prep-20261006a';
 
 // Legacy v3 saves used this fixed 7x7 floor. Keep that geometry when migrating
 // existing characters so their coordinates, discoveries, and encounters survive.

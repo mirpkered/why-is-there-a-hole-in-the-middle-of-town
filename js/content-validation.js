@@ -1,13 +1,13 @@
-import {items,monsters,monsterForId,quests,lootTables,dungeonEvents,roomTypes,dungeonNpcs,townNpcs,trades,floorEncounterTable,shopStock,merchantProfiles,innEvents} from './data.js?v=content-expansion-20261005a';
+import {items,monsters,monsterForId,quests,lootTables,dungeonEvents,roomTypes,dungeonNpcs,townNpcs,trades,floorEncounterTable,shopStock,merchantProfiles,innEvents} from './data.js?v=floor4-release-prep-20261006a';
 import {roomProps,ROOM_PROP_ZONES} from './room-visuals.js?v=paper-stack-20261005a';
-import {classAbilities,achievements,depthBands} from './progression.js?v=content-expansion-20261005a';
+import {classAbilities,achievements,depthBands} from './progression.js?v=floor4-release-prep-20261006a';
 import {questObjectiveTemplates} from './quest-templates.js?v=systems-20261002a';
 import {statusEffectDefinitions} from './status-effects.js?v=systems-20261002a';
 import {validateLocationMusic} from './location-music.js?v=statistics-music-20261005a';
 import {TOWN_ART_ASSETS} from './town-art.js?v=town-service-signs-20261005a';
-import {INTERACTIVE_OBJECT_ART} from './interactive-art.js?v=content-scalability-20261006a';
-import {ROOM_BACKGROUND_REGISTRY,BATTLE_BACKGROUND_REGISTRY,validateBackgroundRegistry} from './scene-backgrounds.js?v=content-scalability-20261006a';
-import {validateArtEntries} from './art-assets.js?v=content-scalability-20261006a';
+import {INTERACTIVE_OBJECT_ART} from './interactive-art.js?v=floor4-release-prep-20261006a';
+import {ROOM_BACKGROUND_REGISTRY,BATTLE_BACKGROUND_REGISTRY,validateBackgroundRegistry} from './scene-backgrounds.js?v=floor4-release-prep-20261006a';
+import {validateArtEntries} from './art-assets.js?v=floor4-release-prep-20261006a';
 import {MASCOT_ART} from './mascots.js?v=mascot-penguin-20261006a';
 
 const slots=new Set(['head','body','mainHand','offHand','feet','accessory']);

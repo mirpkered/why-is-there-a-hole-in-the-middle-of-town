@@ -1,69 +1,68 @@
 # Floor 4–7 Readiness
 
-## Decision
+## Release state
 
-**Do not unlock Floor 4 yet.** Core generation, deterministic rooms, scaling, QA access, and return paths work. Floor 4 is the better first release than opening all four floors at once, but it still needs a small authored content tranche and a playtest of the real progression path. Floors 5–7 should remain staged behind later reviews.
+**Normal play remains capped at Floors 1–3. Floor 4 is not unlocked.** `CURRENT_PLAYABLE_MAX_FLOOR` in `js/depth-config.js` is still 3; Floors 4–7 remain QA previews. Preview state does not overwrite a normal save, and an over-cap save resumes in Town while retaining its deeper exploration record. No save migration was added.
 
-Current normal play remains **Floors 1–3**. `CURRENT_PLAYABLE_MAX_FLOOR` in `js/depth-config.js` is the single normal-play cap. `descend()` seals Floor 3, the stair control observes the same setting, and deeper QA previews are explicitly marked. QA preview state is kept in memory and `persist()` skips it, so preview progress cannot overwrite a playable save. If an older or externally edited save points beyond the cap, normal Continue safely resumes in Town while retaining the saved record.
+**Floor 4 verdict: B — Nearly Ready.** Floor 4 now has a distinct encounter table, authored events, gated quest chains, room flavor, Nell follow-ups, town return reaction, and a less punishing deep return curve. The remaining release blocker is an end-to-end playtest of this authored progression at realistic player levels, including quest completion, economy/inventory, interruption/recovery, save/Continue, and mobile browser flows. **Floors 5–7 are not release-ready**; this pass did not author them.
 
-## Readiness checklist
+## Floor 4 release checklist
 
-| Area | State | Finding / action before release |
+| Area | State | Finding / remaining work |
 |---|---|---|
-| Code and cap | READY | One configured playable cap; normal descent remains sealed at 3. No save migration required. |
-| Generation | READY | 2,500 deterministic 11×11 layouts per floor, Floors 4–7, all passed bounds/connectivity/stair checks. |
-| QA preview | READY | Direct Floor 1–7 selector; deep preview save writes are suppressed. |
-| Rooms | READY | Old Foundations weights all ten current room types without excluding any. Storage, Flooded Chamber, Records, Library, and Camp are emphasized. |
-| Room/battle backgrounds | PARTIAL | Existing registry and CSS fallback apply. No Old Foundations-specific background art or deeper variants are registered. |
-| Enemies | PARTIAL | No Floor 4+ monster definitions exist. Deep floors reuse the Floor 3 pool with small weight changes and open-ended stat/attack scaling. Add at least one authored deep encounter identity before release. |
-| Combat | PARTIAL | Higher attack unlocks work, but generated player-level expectations and skill/item use are not represented by the baseline fight model. Recheck through a real expedition. |
-| Loot | PARTIAL | Rarity weighting is configured and sampled. There are no Old Foundations-exclusive drops or material identities. |
-| Economy | PARTIAL | Existing reward and market logic scales without invalid values; no deep-only goods or price/demand hooks are authored. Validate a multi-floor expedition once content exists. |
-| Return routes | READY for route correctness; BLOCKED for odds | All tested preview routes reach Floor 1 and interrupted returns resume on-route. Current return odds hit the 20% clamp on every sampled Floor 4–7 route. Review this before public release; it may make deep excursions feel excessively punishing. |
-| Quests | PARTIAL | Current quests remain compatible with Floors 1–3; the Floor 3 return quest is intentional. No gated Old Foundations quest is active. Add and validate a release quest if deeper floors need a purpose. |
-| Events | PARTIAL | Existing events are depth-agnostic or have lower minimum depths; no new deep event content is authored. Weighting raises event pressure at depth. |
-| NPCs | BLOCKED for authored progression | Pip and Nell can appear, but their deeper dialogue repeats current generic lines. No new survey/report progression is registered. |
-| Status and counter items | PARTIAL | Existing status attacks and counter items continue to function; no counter item is required by the generator. Deep encounter variety remains limited to current monsters. |
-| Save | READY | No schema or migration change. Synthetic state with seven 11×11 maps, visited route cells, and related run state serialized to about 9 KB. QA previews do not write into the player save. |
-| Art | PARTIAL | Current monsters, props, and fallback CSS remain usable. Helpful next art: damaged archive/storage props and deeper enemy variants. Room and battle backgrounds are future work, not release prerequisites. |
-| Audio | READY with optional future work | Current dungeon pool can be reused. A depth-specific pool is optional and not required for correctness. |
-| Mobile | PARTIAL | No layout changes were made for normal screens. Automated viewport-specific/browser checks were unavailable in this pass; verify the QA selector on target mobile devices before using it there. |
+| Playable cap and save safety | READY | Cap remains 3; QA preview range remains 1–7; preview state is not persisted. No migration. |
+| Generation and map | READY | Existing generation checks cover 2,500 layouts per depth on 11×11 maps. Geometry and routes remain valid. |
+| Room identity | READY | Old Foundations weighting favors Storage, Flooded Chamber, Records, Library, and Camp while retaining all familiar room types. Five room types have depth-specific descriptions; image art remains optional. |
+| Events | PARTIAL | Six concise Floor 4-only events are authored: Old Survey Marker, Flooded Records, Collapsed Storage, Abandoned Crew Camp, Old Warning Sign, and The Second Small Door. Event flags reuse existing state. Run the full quest/event path in a real expedition before unlock. |
+| Quests | PARTIAL | Two short chains (four stages) use `minDepth: 4` and stay hidden/unavailable below Floor 4. Board/accept/outcome gating has regression coverage. Validate the complete return-and-reward loop in a playtest. |
+| Nell and Town | PARTIAL | Nell has Floor 4 reactions and the first return from depth 4+ records one Town reaction. Verify the scene sequence in browser; currently QA-only. |
+| Enemies and pacing | READY for preview | Dedicated 12-monster Floor 4 weights reduce ordinary early-floor encounters and emphasize deeper fits. No new monster is required for this tranche. |
+| Combat | PARTIAL | Engine simulation covers four classes, low/average/high starting rolls, and four action policies at level 5. It is a controlled fight model, not a full expedition or final balance certification. |
+| Loot | READY for preview | Floor 4 uses current item identities with the Old Foundations rarity weights. Uncommon is more available, Rare remains occasional, Strange stays rare. No new exclusive drop was added. |
+| Return risk | PARTIAL | Floor 4+ uses gentler depth, route, and agility coefficients; Floors 1–3 keep their existing curve. Modeled chance improves, but the actual route interruption, healing, and defeat loop needs playtesting. |
+| Economy and inventory | PARTIAL | Loot and encounter simulations are sampled. No complete player expedition currently models shop/Inn spending, capacity, quest rewards, and return frequency together. |
+| Room/battle backgrounds | OPTIONAL | Current registries and CSS fallback are usable. No Old Foundations-specific background image is needed for release. |
+| Art and audio | OPTIONAL | Existing art, fallback renderers, and dungeon music are serviceable. See wishlists below; neither needs to block a first Floor 4 release. |
+| Mobile/browser | BLOCKED for release | Automated preflight passes, but viewport interaction and QA preview were not visually exercised in a browser/device during this pass. Check 320×740, 390×844, and 430×932 before unlock. |
 
-## Depth assumptions found
+## Floor 4 content
 
-- **Intentional current-game rules:** Floor 3 descent seal, the `depth-three` quest/return target, the Floor 3 milestone achievement, and Pip's current “deeper” trade/dialogue are all tied to the released content.
-- **Made scalable:** current cap, future band membership, QA preview max, depth room weights, enemy weights, and loot rarity weights now live in `js/depth-config.js`. Return routing no longer assumes the third floor is deepest.
-- **Future-facing:** Old Foundations is configured for Floors 4–7. Later band metadata remains descriptive and does not make floors eligible for normal play.
-- **Remaining risk:** `floorEncounterTable` currently ends at Floor 3, so Floors 4–7 intentionally fall back to that table. There are 12 current monsters total, and no additional monsters are introduced by this pass. Several event and quest behaviors intentionally reference the current Floor 3 milestone.
+The new encounter weights are: Permit-Office Mimic 12.4%, Fire-Breathing Earthworm 11.0%, Skeleton on Break 10.5%, Rotten Apple 10.1%, Heart-Attack 10.0%, Porkscrew 9.5%, Poo Gas 8.9%, Killer Rabbit 7.6%, Kung Fungoose 7.4%, Pocket Slime 5.0%, Kobold Toll-Taker 4.6%, and Deadly Rat 3.0% of combat choices in the 50,000-decision sample. Event/NPC/quiet/combat decisions were 18.4%/3.5%/53.4%/24.6%. Immediate monster repeats were 8.3% and three identical encounters in a row were 0.54%. The pool keeps all 12 current monsters and does not make the Permit Mimic dominant.
 
-## Simulation summary
+The Old Foundations Survey and Wrong Map chains are data-gated at depth 4. Nell can react to reaching the old records and conflicting markers; returning from Floor 4 sets a one-time civic reaction. Those states reuse existing flags, quests, and Town reactions, so they need no schema change.
 
-Canonical command: `node tests/run.mjs`.
+Room flavor is registered by room ID in `roomDepthPresentation`; it adds older municipal shelving, water-stained records, persistent water and survey debris, expedition traces, and leaning archive shelves to the scene description. It requires no room-specific renderer or new art.
 
-- 10,000 generated Old Foundations floors: 2,500 at each depth. All were deterministic, connected, bounded, and had reachable stairs. All were 11×11 with 51–66 walkable cells; mean walkable cells were about 57.9 per floor. Longest sampled shortest stair path was 36 cells.
-- Rooms: 25,000 weighted selections per depth. All ten room types appeared at every floor. Typical shares were Storage 16.6–17.4%, Flooded Chamber 10.0–10.5%, Records 6.6–6.7%, Library 7.8–8.4%, and Camp 8.4–9.2%. Ordinary Passage remained the largest single type at about 27%.
-- Returns: 100 generated routes per floor (400 total), with 360 safe returns and 40 forced interruptions followed by successful route resumption and return. Every route reached Floor 1. Sampled return chance was 20% throughout Floors 4–7 because the existing formula reached its lower clamp.
-- Combat: 360 no-counter, basic-attack-only fights per floor across Fighter, Wizard, Rogue, and Cleric (player level set to floor + 1; starting gear; no ability use). Win rates: Floor 4 93.9%, Floor 5 94.2%, Floor 6 91.9%, Floor 7 85.6%. Mean rounds rose from 6.6 to 10.9 and mean damage taken from 8.0 to 15.1. These are diagnostic baselines, not a claim of class balance; they omit skills and player healing decisions.
-- Encounter choices: 25,000 decisions at each Floor 4–7. Combat was 24.1–24.7%, events 18.3–18.7%, NPC 3.4–3.7%; immediate monster repeats stayed below 8.5%. The model uses current pacing defaults and current monsters.
-- Loot: 25,000 rolls per floor from weighted current monster loot tables. Rarity was Common 59.6–59.9%, Uncommon 34.7–35.1%, Rare 4.0–4.3%, Strange 1.0–1.3%. The encounter-economy sampler (1,000 encounters/floor) independently estimated 37.2% Uncommon, 3.0–3.1% Rare, and 0.7–1.0% Strange. No Strange inflation or single-item monopoly appeared.
-- Economy: the 1,000 encounter samples/floor averaged 8.10–10.08 gold, 22.67–30.07 XP, and 2.54–3.42 incoming damage per enemy action. Gold and XP rose smoothly. This does not model a full multi-floor player's rest frequency or inventory turnover; perform that run-level balance pass when authored content and target player levels are settled.
-- Save size: the seven-floor synthetic state measured 8,955 bytes. No migration was added.
+## Simulations
 
-## Floor shape and level expectations
+Extended local runs:
 
-Keep the 11×11 grid. Across 10,000 samples the walkable area and stair path remained comparable to current floors. The weighted rooms, encounter pool, event content, and landmarks can make Old Foundations distinct without changing navigation dimensions.
+- `node tools/floor4-release-sim.mjs`: 50,000 encounter decisions, 50,000 loot selections, 10,000 attack selections across move profiles, 1,000 actual generated return routes, and 25,000 modeled attempts for each of six candidate return formulas.
+- `node tools/floor4-battle-sim.mjs`: 2,400 engine-driven fights (50 for each of four classes × three starting-stat profiles × four policies). Player level 5, class-valid starting equipment, and tonic/counter usage are represented. These controlled fights are a diagnostic model and do not simulate expedition attrition.
+- `node tests/run.mjs`: bounded canonical preflight, including content gates, 10,000 deep-floor layouts, room weighting, return-route coverage, save/migration checks, and other gameplay regressions.
 
-For an initial test, use player levels **5–8** at first arrival to Floors 4–7 (roughly floor + 1). This is an explicit QA scenario, not a measured live progression distribution: there is no released content beyond Floor 3 from which to derive actual arrival levels. Validate XP, returns, and Inn use through a complete playtest before setting unlock timing.
+Loot selection was Common 61.9%, Uncommon 29.6%, Rare 7.8%, Strange 0.8%; categories were Equipment 28.4%, consumables 3.9%, trade goods 67.3%, and other 0.4%. The heaviest single selected item was Extremely Heavy Spoon at 12.0%, followed by Suspicious Mushroom at 10.9%; these are spread across different monsters and are not a single-table monopoly. These figures describe the current weighted loot selection model, not the chance per complete expedition.
 
-## Unlock checklist
+Return routes sampled from generated Floor 4 preview states were 30–69 known steps (mean 41.7; median 41; 90th percentile 50). Under the prior formula, the chance hit the 20% minimum. Candidate F combines a 4 percentage-point per-floor penalty, 1.2 points per known route step, 1.5 points per AGI above/below 5, equipment bonus, and current hazard penalty, clamped to 20–95%. Candidate simulations estimated: current formula 20.3% clean return, 45.6% multiple interruptions, 19.2% defeat; 25% minimum 24.8%, 42.4%, 15.3%; combined restrained formula 34.6%, 33.7%, 10.8%. Each candidate used 25,000 modeled attempts, the same sampled routes, random AGI 2–8, 20% chance of a +10-point retreat item, 12% flooded hazard, and assumed 6% defeat per interruption. The combined model is now used for Floor 4+, while the Floor 1–3 formula is unchanged. This is a provisional safer curve, not field-tested balance; the full return loop remains a release gate.
 
-Before opening Floor 4:
+Attack selection was sampled 10,000 times per current monster profile at a representative mid-health state. Basic attacks remained common, while special/status moves appeared often enough to test the deeper attack pool; no move occupied 95% of selections. Some high-cost/situational moves remained uncommon. Floor 4 combat policies should be checked against real resource decisions before release.
 
-1. Add at least one enemy or encounter identity intended for Old Foundations, with tested attacks, counterplay, loot, and the existing art fallback.
-2. Add a small, completable event/quest/Nell follow-up that gives the first floor a concrete purpose.
-3. Review the return-risk curve; floor-level preview routes currently bottom out at 20% success.
-4. Run a real expedition at player levels 5–6 with ordinary gear, consumables, market transactions, save/reload, defeat recovery, and a successful return.
-5. Verify QA preview and released screens on 320×740, 390×844, and 430×932 browser viewports.
-6. Repeat a content eligibility audit to prove new enemy, loot, quest, and event definitions remain hidden from Floors 1–3.
+In the level-5 battle harness, all 2,400 fights were won across Fighter, Wizard, Rogue, and Cleric, low/average/high starting rolls, and basic/ability/tonic/ability-plus-counter policies. Mean fight length ranged from 2.6 to 10.3 player turns by class/profile/policy; low-roll Wizard and Rogue basic-only fights took the longest (8.5 and 9.3 turns) and retained about 16 HP on average. Tonic policies consumed 0–0.78 tonics per fight in the sampled setups; counter items were available only for matching Poo Gas encounters. This is a level-5 controlled sample; the canonical preflight's separate 1,440 basic-only fights across Floors 4–7 had Floor 4 win rate 93.6%, showing why the richer harness does not replace full-expedition playtesting.
 
-Unlock one floor at a time. Floor 4 should be a release gate; review combat, return odds, and economy before opening Floor 5, then repeat for 6 and 7. Do not enable the entire band from one readiness result.
+The canonical preflight also reports 10,000 generated layouts across Floors 4–7 (2,500 each), all connected, deterministic, bounded, and with reachable stairs. Keep the 11×11 map: content and weighting create identity without a navigation-size change.
+
+## Floor 4 art and audio wishlists
+
+Highest-impact future drawings: survey marker, damaged warning sign, archive box or filing cabinet, flooded debris/plank, and abandoned expedition supplies. Existing props and fallback CSS keep every room usable. No new monster drawing is a release prerequisite.
+
+The current dungeon music pool can serve Old Foundations. A separate depth pool or one damp, low-key track could strengthen the transition later, but no new recording is needed for unlock. Existing audio routing provides the fallback.
+
+## Unlock recommendation
+
+Open one floor at a time. **Floor 4 is nearly ready (B)** after a focused manual expedition and mobile pass. Exact remaining blockers:
+
+1. Exercise both quest chains and all six event outcomes through the real QA progression, including return, reward, and reload.
+2. Run a complete Floor 4 expedition with low/average/high builds and ordinary gear; record healing, Inn cost, inventory capacity, return interruptions, and defeat recovery.
+3. Verify the Floor 4 QA route, readable flavor, controls, and save safety in browser viewports 320×740, 390×844, and 430×932.
+
+Floors 5–7 remain **not ready for release**: they have QA generation and shared scaling, but no authored depth-specific event/quest progression or floor-by-floor expedition validation. Do not unlock them based on this Floor 4 pass.

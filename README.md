@@ -24,7 +24,7 @@ Run the deployment preflight before publishing:
 node tests/run.mjs
 ```
 
-It validates content and runtime assets, art/audio inventory freshness, historical save migrations and backup recovery, 5,001 current-depth plus 10,000 Old Foundations floor layouts, 400 deeper return-route cases, quest-chain links, and bounded gameplay simulations. The Floor 4–7 generation/room/encounter/loot/combat readiness results are in [docs/FLOOR_4_7_READINESS.md](docs/FLOOR_4_7_READINESS.md). Refresh generated inventories after registry edits with `node tools/art-report.mjs --write` and `node tools/audio-report.mjs --write`.
+It validates content and runtime assets, art/audio inventory freshness, historical save migrations and backup recovery, floor generation, depth-gated quests/events, return routes, and bounded gameplay simulations. Floors 1–3 are playable; Floors 4–7 remain QA previews. Floor 4 now has an Old Foundations content tranche and a provisional deep return curve, but remains locked pending the playtests listed in [docs/FLOOR_4_7_READINESS.md](docs/FLOOR_4_7_READINESS.md). Run `node tools/floor4-release-sim.mjs` and `node tools/floor4-battle-sim.mjs` for the larger local readiness samples. Refresh generated inventories after registry edits with `node tools/art-report.mjs --write` and `node tools/audio-report.mjs --write`.
 
 Append `?qa=1` to the live or local URL for development diagnostics and controls, including explicit Floor 1–7 previews. Floors above the playable cap are labeled QA-only and do not overwrite the playable save.
 

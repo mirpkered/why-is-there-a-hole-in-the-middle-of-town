@@ -1,4 +1,4 @@
-import {dungeonEvents} from './data.js?v=content-expansion-20261005a';
+import {dungeonEvents} from './data.js?v=floor4-release-prep-20261006a';
 // Optional paired art for stable event/landmark IDs. CSS remains the reliable fallback.
 export const INTERACTIVE_OBJECT_ART=Object.freeze({
   'landmark:warm-wall':{id:'landmark:warm-wall',contentId:'warm-wall',kind:'landmark',ink:null,colored:null,fallback:'css'},

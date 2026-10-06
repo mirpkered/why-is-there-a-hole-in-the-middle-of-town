@@ -17,6 +17,7 @@ This file records current project direction only. It does not reconstruct missin
 - Add authored content to the existing quests, events, room, and monster systems while keeping mobile readability and deterministic QA.
 - Continue device checks for iOS audio session behavior, safe-area layouts, and touch interactions as content changes.
 - Floors 4–7 have a QA-only Old Foundations readiness configuration; normal play remains capped at Floor 3. See [Floor 4–7 Readiness](docs/FLOOR_4_7_READINESS.md) for release gates and current simulation results.
+- Floor 4 preparation now includes its own 12-monster encounter weighting, six depth-limited events, two depth-gated quest chains, Old Foundations room descriptions, Nell follow-ups, and a one-time Town return reaction. It remains locked pending a full expedition/economy/mobile playtest.
 
 ## Later
 

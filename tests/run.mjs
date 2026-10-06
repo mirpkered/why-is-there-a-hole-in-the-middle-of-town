@@ -12,7 +12,7 @@ globalThis.localStorage = {
 };
 
 const { SAVE_KEY, SAVE_BACKUP_KEY, SAVE_RECOVERY_KEY, SAVE_VERSION, freshState, generateFloorMap, validateFloorMap, analyzeFloorMap, saveState, loadState, loadStateDetailed } = await import('../js/state.js?preflight');
-const { items, monsters, lootTables, floorEncounterTable, innEvents, shopStock, roomTypes, dungeonEvents, townNpcs, dungeonNpcs } = await import('../js/data.js?preflight');
+const { items, monsters, lootTables, floorEncounterTable, innEvents, shopStock, roomTypes, roomDepthPresentation, dungeonEvents, townNpcs, dungeonNpcs, quests } = await import('../js/data.js?preflight');
 const { makeMarketCycle, currentSellValue, simulateMarkets, simulateInnEvents } = await import('../js/town-economy.js?preflight');
 const { generateAbsurdName, inspectNameGenerator, MAX_NAME_LENGTH } = await import('../js/name-generator.js?preflight');
 const { roomProps: props, createRoomDecoration, roomPropMarkup } = await import('../js/room-visuals.js?preflight');
@@ -689,6 +689,19 @@ check('Old Foundations configuration keeps the release cap sealed and preserves 
   for(const room of Object.values(roomTypes))assert.ok(roomWeightForDepth(room,4)>0,`${room.id} remains eligible`);
   assert.ok(lootRarityWeightForDepth('uncommon',4)>1);assert.equal(lootRarityWeightForDepth('strange',7),1);
   assert.ok(encounterWeightForDepth({weight:1},monsters.heartAttack,4)>1);
+  assert.ok(floorEncounterTable[4]);assert.equal(new Set(floorEncounterTable[4].map(row=>row.id)).size,12);
+  for(const id of ['foundations-entry','foundations-records','wrong-map-marker','wrong-map-return'])assert.equal(quests[id].minDepth,4,`${id} stays locked until Floor 4`);
+  assert.equal(Object.keys(roomDepthPresentation).length,5);
+});
+
+check('Floor 4 event and quest content stays unavailable below its depth gate',()=>{
+  game.setState(freshState());game.startGame('Depth gate','Fighter');
+  for(const id of ['old-survey-marker','flooded-records','collapsed-storage','abandoned-crew-camp','old-warning-sign','second-small-door']){assert.equal(dungeonEvents[id].minDepth,4);assert.equal(dungeonEvents[id].maxDepth,4);assert.equal(game.triggerEvent(id),false)}
+  game.state.quests.available.push('foundations-entry');assert.equal(game.questStatus('foundations-entry').status,'unavailable');assert.equal(game.acceptQuest('foundations-entry'),false);
+  assert.equal(game.qaSetFloor(4),true);assert.equal(game.questDepthEligible('foundations-entry'),true);assert.equal(game.triggerEvent('flooded-records'),true);
+  const resolved=game.resolveDungeonEvent('flooded-records','inspect');assert.equal(resolved.ok,true);assert.equal(game.state.dungeon.eventFlags['old-records-inspected'],true);
+  game.talkNpc('lost-surveyor');assert.equal(game.questStatus('foundations-records').status,'available');assert.equal(game.acceptQuest('foundations-records'),true);
+  assert.equal(game.state.dungeon.qaPreviewOnly,true);
 });
 
 check('QA preview controls are opt-in, visibly marked and bounded by configured preview depth',()=>{
