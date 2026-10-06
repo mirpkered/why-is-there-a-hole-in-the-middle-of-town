@@ -224,19 +224,12 @@
 .game-masthead--hero .masthead-office{margin:.34rem 0 0;padding:.2rem .58rem;border:2px solid #295453;border-radius:999px;background:#34716b;color:#fff5d2;font-size:.68rem;font-weight:1000;letter-spacing:.15em;text-shadow:0 1px #23433c;box-shadow:0 2px #2e453b}
 .town-hub-heading .eyebrow{display:inline-block;margin:0 0 .3rem;padding:.18rem .6rem;border:2px solid #6b3b2b;border-radius:7px 12px 6px 10px;background:#efbd57;color:#492d20;font-size:.68rem;font-weight:1000;letter-spacing:.12em;transform:rotate(-1deg);box-shadow:0 2px #593326}
 .town-hub-heading .section-title{color:#fff1c6;font-family:"Trebuchet MS","Arial Rounded MT Bold",system-ui,sans-serif;font-weight:1000;letter-spacing:-.025em;text-shadow:2px 3px #613a2b,-1px -1px #613a2b}
-.town-hub .location--art-destination::before{position:absolute;z-index:0;inset:4% 7% 15%;content:"";border-radius:48% 52% 44% 56%;background:radial-gradient(ellipse at 50% 46%,#fff9e8 0 42%,#ffe9ad 64%,#f4cc785c 75%,transparent 86%);filter:drop-shadow(0 4px 4px #0005);transform:rotate(-2deg) scale(.96);pointer-events:none}
-.town-hub .location--art-destination.location-store::before{background:radial-gradient(ellipse at 50% 46%,#fffef0 0 40%,#ffe07a 63%,#f9b94866 76%,transparent 86%)}
-.town-hub .location--art-destination.location-inn::before{background:radial-gradient(ellipse at 50% 46%,#fff8e6 0 40%,#ffd5a3 63%,#ed986666 76%,transparent 86%)}
-.town-hub .location--art-destination.location-quests::before{background:radial-gradient(ellipse at 50% 46%,#fff8dc 0 40%,#e8c58b 63%,#b7854b66 76%,transparent 86%)}
-.town-hub .location--art-destination.location-character::before,.town-hub .location--art-destination.location-records::before{background:radial-gradient(ellipse at 50% 46%,#f8fff0 0 40%,#c3e0bd 63%,#72aa9b66 76%,transparent 86%)}
-.town-hub .location--art-destination.location-achievements::before{background:radial-gradient(ellipse at 50% 46%,#fffbe8 0 40%,#ffe38d 63%,#f39c4b66 76%,transparent 86%)}
-.town-hub .location--art-destination.location-settings::before{background:radial-gradient(ellipse at 50% 46%,#f8ffff 0 40%,#bbdef0 63%,#659fc266 76%,transparent 86%)}
+.town-hub .location--art-destination::before{display:none;content:none}
 .town-hub .location--art-destination:not(.location-hole) .location-art--illustration{inset:0}
 .town-hub .location--art-destination.location-hole .location-art--illustration{inset:0}
 .town-hub .location--art-destination .location-art--illustration img{filter:drop-shadow(0 1px 1px #fff7df) drop-shadow(0 3px 2px #352016a8)}
 .town-hub .location--art-destination.location-hole .location-art--illustration img{filter:drop-shadow(0 1px 1px #fff7df) drop-shadow(0 3px 2px #352016a8)}
 .town-hub .location--art-destination .location-art--illustration img.town-art-image--ink{filter:drop-shadow(0 0 1px #fff) drop-shadow(0 0 3px #fff8df) drop-shadow(0 3px 2px #352016a8)}
-.town-hub .location--art-destination.location-hole::before{inset:2% 13% 13%;background:radial-gradient(ellipse at 50% 47%,#fff9e9 0 43%,#ffe6aa 64%,#f2c77860 77%,transparent 88%)}
 @media(max-width:360px){.town-hub .location--art-destination:not(.location-hole) .location-art--illustration,.town-hub .location--art-destination.location-hole .location-art--illustration{inset:0}}
 
 /* Shared municipal-dungeon identity: quiet doodles stay behind opaque content. */

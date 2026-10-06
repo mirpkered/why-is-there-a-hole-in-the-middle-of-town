@@ -663,6 +663,8 @@ check('town button art has transparent cropped bounds and no rectangular image b
   assert.match(css,/\.location--art-destination \.location-art--illustration\{[^}]*box-shadow:none/);
   assert.match(css,/\.location--art-destination \.location-art--illustration\{[^}]*position:absolute/);
   assert.match(css,/\.town-hub \.location--art-destination\{[^}]*border:0[^}]*background:transparent[^}]*box-shadow:none/);
+  assert.match(css,/\.town-hub \.location--art-destination::before\{display:none;content:none\}/,'Town art buttons should suppress UI-generated backplates');
+  assert.doesNotMatch(css,/\.town-hub \.location--art-destination(?:\.location-[\w-]+)?::before\{[^}]*radial-gradient/,'Town art buttons should not have pale radial backplates');
   assert.match(css,/\.town-hub \.location--art-destination\.location-hole\{[^}]*grid-column:1\/-1[^}]*height:clamp\([^)]*\)[^}]*border:0[^}]*background:transparent[^}]*box-shadow:none/,'Hole should be a prominent transparent art hit area with no visible shell');
   assert.match(css,/\.town-hub \.location--art-destination\.location-hole \.location-art--illustration img\{filter:drop-shadow/,'Hole illustration should preserve aspect ratio and high-contrast edge separation');
   assert.match(css,/\.town-hub \.location--art-destination\.location-hole:active|\.town-hub \.location--art-destination:active/,'art buttons should retain a pressed-state response');
@@ -752,7 +754,7 @@ check('art-backed Town buttons are label-free, accessible, and keep full-tile na
   assert.equal(TOWN_DESTINATIONS.length,8);
   for(const destination of TOWN_DESTINATIONS){assert.match(townMarkup,new RegExp(`aria-label="${destination.ariaLabel}"`),`${destination.id} keeps its semantic name`);assert.match(townMarkup,new RegExp(`data-art-slot="${destination.slot}"`),`${destination.id} keeps its art registration`);if(destination.route)assert.match(townMarkup,new RegExp(`data-go="${destination.route}"`),`${destination.id} keeps navigation`);else assert.match(townMarkup,new RegExp(`data-action="${destination.action}"`),`${destination.id} keeps its action`)}
   assert.doesNotMatch(townMarkup,/town-destination-label|ENTER THE HOLE|GENERAL STORE|THE INN|QUEST BOARD|CHARACTER|STATISTICS|ACHIEVEMENTS|SETTINGS|Deepest:/);
-  assert.match(appSource,/renderTownDestinations/);assert.match(css,/town-hub \.location--art-destination::before\{[^}]*#fff9e8/);assert.doesNotMatch(css,/town-destination-label/);assert.match(css,/\.town-hub \.location--art-destination:not\(\.location-hole\) \.location-art--illustration\{inset:0\}/);assert.match(css,/\.town-hub \.location--art-destination\.location-hole \.location-art--illustration\{inset:0\}/);assert.match(css,/town-art-image--ink/)
+  assert.match(appSource,/renderTownDestinations/);assert.match(css,/town-hub \.location--art-destination::before\{display:none;content:none\}/);assert.doesNotMatch(css,/town-destination-label/);assert.match(css,/\.town-hub \.location--art-destination:not\(\.location-hole\) \.location-art--illustration\{inset:0\}/);assert.match(css,/\.town-hub \.location--art-destination\.location-hole \.location-art--illustration\{inset:0\}/);assert.match(css,/town-art-image--ink/)
 });
 
 check('ambient audio session uses feature detection and never selects playback mode', () => {
