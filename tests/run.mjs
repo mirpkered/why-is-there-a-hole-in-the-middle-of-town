@@ -122,6 +122,7 @@ check('background registries support empty, single, weighted, stable variants an
   assert.match(backgroundLayerMarkup({roomType:'ordinary',variant:{id:'room',path:'assets/images/rooms/room.webp',focal:'left center',mobileFocal:'bad'}}),/<img class="scene-image-layer"/);
   assert.match(backgroundLayerMarkup({roomType:'ordinary',variant:{id:'room',path:'assets/images/rooms/room.webp',focal:'left center',mobileFocal:'bad'}}),/--scene-focal:left center/);
   assert.match(backgroundLayerMarkup({roomType:'ordinary',variant:{id:'room',path:'assets/images/rooms/room.webp',mobileFocal:'bad'}}),/--scene-mobile-focal:50% 50%/);
+  assert.match(backgroundLayerMarkup({roomType:'ordinary',variant:{id:'room',path:'assets/images/rooms/room.webp',scale:1.4}}),/--scene-scale:1\.15/,'per-topology image scale is safely capped');
   assert.doesNotMatch(backgroundLayerMarkup({roomType:'ordinary',variant:{id:'room',path:'assets/images/rooms/room.webp'}}),/is-loaded/,'an unconfirmed image must leave the CSS scene visible');
   assert.match(backgroundLayerMarkup({roomType:'ordinary',variant:{id:'room',path:'assets/images/rooms/room.webp'}},{loaded:true}),/is-loaded/);
   assert.deepEqual(sceneImagePresentation('loaded'),{imageVisible:true,fallbackVisible:false,imageClass:'is-loaded',viewClass:'scene-view--image'});
@@ -134,7 +135,7 @@ check('five dungeon sets include all forty registered topology backgrounds',()=>
   assert.equal(DUNGEON_SET_IDS.length,5);assert.equal(DUNGEON_TOPOLOGIES.length,8);
   const validation=validateDungeonSetRegistry(DUNGEON_SETS,{exists:path=>existsSync(resolve(path))});assert.equal(validation.valid,true,validation.errors.join('\n'));
   const paths=DUNGEON_SET_IDS.flatMap(id=>DUNGEON_TOPOLOGIES.map(topology=>DUNGEON_SETS[id].backgrounds[topology.id].path));assert.equal(new Set(paths).size,40);assert.equal(paths.length,40);
-  for(const path of paths){const bytes=readFileSync(resolve(path));assert.equal(bytes.subarray(0,8).toString('hex'),'89504e470d0a1a0a',path);assert.ok(bytes.length>1_000_000,path)}
+  for(const id of DUNGEON_SET_IDS)for(const topology of DUNGEON_TOPOLOGIES){const path=DUNGEON_SETS[id].backgrounds[topology.id].path,bytes=readFileSync(resolve(path)),dimensions=`${bytes.readUInt32BE(16)}x${bytes.readUInt32BE(20)}`;assert.equal(bytes.subarray(0,8).toString('hex'),'89504e470d0a1a0a',path);assert.ok(bytes.length>1_000_000,path);assert.ok(['1672x941','1448x1086'].includes(dimensions),`${path} has an unexpected aspect ratio: ${dimensions}`);assert.equal(dimensions==='1448x1086',topology.file.startsWith('08-'),`${path} ratio should match its topology frame`)}
   assert.equal(DUNGEON_SETS['dungeon-set-1'].name,'Wet Stone Dungeon');assert.equal(DUNGEON_SETS['dungeon-set-5'].name,'Impossible Dungeon');
 });
 
@@ -177,9 +178,12 @@ check('exploration and combat render distinct background and prop layers',()=>{
   assert.match(source,/propMarkup=combat\?'':roomPropMarkup/);
   assert.match(source,/kind:combat\?'battle':'exploration'/);
   assert.match(css,/\.scene-view--image>\.scene-ceiling[^}]*display:none/);
+  assert.match(css,/\.scene-image-layer[^}]*object-fit:contain/,'exploration framing preserves every topology opening');
+  assert.match(css,/\.scene-view[^}]*aspect-ratio:1672 \/ 941/,'the default scene frame matches the supplied wide backgrounds');
   assert.match(css,/\.scene-image-layer\.is-loaded\{opacity:1\}/);
   assert.match(css,/\.battle-scene--image:before\{opacity:\.18\}/);
   assert.match(source,/app\.addEventListener\('load',e=>[\s\S]*scene-image-layer/);
+  assert.match(source,/view\.style\.aspectRatio=`\$\{image\.naturalWidth\} \/ \$\{image\.naturalHeight\}`/,'loaded backgrounds size the view to their native ratio, including the 4:3 dead-end art');
   assert.match(source,/data-qa-bg-metrics/);
   assert.match(source,/data-qa-props/);
   assert.match(source,/toggle-css-fallback/);
@@ -187,28 +191,33 @@ check('exploration and combat render distinct background and prop layers',()=>{
   assert.match(source,/data-qa="set-visual-set"/);assert.match(source,/Preview all eight views/);assert.match(source,/dungeonBackgroundAssetStatus/);
 });
 
-check('large room props avoid open passages and use anchored perspective coordinates',()=>{
+check('room props preserve opening clearance, floor perspective, and calibrated scale',()=>{
   const room=roomTypes.storage,map={width:11,height:11,walls:[[0,0]],upStairs:[1,1],downStairs:[9,9]};
   for(const topology of DUNGEON_TOPOLOGIES){
     const openings={front:topology.front,leftOpen:topology.left,rightOpen:topology.right};
     for(let variation=0;variation<30;variation++){
       const decoration=createRoomDecoration(room,map,4,5,5,variation,openings);
-      for(const prop of decoration.props.filter(candidate=>candidate.footprint==='large')){
+      for(const prop of decoration.props){
         assert.equal(topology.front&&(prop.zone==='far-center'||prop.zone==='wall-center'),false,`${topology.id} blocks front prop ${prop.id}`);
-        assert.equal(topology.left&&(prop.zone==='far-left'||prop.zone==='mid-left'),false,`${topology.id} blocks left prop ${prop.id}`);
-        assert.equal(topology.right&&(prop.zone==='far-right'||prop.zone==='mid-right'),false,`${topology.id} blocks right prop ${prop.id}`);
+        assert.equal(topology.left&&prop.zone==='far-left',false,`${topology.id} blocks the left mouth with ${prop.id}`);
+        assert.equal(topology.right&&prop.zone==='far-right',false,`${topology.id} blocks the right mouth with ${prop.id}`);
+        if(prop.footprint==='large'){
+          assert.equal(topology.left&&prop.zone==='mid-left',false,`${topology.id} blocks left approach with ${prop.id}`);
+          assert.equal(topology.right&&prop.zone==='mid-right',false,`${topology.id} blocks right approach with ${prop.id}`);
+        }
         assert.ok(Number.isFinite(prop.x)&&Number.isFinite(prop.y)&&prop.x>=0&&prop.x<=100&&prop.y>=0&&prop.y<=100);
         assert.ok(prop.perspectiveScale>0&&prop.depth>=1&&['floor','wall'].includes(prop.anchor));
-        if(prop.anchor==='floor')assert.ok(prop.y>=60,`${prop.id} floor anchor is above the visible ground plane`);
+        if(prop.anchor==='floor')assert.ok(prop.y>=73,`${prop.id} floor anchor is above the visible ground plane`);
+        assert.ok(prop.depthScale===.58||prop.depthScale===.76||prop.depthScale===.98,`${prop.id} has calibrated depth scaling`);
       }
     }
   }
   const sample=createRoomDecoration(room,map,4,5,5,3,{front:true,leftOpen:true,rightOpen:false}).props[0];
-  if(sample){const markup=roomPropMarkup({props:[sample]});assert.match(markup,/data-prop-x=/);assert.match(markup,/data-prop-depth=/);assert.match(markup,/data-prop-depth-scale=/);assert.match(markup,/data-prop-scale=/);assert.match(markup,/data-prop-final-scale=/);assert.match(markup,/translate\(-50%,-100%\)|translate\(-50%,-50%\)/)}
+  if(sample){const markup=roomPropMarkup({props:[sample]});assert.match(markup,/data-prop-x=/);assert.match(markup,/data-prop-depth=/);assert.match(markup,/data-prop-depth-scale=/);assert.match(markup,/data-prop-scale=/);assert.match(markup,/data-prop-final-scale=/);assert.match(markup,/data-prop-clearance-adjustment=/);assert.match(markup,/translate\(-50%,-100%\)|translate\(-50%,-50%\)/)}
   const floorProp=createRoomDecoration(roomTypes.storage,map,4,5,5,0,{front:false,leftOpen:false,rightOpen:false}).props.find(prop=>prop.anchor==='floor');
   if(floorProp)assert.match(roomPropMarkup({props:[floorProp]}),/translate\(-50%,-100%\)/,'floor objects are bottom anchored');
-  const wallProp={...props.bookshelf,zone:'wall-center',x:50,y:69,width:18,height:37,anchor:'wall',scale:1,perspectiveScale:.78,depth:1,flip:false};
-  assert.match(roomPropMarkup({props:[wallProp]}),/translate\(-50%,-50%\)/,'wall objects use their wall anchor');
+  const rearShelf={...props.bookshelf,zone:'wall-center',x:50,y:74,width:15,height:29,anchor:'floor',scale:.8,perspectiveScale:.46,depth:1,flip:false};
+  assert.match(roomPropMarkup({props:[rearShelf]}),/translate\(-50%,-100%\)/,'wall furniture uses a floor-contact anchor at the wall/floor seam');
 });
 
 check('shared art resolver handles Colored, Ink, alternate style and fallback',()=>{

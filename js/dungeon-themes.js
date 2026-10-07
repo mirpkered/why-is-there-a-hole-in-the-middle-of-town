@@ -14,7 +14,7 @@ export const DUNGEON_TOPOLOGIES=Object.freeze([
 const setNames=['Wet Stone Dungeon','Ancient Catacombs','Natural Cave','Derelict Basement','Impossible Dungeon'];
 export const DUNGEON_SETS=Object.freeze(Object.fromEntries(setNames.map((name,index)=>{
   const id=`dungeon-set-${index+1}`;
-  return [id,Object.freeze({id,name,backgrounds:Object.freeze(Object.fromEntries(DUNGEON_TOPOLOGIES.map(topology=>[topology.id,Object.freeze({id:`${id}:${topology.id}`,topologyId:topology.id,path:`assets/images/dungeon-sets/${id}/${topology.file}`,weight:1,enabled:true,focal:'50% 50%',mobileFocal:'50% 50%',overlay:.04})])))})];
+  return [id,Object.freeze({id,name,backgrounds:Object.freeze(Object.fromEntries(DUNGEON_TOPOLOGIES.map(topology=>[topology.id,Object.freeze({id:`${id}:${topology.id}`,topologyId:topology.id,path:`assets/images/dungeon-sets/${id}/${topology.file}`,weight:1,enabled:true,focal:'50% 50%',mobileFocal:'50% 50%',scale:1,overlay:.04})])))})];
 })));
 export const DUNGEON_SET_IDS=Object.freeze(Object.keys(DUNGEON_SETS));
 const topologyKey=(front,left,right)=>`${front?'front-open':'front-wall'}-${left?'left-open':'left-wall'}-${right?'right-open':'right-wall'}`;

@@ -16,8 +16,8 @@
 /* Location-aware dungeon scene: the openings are relative to facing, while the map and controls remain absolute. */
 .scene-backdrop{margin:.5rem 0}.dungeon-main .scene{position:relative;display:grid;place-items:center;overflow:hidden;min-height:clamp(170px,25vw,260px);border:1px solid #5a5948;border-radius:9px;background:radial-gradient(ellipse at 50% 24%,#9b7540 0,#514431 24%,#282721 61%,#171a19 100%);isolation:isolate}
 .dungeon-main .scene:before,.dungeon-main .scene:after{display:none}
-.scene-view{position:relative;width:min(100%,620px);height:100%;min-height:inherit;overflow:hidden;perspective:650px;background:linear-gradient(#4e4536,#252521 72%,#151918)}
-.scene-image-layer{position:absolute;inset:0;z-index:0;display:block;width:100%;height:100%;object-fit:cover;object-position:var(--scene-focal,50% 50%);pointer-events:none;opacity:0;transition:opacity .14s ease;filter:brightness(calc(1 - var(--scene-overlay,.04)));}
+.scene-view{position:relative;width:min(100%,620px);height:auto;aspect-ratio:1672 / 941;min-height:0;overflow:hidden;perspective:650px;background:#171a19}
+.scene-image-layer{position:absolute;inset:0;z-index:0;display:block;width:100%;height:100%;object-fit:contain;object-position:var(--scene-focal,50% 50%);transform:scale(var(--scene-scale,1));transform-origin:var(--scene-focal,50% 50%);pointer-events:none;opacity:0;transition:opacity .14s ease;filter:brightness(calc(1 - var(--scene-overlay,.04)));}
 .scene-image-layer.is-loaded{opacity:1}
 .qa-topology-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr));gap:.75rem;margin-block:.75rem}.qa-topology-grid figure{min-width:0;margin:0}.qa-topology-grid img{display:block;width:100%;aspect-ratio:16/10;object-fit:cover;border-radius:.4rem;background:#181818}.qa-topology-grid figcaption{font-size:.78rem;overflow-wrap:anywhere;padding:.25rem 0}
 .scene-ceiling,.scene-side,.scene-far,.scene-floor,.scene-light{z-index:1}
@@ -68,31 +68,9 @@
 .room-props{position:absolute;inset:0;z-index:2;pointer-events:none}
 .room-prop{position:absolute;display:block;left:var(--prop-x,50%);top:var(--prop-y,50%);width:var(--prop-width,17%);height:var(--prop-height,40%);transform-origin:center bottom;filter:drop-shadow(0 3px 4px #08090999);transform-style:preserve-3d}
 .room-prop svg,.room-prop img{display:block;width:100%;height:100%;overflow:visible}
-.room-prop[data-prop-id="mushroom-cluster"] img{object-fit:contain}
-.room-prop[data-prop-id="small-mushroom"]{width:10%;height:18%}
-.room-prop[data-prop-id="small-mushroom"] img{object-fit:contain}
-.room-prop[data-prop-id="market-sign"]{width:25%;height:38%}
-.room-prop[data-prop-id="market-sign"] img{object-fit:contain}
-.room-prop[data-prop-id="small-door"]{width:12%;height:31%}
-.room-prop[data-prop-id="small-door"] img{object-fit:contain}
-.room-prop[data-prop-id="arched-small-door"]{width:30%;height:31%}
-.room-prop[data-prop-id="arched-small-door"] img{object-fit:contain}
-.room-prop[data-prop-id="bookshelf"]{width:20%;height:47%}
-.room-prop[data-prop-id="bookshelf"] img{object-fit:contain}
-.room-prop[data-prop-id="bookshelf-books"]{width:20%;height:47%}
-.room-prop[data-prop-id="bookshelf-books"] img{object-fit:contain}
-.room-prop[data-prop-id="bookshelf-full"]{width:20%;height:47%}
-.room-prop[data-prop-id="bookshelf-full"] img{object-fit:contain}
-.room-prop[data-prop-id="bookshelf-packed"]{width:20%;height:47%}
-.room-prop[data-prop-id="bookshelf-packed"] img{object-fit:contain}
-.room-prop[data-prop-id="candle"]{width:19%;height:34%}
-.room-prop[data-prop-id="candle"] img{object-fit:contain}
-.room-prop[data-prop-id="barrel"]{width:17%;height:36%}
-.room-prop[data-prop-id="barrel"] img{object-fit:contain}
-.room-prop[data-prop-id="paper-stack"]{width:21%;height:26%}
-.room-prop[data-prop-id="paper-stack"] img{object-fit:contain}
+.room-prop img{object-fit:contain}
 .room-prop-zone--far_left,.room-prop-zone--far_center,.room-prop-zone--far_right,.room-prop-zone--mid_left,.room-prop-zone--mid_right,.room-prop-zone--foreground_left,.room-prop-zone--foreground_right,.room-prop-zone--floor_center,.room-prop-zone--wall_center{left:var(--prop-x);top:var(--prop-y);width:var(--prop-width);height:var(--prop-height)}
-.room-prop--campfire.room-prop-zone--floor_center{width:34%;height:43%}
+.room-prop--campfire.room-prop-zone--floor_center{width:22%;height:28%}
 .room-prop--show-zone{outline:1px dashed #fff5a5;background:#ffe58b22;border-radius:4px}
 .scene--mushroom-room .scene-view{background:linear-gradient(#344336,#27352c 68%,#151918)}
 .scene--mushroom-room .scene-side{background:linear-gradient(90deg,#28342b,#526349 52%,#343a2c)}

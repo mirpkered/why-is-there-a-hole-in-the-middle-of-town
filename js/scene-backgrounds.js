@@ -1,6 +1,6 @@
 import {roomTypes} from './data.js?v=floor4-release-prep-20261006a';
-import {roomVisualSeed} from './room-visuals.js?v=paper-stack-20261005a';
-import {DUNGEON_SETS,DUNGEON_SET_IDS,DUNGEON_TOPOLOGIES,getFloorVisualSet} from './dungeon-themes.js?v=dungeon-sets-20261006a';
+import {roomVisualSeed} from './room-visuals.js?v=scene-calibration-20261007a';
+import {DUNGEON_SETS,DUNGEON_SET_IDS,DUNGEON_TOPOLOGIES,getFloorVisualSet} from './dungeon-themes.js?v=scene-calibration-20261007a';
 
 // Empty variant lists intentionally use the existing CSS scene. Visual choice is derived from
 // saved room identity and never consumes gameplay, combat, encounter, or loot randomness.
@@ -70,9 +70,10 @@ export function backgroundLayerMarkup(selection,{loaded=false}={}){
   if(!variant?.path||!/^assets\/[\w./-]+\.(?:png|webp|jpe?g|avif)$/i.test(variant.path)||variant.path.includes('..'))return '';
   const safeFocal=value=>/^(?:(?:\d{1,3}%|left|center|right)\s+(?:\d{1,3}%|top|center|bottom))$/i.test(value||'')?value:'50% 50%';
   const focal=safeFocal(variant.focal),mobile=safeFocal(variant.mobileFocal||focal);
+  const scale=Number.isFinite(variant.scale)?Math.max(.85,Math.min(1.15,variant.scale)):1;
   const overlay=Number.isFinite(variant.overlay)?Math.max(0,Math.min(1,variant.overlay)):.12;
   const presentation=sceneImagePresentation(loaded?'loaded':'loading');
-  return `<img class="scene-image-layer${presentation.imageClass?' '+presentation.imageClass:''}" aria-hidden="true" alt="" decoding="async" fetchpriority="high" data-background-id="${variant.id||selection.roomType}" data-background-path="${variant.path}" data-image-state="${loaded?'loaded':'loading'}" style="--scene-focal:${focal};--scene-mobile-focal:${mobile};--scene-overlay:${overlay}" src="${variant.path}">`;
+  return `<img class="scene-image-layer${presentation.imageClass?' '+presentation.imageClass:''}" aria-hidden="true" alt="" decoding="async" fetchpriority="high" data-background-id="${variant.id||selection.roomType}" data-background-path="${variant.path}" data-image-state="${loaded?'loaded':'loading'}" style="--scene-focal:${focal};--scene-mobile-focal:${mobile};--scene-scale:${scale};--scene-overlay:${overlay}" src="${variant.path}">`;
 }
 
 export function validateBackgroundRegistry(registry,roomIds=Object.keys(roomTypes)){
