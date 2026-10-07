@@ -25,6 +25,7 @@ const {MASCOT_ART}=await import('../js/mascots.js?preflight');
 const {SCREEN_PRESENTATION}=await import('../js/screen-presentation.js?preflight');
 const {TOWN_DESTINATIONS,renderTownDestinations}=await import('../js/ui/town.js?preflight');
 const {renderCharacterScreen}=await import('../js/ui/character.js?preflight');
+const {NORMAL_SPLASH_TIMING,REDUCED_MOTION_SPLASH_TIMING,initializeLaunchSplash}=await import('../js/launch-splash.js?preflight');
 const { validateContent, validateQuestGraph } = await import('../js/content-validation.js?preflight');
 const { achievements } = await import('../js/progression.js?preflight');
 const { validateQuestTemplate, questObjectiveTemplates } = await import('../js/quest-templates.js?preflight');
@@ -265,18 +266,39 @@ check('shared municipal background and masthead use the local doodle sheet and r
   assert.match(css,/@media\(prefers-reduced-transparency:reduce\)/,'text backing should respect reduced-transparency preferences');
 });
 
-check('Mirpworks startup splash hands off once, respects reduced motion, and fails open',()=>{
-  const html=readFileSync(resolve('index.html'),'utf8'),app=readFileSync(resolve('js/app.js'),'utf8'),css=readFileSync(resolve('css/mechanics.css'),'utf8');
-  assert.match(html,/<div id="startup-splash"[^>]*aria-label="Mirpworks"/,'fresh document load should include accessible Mirpworks branding');
-  assert.match(html,/setTimeout\(\(\)=>document\.getElementById\('startup-splash'\)\?\.remove\(\),5000\)/,'a watchdog should remove the overlay if initialization never hands off');
-  assert.match(html,/js\/app\.js\?v=title-town-splash-20261007a/,'startup script should use a fresh cache key');
-  assert.match(app,/function finishStartupSplash\(/,'startup should have a single dismissal routine');
-  assert.match(app,/const existing=loadState\(\);[\s\S]*?finishStartupSplash\(\);/,'splash should dismiss only after state restore and initial Title render');
-  assert.equal((app.match(/finishStartupSplash\(\);/g)||[]).length,1,'internal screen renders and navigation must not replay the splash');
-  assert.match(app,/minimum=reduced\?80:950/,'Reduced Motion should keep the branding visible briefly and shorten the transition');
-  assert.match(css,/\.startup-splash\{[^}]*position:fixed[^}]*z-index:10000/,'splash should cover the Title during the handoff');
-  assert.match(css,/\.startup-splash--leaving\{[^}]*visibility:hidden[^}]*pointer-events:none/,'dismissed splash must no longer intercept interaction');
-  assert.match(css,/@media\(prefers-reduced-motion:reduce\)\{\.startup-splash\{transition:none\}\}/,'splash animation should honor OS Reduced Motion');
+check('canonical Mirpworks logo asset and standard launch timings are registered',()=>{
+  const html=readFileSync(resolve('index.html'),'utf8'),css=readFileSync(resolve('css/mechanics.css'),'utf8'),logo=readFileSync(resolve('assets/images/branding/mirpworks-logo-white.svg'),'utf8');
+  assert.ok(existsSync(resolve('assets/images/branding/mirpworks-logo.jpg')),'canonical studio logo source should be copied into runtime assets');
+  assert.match(logo,/href="mirpworks-logo\.jpg"/,'white display asset must derive from the canonical logo image');
+  assert.match(logo,/<feColorMatrix/,'white display asset should preserve the canonical mark while making its light background transparent');
+  assert.match(html,/class="launch-splash"[\s\S]*?src="assets\/images\/branding\/mirpworks-logo-white\.svg"/,'fresh HTML load should show the canonical logo asset');
+  assert.doesNotMatch(html,/startup-splash__wordmark|MIRPWORKS<\/span>/,'the custom text-wordmark splash should be removed');
+  assert.match(css,/\.launch-splash\{[^}]*position:fixed[^}]*background:#000/,'splash should cover the screen with solid black');
+  assert.match(css,/\.launch-splash-logo\{[^}]*width:min\(72vw,410px\)[^}]*object-fit:contain/,'logo sizing should preserve aspect ratio on small screens');
+  assert.deepEqual(Object.values(NORMAL_SPLASH_TIMING),[750,1950,2800,3000,3150,3750,4550]);
+  assert.deepEqual(Object.values(REDUCED_MOTION_SPLASH_TIMING),[100,150,270,320,340,440,640]);
+});
+
+check('launch splash initializes once, reveals Title on schedule, and fails open',()=>{
+  const makeNode=()=>{const attributes=new Map(),classes=new Set();return {dataset:{},isConnected:true,classList:{add:(...names)=>names.forEach(name=>classes.add(name)),contains:name=>classes.has(name)},setAttribute:(name,value)=>attributes.set(name,value),removeAttribute:name=>attributes.delete(name),hasAttribute:name=>attributes.has(name),remove(){this.isConnected=false},attributes,classes}};
+  const makeFixture=reduced=>{const app=makeNode(),root=makeNode(),body=makeNode(),splash=makeNode(),logo=makeNode(),scheduled=[];logo.addEventListener=(name,callback)=>logo.errorHandler=callback;splash.querySelector=selector=>selector==='.launch-splash-logo'?logo:null;const doc={documentElement:root,body,querySelector:selector=>selector==='.launch-splash'?splash:selector==='#app'?app:null},win={matchMedia:()=>({matches:reduced}),localStorage:{getItem:()=>null},setTimeout:(callback,delay)=>{scheduled.push({callback,delay});return scheduled.length},clearTimeout:()=>{}};return {app,root,body,splash,logo,scheduled,doc,win}};
+  const normal=makeFixture(false),splash=initializeLaunchSplash(normal.doc,normal.win);
+  assert.equal(splash,normal.splash);assert.equal(normal.app.hasAttribute('data-launch-pending'),true);assert.ok(normal.logo.classes.has('is-entering'));
+  assert.deepEqual(normal.scheduled.map(timer=>timer.delay),Object.values(NORMAL_SPLASH_TIMING));
+  assert.equal(initializeLaunchSplash(normal.doc,normal.win),undefined,'a second bootstrap call must not restart the launch');
+  normal.scheduled.find(timer=>timer.delay===3000).callback();assert.ok(normal.splash.classes.has('is-revealing-app'));
+  normal.scheduled.find(timer=>timer.delay===3150).callback();assert.equal(normal.app.hasAttribute('data-launch-pending'),false);assert.equal(normal.app.hasAttribute('data-launch-revealing'),true);
+  normal.scheduled.find(timer=>timer.delay===3750).callback();assert.equal(normal.splash.isConnected,false);assert.equal(normal.app.hasAttribute('data-launch-revealing'),false);
+  const reduced=makeFixture(true);initializeLaunchSplash(reduced.doc,reduced.win);assert.deepEqual(reduced.scheduled.map(timer=>timer.delay),Object.values(REDUCED_MOTION_SPLASH_TIMING));
+  const preference=makeFixture(false);preference.win.localStorage.getItem=()=>'{"reducedMotion":true}';initializeLaunchSplash(preference.doc,preference.win);assert.deepEqual(preference.scheduled.map(timer=>timer.delay),Object.values(REDUCED_MOTION_SPLASH_TIMING),'the game’s saved Reduced Motion setting should use the short splash too');
+  const failed=makeFixture(false);initializeLaunchSplash(failed.doc,failed.win);failed.logo.errorHandler();assert.equal(failed.splash.isConnected,false);assert.equal(failed.app.hasAttribute('data-launch-pending'),false);
+  const appSource=readFileSync(resolve('js/app.js'),'utf8'),html=readFileSync(resolve('index.html'),'utf8'),css=readFileSync(resolve('css/mechanics.css'),'utf8');
+  assert.match(appSource,/initializeLaunchSplash\(\);/,'splash should start at application bootstrap, before screen routing');
+  assert.equal((appSource.match(/initializeLaunchSplash\(\);/g)||[]).length,1,'internal navigation must not replay startup');
+  assert.match(html,/__mirpworksSplashFailOpen\(\),4550/,'HTML watchdog should remove a splash if startup JavaScript never hands off');
+  assert.match(css,/#app\[data-launch-pending\]\{visibility:hidden\}/,'Title must not flash before scheduled reveal');
+  assert.match(css,/@media\(prefers-reduced-motion:reduce\)/,'visual animations should honor Reduced Motion');
+  assert.match(css,/\.launch-splash\.is-revealing-app\{[^}]*pointer-events:none/,'fading splash must stop intercepting player input');
 });
 
 check('5,001 floor layouts across playable depths are valid, varied, and deterministic', () => {

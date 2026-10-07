@@ -409,10 +409,17 @@ body:has(.title-screen),body:has(.town-hub){background-color:#171918;background-
 @media(max-width:680px){.title-screen{padding:calc(.55rem + env(safe-area-inset-top,0px)) .55rem calc(.65rem + env(safe-area-inset-bottom,0px))}.title-screen .title-card{width:100%;padding:.8rem .35rem;background:radial-gradient(ellipse at 50% 40%,#111613dc 0,#111613a8 60%,#1116134d 84%,transparent 100%)}.title-screen .game-masthead--hero{margin-bottom:.5rem}.title-screen .game-masthead--hero+.subtle{max-width:28rem;margin:.38rem auto .75rem;font-size:.9rem}.title-screen .button-stack{margin-top:.7rem}.title-screen .button-stack button{min-height:50px}.town-hub .town-status{background:linear-gradient(90deg,transparent,#111613b8 9% 91%,transparent)}.town-hub-flavor{padding:.24rem .35rem;font-size:.76rem}}
 @media(max-width:360px){.title-screen .game-masthead--hero .masthead-main{font-size:clamp(1.15rem,7vw,1.4rem)}.title-screen .game-masthead--hero .masthead-ribbon{font-size:.68rem;padding:.3rem .55rem}.title-screen .button-stack{width:min(100%,320px)}}
 @media(prefers-reduced-transparency:reduce){.title-screen .title-card{background:#111613e8}.town-hub .town-status,.town-hub-flavor{background:#111613e8}}
-.startup-splash{position:fixed;inset:0;z-index:10000;isolation:isolate;display:grid;place-content:center;justify-items:center;gap:1rem;background:radial-gradient(ellipse at center,#343a32 0,#171918 68%,#101211 100%);color:#f3e6c1;transition:opacity .36s ease,visibility .36s ease;pointer-events:auto}
-.startup-splash::before{position:absolute;inset:0;z-index:0;background:url('../assets/images/ui/municipal-doodles.svg') center/360px 360px repeat;content:"";opacity:.65;pointer-events:none}
-.startup-splash__wordmark,.startup-splash__rule{position:relative;z-index:1}
-.startup-splash__wordmark{font-family:Literata,Georgia,serif;font-size:clamp(2.2rem,12vw,4.5rem);font-weight:900;letter-spacing:.13em;text-shadow:0 3px #482f21,0 7px 24px #000b}
-.startup-splash__rule{width:min(38vw,150px);height:4px;border-radius:4px;background:linear-gradient(90deg,#d77b4c,#efd18a,#d77b4c);box-shadow:0 2px 10px #e1b96877}
-.startup-splash--leaving{opacity:0;visibility:hidden;pointer-events:none}
-@media(prefers-reduced-motion:reduce){.startup-splash{transition:none}}
+.launch-splash{position:fixed;z-index:10000;inset:0;display:grid;place-items:center;box-sizing:border-box;padding:max(24px,env(safe-area-inset-top)) max(24px,env(safe-area-inset-right)) max(24px,env(safe-area-inset-bottom)) max(24px,env(safe-area-inset-left));overflow:hidden;background:#000;opacity:1;pointer-events:auto}
+.launch-splash-logo{display:block;width:min(72vw,410px);max-height:min(58dvh,520px);height:auto;object-fit:contain;opacity:0}
+.launch-splash-logo.is-entering{animation:launch-splash-enter 750ms ease-out forwards}
+.launch-splash.is-fading-to-black .launch-splash-logo{animation:launch-splash-to-black 850ms ease-in-out forwards}
+.launch-splash.is-black{background:#000}
+.launch-splash.is-revealing-app{animation:launch-splash-reveal 750ms ease-out forwards;pointer-events:none}
+#app[data-launch-pending]{visibility:hidden}
+#app[data-launch-revealing]{visibility:visible;opacity:0;animation:launch-app-reveal 600ms ease-out forwards}
+@keyframes launch-splash-enter{to{opacity:1}}
+@keyframes launch-splash-to-black{from{opacity:1}to{opacity:0}}
+@keyframes launch-splash-reveal{from{opacity:1}to{opacity:0;visibility:hidden}}
+@keyframes launch-app-reveal{to{opacity:1}}
+@media(max-width:360px){.launch-splash-logo{width:min(76vw,360px);max-height:52dvh}}
+@media(prefers-reduced-motion:reduce){.launch-splash-logo.is-entering{animation:launch-splash-enter-reduced 100ms linear forwards}.launch-splash.is-fading-to-black .launch-splash-logo{animation:launch-splash-to-black-reduced 120ms linear forwards}.launch-splash.is-revealing-app{animation:launch-splash-reveal-reduced 120ms linear forwards}#app[data-launch-revealing]{animation:launch-app-reveal-reduced 100ms linear forwards}@keyframes launch-splash-enter-reduced{to{opacity:1}}@keyframes launch-splash-to-black-reduced{from{opacity:1}to{opacity:0}}@keyframes launch-splash-reveal-reduced{from{opacity:1}to{opacity:0;visibility:hidden}}@keyframes launch-app-reveal-reduced{to{opacity:1}}}

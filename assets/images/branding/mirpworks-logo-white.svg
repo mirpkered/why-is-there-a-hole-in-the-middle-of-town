@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1240 1240">
+  <defs>
+    <filter id="white-logo" color-interpolation-filters="sRGB">
+      <feColorMatrix type="matrix" values="0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 -.2126 -.7152 -.0722 0 1"/>
+    </filter>
+  </defs>
+  <image href="mirpworks-logo.jpg" width="1240" height="1240" filter="url(#white-logo)"/>
+</svg>
