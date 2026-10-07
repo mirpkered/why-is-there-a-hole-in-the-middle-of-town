@@ -48,7 +48,7 @@ The largest unresolved risks are real iPhone/browser verification, remaining lar
 
 - `js/app.js` is still the main screen-routing and event module at roughly 109 KB, down 7.3 KB from the audited baseline. Character/Inventory rendering now lives in `js/ui/character.js`; service, dungeon, and QA rendering remain coupled in the app module.
 - Screen policy metadata is centralized, while the actual render/action dispatch still uses nested branches in `app.js`; a single full route registry does not exist.
-- Image-background registries are ready but empty. NPC portraits, item illustrations, most interactive-landmark illustrations, and 16 room props use text/CSS fallbacks.
+- Image-background registries are ready but empty. Pip Underledger now has an illustrated portrait; other NPC portraits, item illustrations, most interactive-landmark illustrations, and 16 room props use text/CSS fallbacks.
 - Saves are local to one browser/device. No cloud sync or cross-device recovery is implemented.
 - There is no interactive browser/device regression in the canonical Node preflight. Those checks remain a manual release task for mobile-specific changes.
 - Static scan found no `TODO`, `FIXME`, or `HACK` markers in tracked project files and no `eval()`/`new Function()` use in the runtime modules. `app.js` uses `innerHTML` for templates; player/content strings in audited dynamic templates are escaped, while remaining template inputs are controlled definitions/state. Keep this boundary in future UI work.

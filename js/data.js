@@ -165,7 +165,7 @@ export const townNpcs={
 };
 
 export const dungeonNpcs={
-  'kobold-trader':{id:'kobold-trader',name:'Pip Underledger',role:'Wandering kobold merchant',line:'Gold is fine. Odd things are better. I have a ledger for both.',tradeIds:['salt-for-buckler','mushroom-goose-deal']},
+  'kobold-trader':{id:'kobold-trader',name:'Pip Underledger',role:'Wandering kobold merchant',line:'Gold is fine. Odd things are better. I have a ledger for both.',art:{src:'assets/images/npcs/pip-underledger.png'},tradeIds:['salt-for-buckler','mushroom-goose-deal']},
   'lost-surveyor':{id:'lost-surveyor',name:'Nell from Municipal Survey',role:'Lost adventurer',line:'I came to measure the stairs. I have been measuring for three days.',stock:['healing-tonic'],priceMultiplier:2}
 };
 

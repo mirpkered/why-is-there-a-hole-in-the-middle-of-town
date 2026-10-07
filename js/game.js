@@ -1,11 +1,11 @@
 import {freshState,saveState,wallAt,INVENTORY_CAPACITY,EQUIPMENT_SLOTS,createFloorMap,generateFloorMap} from './state.js?v=floor4-release-prep-20261006a';
-import {quests,items,monsters,lootTables,floorEncounterTable,dungeonNpcs,npcEncounterIds,trades,shopStock,merchantProfiles,rarities,dungeonEvents,roomTypes,enemyVariants,monsterForId} from './data.js?v=floor4-release-prep-20261006a';
+import {quests,items,monsters,lootTables,floorEncounterTable,dungeonNpcs,npcEncounterIds,trades,shopStock,merchantProfiles,rarities,dungeonEvents,roomTypes,enemyVariants,monsterForId} from './data.js?v=pip-underledger-art-20261007a';
 import {scaleEnemy,threatAssessment} from './enemy-scaling.js?v=enemy-depth-20261003a';
 import {classAbilities,achievements} from './progression.js?v=floor4-release-prep-20261006a';
 import {chooseEnemyAttack,chooseEncounterCategory,paceEncounterChance,recordEncounter,selectWithHistory} from './encounter-director.js?v=systems-20261003a';
 import {applyStatus,statusModifier,tickStatuses} from './status-effects.js?v=systems-20261002a';
 import {weightedChoice} from './random-utils.js?v=systems-20261002a';
-import {innEvents} from './data.js?v=floor4-release-prep-20261006a';
+import {innEvents} from './data.js?v=pip-underledger-art-20261007a';
 import {CURRENT_PLAYABLE_MAX_FLOOR,QA_PREVIEW_MAX_FLOOR,roomWeightForDepth,encounterWeightForDepth,lootRarityWeightForDepth} from './depth-config.js?v=floor4-release-prep-20261006a';
 import {makeMarketCycle,currentSellValue,marketCondition,pickInnEvent,simulateMarkets,simulateInnEvents,MARKET_CORE_STOCK} from './town-economy.js?v=maintenance-20261006a';
 export {threatAssessment};

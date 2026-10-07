@@ -85,7 +85,7 @@ check('all registered local runtime assets exist', () => {
   for(const registry of [ROOM_BACKGROUND_REGISTRY,BATTLE_BACKGROUND_REGISTRY])for(const entry of Object.values(registry))for(const variant of entry.variants||[])refs.push(variant.path);
   for(const entry of Object.values(INTERACTIVE_OBJECT_ART))refs.push(entry.ink,entry.colored);
   for(const entry of Object.values(MASCOT_ART))refs.push(entry.src,entry.ink,entry.colored);
-  for(const npc of [...Object.values(townNpcs),...Object.values(dungeonNpcs)])refs.push(npc.art?.ink,npc.art?.colored);
+  for(const npc of [...Object.values(townNpcs),...Object.values(dungeonNpcs)])refs.push(npc.art?.src,npc.art?.ink,npc.art?.colored);
   for (const path of ['assets/icons/favicon-16.png', 'assets/icons/favicon-32.png', 'assets/icons/apple-touch-icon.png', 'assets/icons/icon-192.png', 'assets/icons/icon-512.png']) refs.push(path);
   const manifest = JSON.parse(readFileSync(resolve('site.webmanifest'), 'utf8'));
   for (const icon of manifest.icons || []) refs.push(icon.src);
@@ -102,6 +102,13 @@ check('DJ Penguin mascot registration and cutout preserve source art and transpa
   const mascot=MASCOT_ART['dj-penguin'];assert.ok(mascot);assert.equal(mascot.id,'dj-penguin');assert.equal(mascot.role,'trivia-generator');assert.equal(mascot.src,'assets/images/mascots/dj-penguin.png');assert.equal(resolveArtVariant(mascot,'ink').src,mascot.src);
   assert.ok(existsSync(resolve('assets/source/mascots/dj-penguin.jpg')),'original mascot source should remain archived');
   const {width,height}=inspectTransparentPng(mascot.src);assert.ok(width<753&&height<1280,'runtime art should be cropped from the original scan');
+});
+
+check('Pip Underledger portrait preserves Mirpyems source and full barbell on transparent runtime art',()=>{
+  const pip=dungeonNpcs['kobold-trader'];assert.ok(pip);assert.equal(pip.name,'Pip Underledger');assert.equal(pip.art?.src,'assets/images/npcs/pip-underledger.png');
+  assert.equal(resolveArtVariant(pip.art,'colored').src,pip.art.src);assert.equal(resolveArtVariant(pip.art,'ink').src,pip.art.src);
+  assert.ok(existsSync(resolve('assets/source/npcs/pip-underledger-original.jpg')),'original user drawing should remain archived');
+  const {width,height}=inspectTransparentPng(pip.art.src);assert.ok(width>1000&&width<1172&&height>1100&&height<1280,'runtime portrait should be tightly cropped while retaining the full barbell and figure');
 });
 
 check('background registries support empty, single, weighted, stable variants and CSS fallback',()=>{

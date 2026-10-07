@@ -3,18 +3,18 @@ import {execFileSync} from 'node:child_process';
 import {readFileSync,writeFileSync} from 'node:fs';
 import {deflateSync} from 'node:zlib';
 
-const [source, output] = process.argv.slice(2);
-if (!source || !output) throw new Error('Usage: node tools/process-mascot-cutout.mjs <source-image> <runtime-png>');
+const args=process.argv.slice(2),pencilPaper=args.includes('--pencil-paper'),[source, output] = args.filter(arg=>arg!=='--pencil-paper');
+if (!source || !output) throw new Error('Usage: node tools/process-mascot-cutout.mjs <source-image> <runtime-png> [--pencil-paper]');
 const probe=execFileSync('ffprobe',['-v','error','-select_streams','v:0','-show_entries','stream=width,height','-of','csv=s=x:p=0',source],{encoding:'utf8'}).trim();
 const [width,height]=probe.split('x').map(Number);
 if(!width||!height||width*height>12_000_000)throw new Error('Unsupported image dimensions.');
 const rgba=execFileSync('ffmpeg',['-v','error','-i',source,'-f','rawvideo','-pix_fmt','rgba','pipe:1'],{maxBuffer:width*height*4+1024});
 if(rgba.length!==width*height*4)throw new Error('Could not decode source image.');
 
-// Flood only near-neutral bright pixels connected to the image edge. This leaves enclosed white
-// areas (such as a penguin belly) intact, while feathering paper/antialiasing at the silhouette.
+// White-paper mode removes only edge-connected paper, preserving enclosed white drawing areas.
+// Optional graphite mode removes the gray page tone by luminance while keeping darker pencil marks.
 const count=width*height, paper=new Uint8Array(count), seen=new Uint8Array(count), queue=new Int32Array(count);
-for(let p=0;p<count;p++){const i=p*4,r=rgba[i],g=rgba[i+1],b=rgba[i+2];paper[p]=Math.min(r,g,b)>=174&&Math.max(r,g,b)-Math.min(r,g,b)<=48?1:0;}
+for(let p=0;p<count;p++){const i=p*4,r=rgba[i],g=rgba[i+1],b=rgba[i+2],luma=.299*r+.587*g+.114*b;paper[p]=pencilPaper?luma>=138:(Math.min(r,g,b)>=174&&Math.max(r,g,b)-Math.min(r,g,b)<=48)?1:0;}
 let head=0,tail=0;
 function seed(p){if(paper[p]&&!seen[p]){seen[p]=1;queue[tail++]=p}}
 for(let x=0;x<width;x++){seed(x);seed((height-1)*width+x)}
@@ -23,7 +23,9 @@ while(head<tail){const p=queue[head++],x=p%width,y=(p/width)|0;for(let dy=-1;dy<
 let left=width,top=height,right=-1,bottom=-1;
 for(let p=0;p<count;p++){
   const i=p*4;
-  if(seen[p]){const luma=.299*rgba[i]+.587*rgba[i+1]+.114*rgba[i+2];rgba[i+3]=Math.round(Math.max(0,Math.min(255,(255-luma)*255/72)));}
+  const luma=.299*rgba[i]+.587*rgba[i+1]+.114*rgba[i+2];
+  if(pencilPaper)rgba[i+3]=Math.round(Math.max(0,Math.min(255,(128-luma)*255/28)));
+  else if(seen[p])rgba[i+3]=Math.round(Math.max(0,Math.min(255,(255-luma)*255/72)));
   if(rgba[i+3]>=32){const x=p%width,y=(p/width)|0;left=Math.min(left,x);right=Math.max(right,x);top=Math.min(top,y);bottom=Math.max(bottom,y)}
 }
 if(right<left||bottom<top)throw new Error('No drawing pixels remained after background removal.');
