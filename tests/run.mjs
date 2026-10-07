@@ -256,6 +256,27 @@ check('shared municipal background and masthead use the local doodle sheet and r
   assert.match(css,/\.game-masthead--hero/,'title screen should use the enlarged lockup');
   assert.match(css,/\.topbar\{display:grid;grid-template-columns:minmax\(0,1fr\)/,'narrow layouts should give masthead and actions separate rows');
   assert.match(css,/@media\(max-width:360px\)\{\.topbar/,'masthead must have a narrow-phone layout');
+  assert.match(css,/\.title-screen \.title-card\{[^}]*border:0[^}]*border-radius:0[^}]*radial-gradient/,'title content should use a localized text-legibility glow instead of an enclosing card');
+  assert.match(css,/body:has\(\.title-screen\),body:has\(\.town-hub\)\{[^}]*municipal-doodles\.svg[^}]*background-size:100% 650px,100% 100%,360px 360px,520px 520px/,'title and Town should make the local background art more present with layered scale');
+  assert.match(css,/\.town-hub \.town-status\{[^}]*border:0[^}]*linear-gradient/,'Town status should use a soft localized readability treatment rather than a framed panel');
+  assert.match(css,/\.town-hub-heading \.eyebrow\{[^}]*border:0[^}]*background:transparent/,'Town heading should not retain a generic badge frame');
+  assert.match(css,/\.town-hub-flavor\{[^}]*linear-gradient/,'Town flavor text should have localized contrast support');
+  assert.match(css,/@media\(max-width:680px\)\{\.title-screen/,'title/Town cleanup should include phone sizing');
+  assert.match(css,/@media\(prefers-reduced-transparency:reduce\)/,'text backing should respect reduced-transparency preferences');
+});
+
+check('Mirpworks startup splash hands off once, respects reduced motion, and fails open',()=>{
+  const html=readFileSync(resolve('index.html'),'utf8'),app=readFileSync(resolve('js/app.js'),'utf8'),css=readFileSync(resolve('css/mechanics.css'),'utf8');
+  assert.match(html,/<div id="startup-splash"[^>]*aria-label="Mirpworks"/,'fresh document load should include accessible Mirpworks branding');
+  assert.match(html,/setTimeout\(\(\)=>document\.getElementById\('startup-splash'\)\?\.remove\(\),5000\)/,'a watchdog should remove the overlay if initialization never hands off');
+  assert.match(html,/js\/app\.js\?v=title-town-splash-20261007a/,'startup script should use a fresh cache key');
+  assert.match(app,/function finishStartupSplash\(/,'startup should have a single dismissal routine');
+  assert.match(app,/const existing=loadState\(\);[\s\S]*?finishStartupSplash\(\);/,'splash should dismiss only after state restore and initial Title render');
+  assert.equal((app.match(/finishStartupSplash\(\);/g)||[]).length,1,'internal screen renders and navigation must not replay the splash');
+  assert.match(app,/minimum=reduced\?80:950/,'Reduced Motion should keep the branding visible briefly and shorten the transition');
+  assert.match(css,/\.startup-splash\{[^}]*position:fixed[^}]*z-index:10000/,'splash should cover the Title during the handoff');
+  assert.match(css,/\.startup-splash--leaving\{[^}]*visibility:hidden[^}]*pointer-events:none/,'dismissed splash must no longer intercept interaction');
+  assert.match(css,/@media\(prefers-reduced-motion:reduce\)\{\.startup-splash\{transition:none\}\}/,'splash animation should honor OS Reduced Motion');
 });
 
 check('5,001 floor layouts across playable depths are valid, varied, and deterministic', () => {
