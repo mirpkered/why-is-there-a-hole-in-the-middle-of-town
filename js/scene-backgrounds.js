@@ -24,7 +24,9 @@ export function backgroundForRoom({roomType='ordinary',map,floor=1,x=0,y=0,kind=
   const entry=kind==='battle'?(specific?.variants?.length?specific:generic?.variants?.length?generic:specific||generic):(specific||source.ordinary);
   const seed=roomVisualSeed(map,floor,x,y,roomType,kind==='battle'?9173:0);
   const roomVariant=selectBackgroundVariant(entry,seed);
-  if(kind==='exploration'&&!roomVariant&&topologyId){
+  // The room map is authoritative in both modes. A battle keeps the same
+  // floor theme and camera-relative openings as exploration; only props differ.
+  if(!roomVariant&&topologyId){
     const selectedSet=DUNGEON_SETS[setId]||getFloorVisualSet({seed:map?.seed,visualSets:{}},floor);
     const variant=selectedSet.backgrounds[topologyId]||null;
     if(variant)return {kind,roomType,entry,variant,seed,fallback:'css',setId:selectedSet.id,topologyId};

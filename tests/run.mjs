@@ -117,6 +117,7 @@ check('background registries support empty, single, weighted, stable variants an
   assert.equal(backgroundForRoom({roomType:'ordinary',map,floor:2,x:4,y:5}).fallback,'css');
   assert.equal(backgroundForRoom({roomType:'ordinary',map,floor:2,x:4,y:5,kind:'battle'}).fallback,'battle-css');
   const topology='front-wall-left-wall-right-wall',theme=backgroundForRoom({roomType:'ordinary',map,floor:2,x:4,y:5,setId:'dungeon-set-3',topologyId:topology});assert.equal(theme.variant.path,DUNGEON_SETS['dungeon-set-3'].backgrounds[topology].path);assert.equal(theme.variant.topologyId,topology);assert.equal(theme.setId,'dungeon-set-3');
+  for(const setId of ['dungeon-set-1','dungeon-set-3','dungeon-set-5']){const exploration=backgroundForRoom({roomType:'ordinary',map,floor:2,x:4,y:5,setId,topologyId:topology}),battle=backgroundForRoom({roomType:'ordinary',map,floor:2,x:4,y:5,kind:'battle',setId,topologyId:topology});assert.equal(battle.variant.path,exploration.variant.path,`${setId} combat must retain the exploration topology image`);assert.equal(battle.topologyId,topology);assert.equal(battle.setId,setId)}
   const battleRegistry={default:{id:'default',variants:[{id:'generic',path:'assets/images/rooms/battle.webp'}]},ordinary:{id:'ordinary',variants:[]}};
   assert.equal(backgroundForRoom({roomType:'ordinary',map,floor:2,x:4,y:5,kind:'battle',registry:battleRegistry}).variant.id,'generic');
   assert.equal(backgroundLayerMarkup({variant:null}),'');
@@ -130,6 +131,7 @@ check('background registries support empty, single, weighted, stable variants an
   for(const status of ['loading','failed','missing'])assert.deepEqual(sceneImagePresentation(status),{imageVisible:false,fallbackVisible:true,imageClass:'',viewClass:''});
   assert.equal(validateBackgroundRegistry({ordinary:{id:'ordinary',variants:[],fallback:'css'}},['ordinary']).valid,true);
   assert.equal(validateBackgroundRegistry({ordinary:{id:'ordinary',variants:[{id:'bad',path:'https://example.invalid/bg.webp'}]}},['ordinary']).valid,false);
+  const appSource=readFileSync(resolve('js/app.js'),'utf8'),css=readFileSync(resolve('css/mechanics.css'),'utf8');assert.match(appSource,/combatEnvironment=\{key:combatKey[^}]*selection\}/,'battle captures one immutable room presentation');assert.match(appSource,/propMarkup=combat\?'':/,'exploration props are omitted during battle');assert.match(appSource,/image\.closest\('\.scene-view,\.battle-scene'\)/,'background load diagnostics support combat scenes');assert.match(css,/\.battle-scene--image:before,\.battle-scene--image:after\{display:none\}/,'loaded dungeon backgrounds suppress generic battle geometry');
 });
 
 check('five dungeon sets include all forty registered topology backgrounds',()=>{
@@ -170,19 +172,20 @@ check('per-floor visual themes stay deterministic, independent, and backward-com
   const prior={...first.dungeon};delete prior.visualSets;const saved={...first,dungeon:prior};saveState(saved);const restored=loadState();assert.deepEqual(restored.dungeon.visualSets,assignments);assert.deepEqual(restored.dungeon.maps,first.dungeon.maps);
 });
 
-check('exploration and combat render distinct background and prop layers',()=>{
+check('exploration and combat share the frozen Dungeon Set environment while combat hides props',()=>{
   const source=readFileSync(resolve('js/app.js'),'utf8'),css=readFileSync(resolve('css/mechanics.css'),'utf8');
   const battle=source.match(/const scene=combat\?`([\s\S]*?)`:`<div class="scene/s)?.[1]||'';
   assert.match(battle,/battle-scene--\$\{esc\(room\?\.id/);
   assert.match(battle,/\$\{sceneFocus\}/);
   assert.doesNotMatch(battle,/room-props|landmarkOverlay|npcLayer/);
   assert.match(source,/propMarkup=combat\?'':roomPropMarkup/);
-  assert.match(source,/kind:combat\?'battle':'exploration'/);
+  assert.match(source,/combatEnvironment=\{key:combatKey[^}]*selection\}/,'combat captures the selected background once per encounter');
+  assert.match(source,/sceneBackgroundSelection=combat\?combatEnvironment\.selection:backgroundForRoom/,'combat reuses its frozen exploration environment');
   assert.match(css,/\.scene-view--image>\.scene-ceiling[^}]*display:none/);
   assert.match(css,/\.scene-image-layer[^}]*object-fit:contain/,'exploration framing preserves every topology opening');
   assert.match(css,/\.scene-view[^}]*aspect-ratio:1672 \/ 941/,'the default scene frame matches the supplied wide backgrounds');
   assert.match(css,/\.scene-image-layer\.is-loaded\{opacity:1\}/);
-  assert.match(css,/\.battle-scene--image:before\{opacity:\.18\}/);
+  assert.match(css,/\.battle-scene--image:before,\.battle-scene--image:after\{display:none\}/);
   assert.match(source,/app\.addEventListener\('load',e=>[\s\S]*scene-image-layer/);
   assert.match(source,/view\.style\.aspectRatio=`\$\{image\.naturalWidth\} \/ \$\{image\.naturalHeight\}`/,'loaded backgrounds size the view to their native ratio, including the 4:3 dead-end art');
   assert.match(source,/data-qa-bg-metrics/);
