@@ -83,7 +83,7 @@ check('all registered local runtime assets exist', () => {
   for (const assets of Object.values(TOWN_ART_ASSETS)) refs.push(assets.ink, assets.colored);
   for(const item of Object.values(items))refs.push(item.art?.src,item.art?.ink,item.art?.colored);
   for(const registry of [ROOM_BACKGROUND_REGISTRY,BATTLE_BACKGROUND_REGISTRY])for(const entry of Object.values(registry))for(const variant of entry.variants||[])refs.push(variant.path);
-  for(const entry of Object.values(INTERACTIVE_OBJECT_ART))refs.push(entry.ink,entry.colored);
+  for(const entry of Object.values(INTERACTIVE_OBJECT_ART))refs.push(entry.src,entry.ink,entry.colored);
   for(const entry of Object.values(MASCOT_ART))refs.push(entry.src,entry.ink,entry.colored);
   for(const npc of [...Object.values(townNpcs),...Object.values(dungeonNpcs)])refs.push(npc.art?.src,npc.art?.ink,npc.art?.colored);
   for (const path of ['assets/icons/favicon-16.png', 'assets/icons/favicon-32.png', 'assets/icons/apple-touch-icon.png', 'assets/icons/icon-192.png', 'assets/icons/icon-512.png']) refs.push(path);
@@ -382,6 +382,14 @@ check('Mirpkered Air Freshener drawing is registered as item art and renders thr
   const {width,height}=inspectTransparentPng(item.art.src);assert.ok(width>500&&width<778&&height>900&&height<1280,'runtime image should crop closely around the whole spray bottle');
   const appSource=readFileSync(resolve('js/app.js'),'utf8');assert.match(appSource,/function itemPill\(id\).*optionalArtMarkup\(item\.art,item\.name,'item-art-inline'\)/,'item UI should use the shared art resolver for its registered item image');
   assert.match(appSource,/itemPill\(itemId\)/,'stock and NPC item presentations should show the item art pill');
+});
+
+check('Mirpkered apple-core drawing is registered to the Apple Anomaly event presentation',()=>{
+  const art=INTERACTIVE_OBJECT_ART['event:apple-anomaly'];assert.ok(art);assert.equal(art.contentId,'apple-anomaly');assert.equal(art.src,'assets/images/interactive-objects/apple-anomaly.png');
+  assert.equal(resolveArtVariant(art,'ink').src,art.src);assert.equal(resolveArtVariant(art,'colored').src,art.src);
+  assert.ok(existsSync(resolve('assets/source/interactive-objects/apple-anomaly-original.jpg')),'original event-object drawing should remain archived');
+  const {width,height}=inspectTransparentPng(art.src);assert.ok(width>800&&width<1127&&height>900&&height<1244,'runtime art should be cropped around the whole apple core');
+  const appSource=readFileSync(resolve('js/app.js'),'utf8');assert.match(appSource,/interactiveArtMarkup\(event\.id,event\.title\)/,'event backdrop should render registered event art');
 });
 
 check('hand-drawn empty box is registered as a paired storage-room prop',()=>{
