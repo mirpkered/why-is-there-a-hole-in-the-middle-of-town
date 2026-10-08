@@ -81,7 +81,7 @@ check('all registered local runtime assets exist', () => {
   for (const monster of Object.values(monsters)) refs.push(monster.sprite?.src, monster.sprite?.ink, monster.sprite?.colored);
   for (const prop of Object.values(props)) refs.push(prop.src, prop.ink, prop.colored);
   for (const assets of Object.values(TOWN_ART_ASSETS)) refs.push(assets.ink, assets.colored);
-  for(const item of Object.values(items))refs.push(item.art?.ink,item.art?.colored);
+  for(const item of Object.values(items))refs.push(item.art?.src,item.art?.ink,item.art?.colored);
   for(const registry of [ROOM_BACKGROUND_REGISTRY,BATTLE_BACKGROUND_REGISTRY])for(const entry of Object.values(registry))for(const variant of entry.variants||[])refs.push(variant.path);
   for(const entry of Object.values(INTERACTIVE_OBJECT_ART))refs.push(entry.ink,entry.colored);
   for(const entry of Object.values(MASCOT_ART))refs.push(entry.src,entry.ink,entry.colored);
@@ -373,6 +373,15 @@ check('hand-drawn flower pair is a small compatible Mushroom Room prop with tran
   assert.ok(existsSync(resolve('assets/source/room-props/flower-pair-original.jpg')),'original user drawing should remain archived');
   const {width,height}=inspectTransparentPng(flowers.src);assert.ok(width>1000&&width<1214&&height>700&&height<1095,'runtime image should crop the paper while preserving both flowers and stems');
   const markup=roomPropMarkup({props:[{...flowers,id:'preview-flower-pair',zone:'far-left',placeholder:'mushrooms',scale:1,perspectiveScale:1,depth:'far',layer:'foreground'}]});assert.ok(markup.includes(`src="${flowers.src}"`));
+});
+
+check('Mirpkered Air Freshener drawing is registered as item art and renders through the shared item pill',()=>{
+  const item=items['air-freshener'];assert.ok(item);assert.equal(item.art?.src,'assets/images/items/air-freshener.png');
+  assert.equal(resolveArtVariant(item.art,'ink').src,item.art.src);assert.equal(resolveArtVariant(item.art,'colored').src,item.art.src);
+  assert.ok(existsSync(resolve('assets/source/items/air-freshener-original.jpg')),'original item drawing should remain archived');
+  const {width,height}=inspectTransparentPng(item.art.src);assert.ok(width>500&&width<778&&height>900&&height<1280,'runtime image should crop closely around the whole spray bottle');
+  const appSource=readFileSync(resolve('js/app.js'),'utf8');assert.match(appSource,/function itemPill\(id\).*optionalArtMarkup\(item\.art,item\.name,'item-art-inline'\)/,'item UI should use the shared art resolver for its registered item image');
+  assert.match(appSource,/itemPill\(itemId\)/,'stock and NPC item presentations should show the item art pill');
 });
 
 check('hand-drawn empty box is registered as a paired storage-room prop',()=>{
