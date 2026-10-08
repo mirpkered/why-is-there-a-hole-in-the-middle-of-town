@@ -367,6 +367,14 @@ check('hand-drawn book stack is registered for Library and resolves in either sp
   const markup=roomPropMarkup({props:[{...stack,id:'preview-book-stack',zone:'floor-center',placeholder:'books',scale:1,perspectiveScale:1,depth:'foreground',layer:'foreground'}]});assert.ok(markup.includes(`src="${stack.src}"`));
 });
 
+check('hand-drawn flower pair is a small compatible Mushroom Room prop with transparent runtime art',()=>{
+  const flowers=props['flower-pair'];assert.ok(flowers);assert.equal(flowers.src,'assets/images/room-props/flower-pair-ink.png');assert.deepEqual(flowers.rooms,['mushroom-room']);assert.ok(roomTypes['mushroom-room'].visual.propPool.includes(flowers.id));assert.ok(flowers.scale.max<=.9);
+  assert.equal(resolveArtVariant(flowers,'ink').src,flowers.src);assert.equal(resolveArtVariant(flowers,'colored').src,flowers.src);
+  assert.ok(existsSync(resolve('assets/source/room-props/flower-pair-original.jpg')),'original user drawing should remain archived');
+  const {width,height}=inspectTransparentPng(flowers.src);assert.ok(width>1000&&width<1214&&height>700&&height<1095,'runtime image should crop the paper while preserving both flowers and stems');
+  const markup=roomPropMarkup({props:[{...flowers,id:'preview-flower-pair',zone:'far-left',placeholder:'mushrooms',scale:1,perspectiveScale:1,depth:'far',layer:'foreground'}]});assert.ok(markup.includes(`src="${flowers.src}"`));
+});
+
 check('hand-drawn empty box is registered as a paired storage-room prop',()=>{
   const box=props['empty-box'];assert.ok(box);assert.ok(box.rooms.includes('storage'));assert.ok(roomTypes.storage.visual.propPool.includes('empty-box'));assert.equal(box.placeholder,'box');
   for(const [style,path] of [['ink',box.ink],['colored',box.colored]]){assert.ok(path);const png=readFileSync(resolve(path));assert.equal(png.toString('hex',0,8),'89504e470d0a1a0a');assert.equal(png[25],6,`${style} box must preserve PNG alpha`);assert.ok(png.readUInt32BE(16)<=1400&&png.readUInt32BE(20)<=1100,'empty box art dimensions remain suitable for runtime use')}
