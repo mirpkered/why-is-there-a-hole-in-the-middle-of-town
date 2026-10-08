@@ -359,6 +359,14 @@ check('Mirpyems pile-of-spoons art is registered for Spoon Room with transparent
   const markup=roomPropMarkup({props:[{...pile,id:'preview-pile',zone:'floor-center',placeholder:'spoons',scale:1,perspectiveScale:1,depth:'foreground',layer:'foreground'}]});assert.ok(markup.includes(`src="${pile.src}"`),'room prop renderer should load the registered image');
 });
 
+check('hand-drawn book stack is registered for Library and resolves in either sprite style',()=>{
+  const stack=props['book-stack'];assert.ok(stack);assert.equal(stack.src,'assets/images/room-props/book-stack-ink.png');assert.ok(stack.rooms.includes('library'));assert.ok(roomTypes.library.visual.propPool.includes(stack.id));
+  assert.equal(resolveArtVariant(stack,'ink').src,stack.src);assert.equal(resolveArtVariant(stack,'colored').src,stack.src);
+  assert.ok(existsSync(resolve('assets/source/room-props/book-stack-original.jpg')),'original user drawing should remain archived');
+  const {width,height}=inspectTransparentPng(stack.src);assert.ok(width>1100&&width<1280&&height>550&&height<754,'runtime art should be closely cropped around all four books');
+  const markup=roomPropMarkup({props:[{...stack,id:'preview-book-stack',zone:'floor-center',placeholder:'books',scale:1,perspectiveScale:1,depth:'foreground',layer:'foreground'}]});assert.ok(markup.includes(`src="${stack.src}"`));
+});
+
 check('hand-drawn empty box is registered as a paired storage-room prop',()=>{
   const box=props['empty-box'];assert.ok(box);assert.ok(box.rooms.includes('storage'));assert.ok(roomTypes.storage.visual.propPool.includes('empty-box'));assert.equal(box.placeholder,'box');
   for(const [style,path] of [['ink',box.ink],['colored',box.colored]]){assert.ok(path);const png=readFileSync(resolve(path));assert.equal(png.toString('hex',0,8),'89504e470d0a1a0a');assert.equal(png[25],6,`${style} box must preserve PNG alpha`);assert.ok(png.readUInt32BE(16)<=1400&&png.readUInt32BE(20)<=1100,'empty box art dimensions remain suitable for runtime use')}
