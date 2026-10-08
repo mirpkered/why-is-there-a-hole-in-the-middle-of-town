@@ -78,6 +78,7 @@ for(const monster of Object.values(monsters))for(const attack of monster.attacks
 // These two user-drawn designs keep their stable IDs for existing saves and quest references.
 monsters.kungFuGoose.name='Kung Fungoose';
 monsters.kungFuGoose.sprite={ink:'assets/images/enemies/kung-fungoose-ink.png',colored:'assets/images/enemies/kung-fungoose-colored.png',scale:1.12,offsetY:-1};
+monsters.skeleton.sprite={...monsters.skeleton.sprite,src:'assets/images/enemies/skeleton-on-break.png',scale:1.08,offsetY:0};
 monsters.rat.name='Deadly Rat';
 monsters.rat.sprite={ink:'assets/images/enemies/deadly-rat-ink.png',colored:'assets/images/enemies/deadly-rat-colored.png',scale:1.08,offsetY:1};
 monsters.fireWorm.sprite={ink:'assets/images/enemies/fire-breathing-earthworm-ink.png',colored:'assets/images/enemies/fire-breathing-earthworm-colored.png',scale:1.08,offsetY:0};

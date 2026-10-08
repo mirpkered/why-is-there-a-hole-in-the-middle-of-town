@@ -111,6 +111,13 @@ check('Pip Underledger portrait preserves Mirpyems source and full barbell on tr
   const {width,height}=inspectTransparentPng(pip.art.src);assert.ok(width>1000&&width<1172&&height>1100&&height<1280,'runtime portrait should be tightly cropped while retaining the full barbell and figure');
 });
 
+check('Mirpkered break-time skeleton drawing replaces Skeleton on Break art and preserves its source',()=>{
+  const skeleton=monsters.skeleton;assert.ok(skeleton);assert.equal(skeleton.name,'Skeleton on Break');assert.equal(skeleton.sprite.src,'assets/images/enemies/skeleton-on-break.png');
+  assert.equal(resolveArtVariant(skeleton.sprite,'ink').src,skeleton.sprite.src);assert.equal(resolveArtVariant(skeleton.sprite,'colored').src,skeleton.sprite.src);
+  assert.ok(existsSync(resolve('assets/source/enemies/skeleton-on-break-original.jpg')),'original skeleton drawing should remain archived');
+  const {width,height}=inspectTransparentPng(skeleton.sprite.src);assert.ok(width>500&&width<671&&height>1100&&height<1280,'runtime skeleton should be cropped while keeping the full figure and mug');
+});
+
 check('background registries support empty, single, weighted, stable variants and CSS fallback',()=>{
   assert.equal(Object.keys(ROOM_BACKGROUND_REGISTRY).length,Object.keys(roomTypes).length);
   assert.equal(Object.keys(BATTLE_BACKGROUND_REGISTRY).length,Object.keys(roomTypes).length+1);
