@@ -8,5 +8,14 @@ export const MASCOT_ART=Object.freeze({
     src:'assets/images/mascots/dj-penguin.png',
     ink:null,
     fallback:'text'
+  }),
+  'bowser':Object.freeze({
+    id:'bowser',
+    name:'Bowser',
+    role:'town-companion',
+    accessibilityLabel:'Bowser, carrying a stick',
+    src:'assets/images/mascots/bowser.png',
+    ink:null,
+    fallback:'hidden'
   })
 });

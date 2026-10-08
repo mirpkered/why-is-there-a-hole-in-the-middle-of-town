@@ -47,14 +47,14 @@ check('all runtime JavaScript modules pass Node syntax validation',()=>{
   for(const file of [...sources(resolve('js')).filter(path=>path.endsWith('.js')),...['tools/art-report.mjs','tools/audio-report.mjs','tools/process-mascot-cutout.mjs'].map(path=>resolve(path))]){const result=spawnSync(process.execPath,['--check',file],{encoding:'utf8'});assert.equal(result.status,0,`${file}: ${result.stderr||result.stdout}`)}
 });
 
-function inspectTransparentPng(path) {
+function inspectTransparentPng(path,{maxMargin=12}={}) {
   const bytes=readFileSync(path);assert.equal(bytes.toString('hex',0,8),'89504e470d0a1a0a');
   const width=bytes.readUInt32BE(16),height=bytes.readUInt32BE(20);assert.equal(bytes[24],8);assert.equal(bytes[25],6,'Town art must be RGBA');
   const chunks=[];let offset=8;while(offset<bytes.length){const length=bytes.readUInt32BE(offset),type=bytes.toString('ascii',offset+4,offset+8);if(type==='IDAT')chunks.push(bytes.subarray(offset+8,offset+8+length));offset+=12+length;if(type==='IEND')break;}
   const raw=inflateSync(Buffer.concat(chunks)),stride=width*4;assert.equal(raw.length,(stride+1)*height);const pixels=Buffer.alloc(stride*height),paeth=(a,b,c)=>{const p=a+b-c,pa=Math.abs(p-a),pb=Math.abs(p-b),pc=Math.abs(p-c);return pa<=pb&&pa<=pc?a:pb<=pc?b:c};let x0=width,y0=height,x1=-1,y1=-1;
   for(let y=0;y<height;y++){const row=y*stride,rawRow=y*(stride+1),filter=raw[rawRow];assert.ok(filter<=4,`unsupported PNG row filter ${filter}`);for(let x=0;x<stride;x++){const left=x>=4?pixels[row+x-4]:0,up=y?pixels[row-stride+x]:0,upperLeft=y&&x>=4?pixels[row-stride+x-4]:0,predictor=filter===0?0:filter===1?left:filter===2?up:filter===3?Math.floor((left+up)/2):paeth(left,up,upperLeft);pixels[row+x]=(raw[rawRow+1+x]+predictor)&255;}for(let x=0;x<width;x++)if(pixels[row+x*4+3]>=8){x0=Math.min(x0,x);x1=Math.max(x1,x);y0=Math.min(y0,y);y1=Math.max(y1,y);}}
   const alphaAt=(x,y)=>pixels[y*stride+x*4+3];assert.equal(alphaAt(0,0),0);assert.equal(alphaAt(width-1,0),0);assert.equal(alphaAt(0,height-1),0);assert.equal(alphaAt(width-1,height-1),0);
-  assert.ok(x0<=12&&y0<=12&&width-1-x1<=12&&height-1-y1<=12,`Town image should be closely cropped: ${path}`);
+  assert.ok(x0<=maxMargin&&y0<=maxMargin&&width-1-x1<=maxMargin&&height-1-y1<=maxMargin,`Image should be closely cropped: ${path}`);
   return {width,height};
 }
 
@@ -102,6 +102,14 @@ check('DJ Penguin mascot registration and cutout preserve source art and transpa
   const mascot=MASCOT_ART['dj-penguin'];assert.ok(mascot);assert.equal(mascot.id,'dj-penguin');assert.equal(mascot.role,'trivia-generator');assert.equal(mascot.src,'assets/images/mascots/dj-penguin.png');assert.equal(resolveArtVariant(mascot,'ink').src,mascot.src);
   assert.ok(existsSync(resolve('assets/source/mascots/dj-penguin.jpg')),'original mascot source should remain archived');
   const {width,height}=inspectTransparentPng(mascot.src);assert.ok(width<753&&height<1280,'runtime art should be cropped from the original scan');
+});
+
+check('Bowser is registered as a Town companion with preserved source photo and accessible cameo',()=>{
+  const bowser=MASCOT_ART.bowser;assert.ok(bowser);assert.equal(bowser.id,'bowser');assert.equal(bowser.name,'Bowser');assert.equal(bowser.role,'town-companion');assert.equal(bowser.src,'assets/images/mascots/bowser.png');
+  assert.equal(resolveArtVariant(bowser,'ink').src,bowser.src);assert.equal(resolveArtVariant(bowser,'colored').src,bowser.src);
+  assert.ok(existsSync(resolve('assets/source/mascots/bowser-photo-original.jpg')),'original Bowser photo should remain preserved');
+  const {width,height}=inspectTransparentPng(bowser.src,{maxMargin:64});assert.ok(width>1000&&height>1200,'runtime cutout should keep Bowser’s full pose and stick');
+  const appSource=readFileSync(resolve('js/app.js'),'utf8');assert.match(appSource,/town-bowser/);assert.match(appSource,/optionalArtMarkup\(bowser,bowser\.accessibilityLabel/);
 });
 
 check('Pip Underledger portrait preserves Mirpyems source and full barbell on transparent runtime art',()=>{
