@@ -79,7 +79,7 @@ check('character renderer preserves gear, pack, stats, slot, and accessible cont
 check('all registered local runtime assets exist', () => {
   const refs = [];
   for (const monster of Object.values(monsters)) refs.push(monster.sprite?.src, monster.sprite?.ink, monster.sprite?.colored);
-  for (const prop of Object.values(props)) refs.push(prop.ink, prop.colored);
+  for (const prop of Object.values(props)) refs.push(prop.src, prop.ink, prop.colored);
   for (const assets of Object.values(TOWN_ART_ASSETS)) refs.push(assets.ink, assets.colored);
   for(const item of Object.values(items))refs.push(item.art?.ink,item.art?.colored);
   for(const registry of [ROOM_BACKGROUND_REGISTRY,BATTLE_BACKGROUND_REGISTRY])for(const entry of Object.values(registry))for(const variant of entry.variants||[])refs.push(variant.path);
@@ -349,6 +349,14 @@ check('hand-drawn spoon replaces the single-spoon fallback and preserves its sou
   for(const [style,path] of [['ink',spoon.ink],['colored',spoon.colored]]){assert.ok(path);const png=readFileSync(resolve(path));assert.equal(png.toString('hex',0,8),'89504e470d0a1a0a');assert.equal(png[25],6,`${style} spoon must preserve PNG alpha`);assert.ok(png.readUInt32BE(16)<=900&&png.readUInt32BE(20)<=900,'spoon image dimensions remain suitable for runtime use')}
   assert.ok(existsSync(resolve('assets/source/room-props/spoon-original.jpg')),'original spoon drawing remains archived');
   const sample={...spoon,flip:false,zone:'floor-center',scale:1,depth:3};assert.match(roomPropMarkup({props:[sample]},'ink'),/spoon-ink\.png/);assert.match(roomPropMarkup({props:[sample]},'colored'),/spoon-colored\.png/);
+});
+
+check('Mirpyems pile-of-spoons art is registered for Spoon Room with transparent source-preserving runtime crop',()=>{
+  const pile=props['spoon-pile'];assert.ok(pile);assert.equal(pile.src,'assets/images/room-props/spoon-pile-ink.png');assert.ok(pile.rooms.includes('spoons'));assert.ok(roomTypes.spoons.visual.propPool.includes(pile.id));
+  assert.equal(resolveArtVariant(pile,'ink').src,pile.src);assert.equal(resolveArtVariant(pile,'colored').src,pile.src);
+  assert.ok(existsSync(resolve('assets/source/room-props/spoon-pile-original.jpg')),'original user drawing should remain archived');
+  const {width,height}=inspectTransparentPng(pile.src);assert.ok(width>1000&&width<1280&&height>850&&height<1222,'runtime pile should be cropped around the complete spoon drawing');
+  const markup=roomPropMarkup({props:[{...pile,id:'preview-pile',zone:'floor-center',placeholder:'spoons',scale:1,perspectiveScale:1,depth:'foreground',layer:'foreground'}]});assert.ok(markup.includes(`src="${pile.src}"`),'room prop renderer should load the registered image');
 });
 
 check('hand-drawn empty box is registered as a paired storage-room prop',()=>{
