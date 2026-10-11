@@ -10,6 +10,10 @@ Create or continue a character, take work from town, then descend through three 
 
 The game is single-player and saves automatically in browser local storage. Saves do not sync between devices.
 
+## Contact
+
+Use **About / Help → Send feedback** to contact Mirpworks. The link opens an email to `contact@mirpworks.com` with the subject `Why Is There a Hole in the Middle of Town? — Feedback` and a body beginning `Sent from: Why Is There a Hole in the Middle of Town?`.
+
 ## Controls and accessibility
 
 Use the on-screen directional pad on touch devices. Keyboard movement is W/Up, A/Left, S/Down, and D/Right. Handedness changes touch-control placement only. Settings include sprite style, threat display, music, text size, high-contrast map, reduced motion, and handedness.

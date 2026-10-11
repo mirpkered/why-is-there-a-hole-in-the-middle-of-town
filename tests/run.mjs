@@ -22,6 +22,7 @@ const {ROOM_BACKGROUND_REGISTRY,BATTLE_BACKGROUND_REGISTRY,backgroundForRoom,bac
 const {DUNGEON_SETS,DUNGEON_SET_IDS,DUNGEON_TOPOLOGIES,topologyIdForOpenings,openingsForFacing,ensureDungeonVisualSets,assignedDungeonSetId}=await import('../js/dungeon-themes.js?preflight');
 const {INTERACTIVE_OBJECT_ART}=await import('../js/interactive-art.js?preflight');
 const {MASCOT_ART}=await import('../js/mascots.js?preflight');
+const {MIRPWORKS_CONTACT_EMAIL,APPLICATION_NAME,feedbackMailtoHref}=await import('../js/contact.js?preflight');
 const {SCREEN_PRESENTATION}=await import('../js/screen-presentation.js?preflight');
 const {TOWN_DESTINATIONS,renderTownDestinations}=await import('../js/ui/town.js?preflight');
 const {renderCharacterScreen}=await import('../js/ui/character.js?preflight');
@@ -62,6 +63,17 @@ check('content definitions have no critical validation errors', () => {
   const report = validateContent();
   assert.equal(report.errorCount, 0, JSON.stringify(report.errors));
   assert.equal(report.warningCount, 0, JSON.stringify(report.warnings));
+});
+
+check('About / Help feedback mailto follows the Mirpworks application identity standard',()=>{
+  const href=feedbackMailtoHref(),url=new URL(href);assert.equal(url.protocol,'mailto:');assert.equal(url.pathname,MIRPWORKS_CONTACT_EMAIL);assert.equal(MIRPWORKS_CONTACT_EMAIL,'contact@mirpworks.com');
+  assert.equal(APPLICATION_NAME,'Why Is There a Hole in the Middle of Town?');
+  assert.equal(url.searchParams.get('subject'),`${APPLICATION_NAME} — Feedback`);
+  assert.equal(url.searchParams.get('body'),`Sent from: ${APPLICATION_NAME}\n\n[Your message here]`);
+  assert.match(href,/subject=Why%20Is%20There%20a%20Hole%20in%20the%20Middle%20of%20Town%3F%20%E2%80%94%20Feedback/);
+  assert.match(href,/body=Sent%20from%3A%20Why%20Is%20There%20a%20Hole%20in%20the%20Middle%20of%20Town%3F%0A%0A%5BYour%20message%20here%5D/);
+  const appSource=readFileSync(resolve('js/app.js'),'utf8');assert.match(appSource,/Send feedback/);assert.match(appSource,/href="\$\{feedbackMailtoHref\(\)\}"/);assert.equal((appSource.match(/feedbackMailtoHref\(\)/g)||[]).length,1,'all feedback must use the shared link helper, with one app entry point');
+  const readme=readFileSync(resolve('README.md'),'utf8');assert.match(readme,/Mirpworks.*contact@mirpworks\.com/s);assert.match(readme,/Sent from: Why Is There a Hole in the Middle of Town\?/);
 });
 
 check('character renderer preserves gear, pack, stats, slot, and accessible controls',()=>{

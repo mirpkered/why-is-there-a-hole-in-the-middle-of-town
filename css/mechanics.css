@@ -406,6 +406,7 @@ body:has(.title-screen),body:has(.town-hub){background-color:#171918;background-
 .town-hub-heading .eyebrow{margin:0 0 .2rem;padding:0;border:0;border-radius:0;background:transparent;color:#f2cf78;letter-spacing:.14em;transform:none;box-shadow:none;text-shadow:0 2px 8px #000}
 .town-hub-heading .section-title{color:#fff1c6;text-shadow:0 2px 12px #000,0 1px 3px #000}
 .town-hub-flavor{width:fit-content;max-width:100%;justify-self:center;padding:.22rem .65rem;border-radius:4px;background:linear-gradient(90deg,transparent,#111613a8 14% 86%,transparent);color:#f0e9d8;text-shadow:0 1px 4px #000}
+.contact-link{display:inline-block;margin:.2rem 0 .8rem;color:#f2cf78;text-underline-offset:.18em}.contact-link:hover{color:#fff1c6}.contact-link:focus-visible{outline:3px solid var(--gold);outline-offset:3px;border-radius:3px}
 .town-bowser{display:grid;justify-items:center;gap:.05rem;width:fit-content;margin:.12rem auto -.12rem;text-align:center}
 .town-bowser-art{display:block;width:auto;height:clamp(78px,25vw,128px);max-width:min(54vw,160px);object-fit:contain;object-position:center bottom;filter:drop-shadow(0 5px 7px #0007)}
 .town-bowser figcaption{font-size:.66rem;letter-spacing:.13em;text-transform:uppercase;color:#e8d5a7;text-shadow:0 1px 5px #000}
