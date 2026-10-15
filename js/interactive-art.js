@@ -5,5 +5,6 @@ export const INTERACTIVE_OBJECT_ART=Object.freeze({
   'landmark:giant-stone-face':{id:'landmark:giant-stone-face',contentId:'giant-stone-face',kind:'landmark',ink:null,colored:null,fallback:'css'},
   ...Object.fromEntries(Object.keys(dungeonEvents).map(id=>['event:'+id,{id:'event:'+id,contentId:id,kind:'event',ink:null,colored:null,fallback:'css'}])),
   'event:apple-anomaly':{id:'event:apple-anomaly',contentId:'apple-anomaly',kind:'event',src:'assets/images/interactive-objects/apple-anomaly.png',fallback:'css'},
-  'event:vending-machine':{id:'event:vending-machine',contentId:'vending-machine',kind:'event',creator:'Mirpyems',src:'assets/images/interactive-objects/vending-machine.png',fallback:'css'}
+  'event:vending-machine':{id:'event:vending-machine',contentId:'vending-machine',kind:'event',creator:'Mirpyems',src:'assets/images/interactive-objects/vending-machine.png',fallback:'css'},
+  'event:comfortable-chair':{id:'event:comfortable-chair',contentId:'comfortable-chair',kind:'event',creator:'Mirpkered',src:'assets/images/interactive-objects/comfortable-chair.png',fallback:'css'}
 });
