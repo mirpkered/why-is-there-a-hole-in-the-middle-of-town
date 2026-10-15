@@ -439,6 +439,16 @@ check('Mirpkered comfortable chair and ottoman art replaces the existing event p
   const css=readFileSync(resolve('css/mechanics.css'),'utf8');assert.match(css,/\.scene-event-object--comfortable-chair\{[^}]*background:transparent/);assert.match(css,/\.scene-event-object--comfortable-chair:before\{display:none\}/,'generic CSS chair placeholder should not compete with the supplied drawing');
 });
 
+check('Mirpyems scary duck art is registered to The Duck event and source is preserved',()=>{
+  const art=INTERACTIVE_OBJECT_ART['event:the-duck'];assert.ok(art);assert.equal(art.contentId,'the-duck');assert.equal(art.creator,'Mirpyems');assert.equal(art.src,'assets/images/interactive-objects/the-duck.png');
+  assert.equal(resolveArtVariant(art,'ink').src,art.src);assert.equal(resolveArtVariant(art,'colored').src,art.src);
+  assert.ok(dungeonEvents['the-duck'],'the existing Duck event remains the content owner');
+  assert.ok(existsSync(resolve('assets/source/interactive-objects/the-duck-original.jpg')),'original drawing should remain preserved');
+  const {width,height}=inspectTransparentPng(art.src,{maxMargin:32});assert.ok(width>=750&&width<=800&&height>=500&&height<=570,'runtime art keeps the duck and feet in a compact transparent crop');
+  const appSource=readFileSync(resolve('js/app.js'),'utf8');assert.match(appSource,/interactiveArtMarkup\(event\.id,event\.title\)/,'event scene should render its registered duck art');
+  const css=readFileSync(resolve('css/mechanics.css'),'utf8');assert.match(css,/\.scene-event-object--the-duck\{[^}]*background:transparent/);assert.match(css,/\.scene-event-object--the-duck:before\{display:none\}/,'generic CSS object should not compete with the supplied duck drawing');
+});
+
 check('hand-drawn empty box is registered as a paired storage-room prop',()=>{
   const box=props['empty-box'];assert.ok(box);assert.ok(box.rooms.includes('storage'));assert.ok(roomTypes.storage.visual.propPool.includes('empty-box'));assert.equal(box.placeholder,'box');
   for(const [style,path] of [['ink',box.ink],['colored',box.colored]]){assert.ok(path);const png=readFileSync(resolve(path));assert.equal(png.toString('hex',0,8),'89504e470d0a1a0a');assert.equal(png[25],6,`${style} box must preserve PNG alpha`);assert.ok(png.readUInt32BE(16)<=1400&&png.readUInt32BE(20)<=1100,'empty box art dimensions remain suitable for runtime use')}
