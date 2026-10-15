@@ -419,6 +419,16 @@ check('Mirpkered apple-core drawing is registered to the Apple Anomaly event pre
   const appSource=readFileSync(resolve('js/app.js'),'utf8');assert.match(appSource,/interactiveArtMarkup\(event\.id,event\.title\)/,'event backdrop should render registered event art');
 });
 
+check('Mirpyems vending-machine drawing is registered to its room event with original preserved',()=>{
+  const art=INTERACTIVE_OBJECT_ART['event:vending-machine'];assert.ok(art);assert.equal(art.contentId,'vending-machine');assert.equal(art.creator,'Mirpyems');assert.equal(art.src,'assets/images/interactive-objects/vending-machine.png');
+  assert.equal(resolveArtVariant(art,'ink').src,art.src);assert.equal(resolveArtVariant(art,'colored').src,art.src);
+  assert.ok(dungeonEvents['vending-machine'],'the existing vending-machine event remains the content owner');
+  assert.ok(existsSync(resolve('assets/source/interactive-objects/vending-machine-original.jpg')),'original drawing should remain preserved');
+  const {width,height}=inspectTransparentPng(art.src,{maxMargin:96});assert.ok(width>=950&&width<=1050&&height>1500&&height<1700,'runtime art keeps the full machine while using a mobile-sized transparent derivative');
+  const appSource=readFileSync(resolve('js/app.js'),'utf8');assert.match(appSource,/interactiveArtMarkup\(event\.id,event\.title\)/,'event scene should render its registered vending-machine art');
+  const css=readFileSync(resolve('css/mechanics.css'),'utf8');assert.match(css,/\.scene-event-object--vending-machine\{[^}]*background:transparent/);assert.match(css,/\.scene-event-object--vending-machine:before\{display:none\}/,'the generic CSS machine drawing should not compete with the supplied art');
+});
+
 check('hand-drawn empty box is registered as a paired storage-room prop',()=>{
   const box=props['empty-box'];assert.ok(box);assert.ok(box.rooms.includes('storage'));assert.ok(roomTypes.storage.visual.propPool.includes('empty-box'));assert.equal(box.placeholder,'box');
   for(const [style,path] of [['ink',box.ink],['colored',box.colored]]){assert.ok(path);const png=readFileSync(resolve(path));assert.equal(png.toString('hex',0,8),'89504e470d0a1a0a');assert.equal(png[25],6,`${style} box must preserve PNG alpha`);assert.ok(png.readUInt32BE(16)<=1400&&png.readUInt32BE(20)<=1100,'empty box art dimensions remain suitable for runtime use')}
