@@ -98,7 +98,7 @@
 .scene-event-object--comfortable-chair{top:63%;width:26%;height:67%;border:0;border-radius:0;background:transparent;box-shadow:none}
 .scene-event-object--comfortable-chair:before{display:none}
 .scene-event-object--comfortable-chair>.interactive-art-slot .interactive-object-art{width:100%;height:100%;object-position:center bottom}
-.scene-event-object--the-duck{top:55%;width:48%;height:44%;border:0;border-radius:0;background:transparent;box-shadow:none}
+.scene-event-object--the-duck{top:58%;width:48%;height:54%;border:0;border-radius:0;background:transparent;box-shadow:none}
 .scene-event-object--the-duck:before{display:none}
 .scene-event-object--the-duck>.interactive-art-slot .interactive-object-art{width:100%;height:100%;object-fit:contain;object-position:center bottom}
 .scene-event-object:before{content:"";position:absolute;left:16%;right:16%;top:15%;height:31%;border:2px solid #31443b;background:linear-gradient(#d5dfba,#879a7d)}

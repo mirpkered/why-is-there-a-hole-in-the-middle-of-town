@@ -439,12 +439,13 @@ check('Mirpkered comfortable chair and ottoman art replaces the existing event p
   const css=readFileSync(resolve('css/mechanics.css'),'utf8');assert.match(css,/\.scene-event-object--comfortable-chair\{[^}]*background:transparent/);assert.match(css,/\.scene-event-object--comfortable-chair:before\{display:none\}/,'generic CSS chair placeholder should not compete with the supplied drawing');
 });
 
-check('Mirpyems scary duck art is registered to The Duck event and source is preserved',()=>{
-  const art=INTERACTIVE_OBJECT_ART['event:the-duck'];assert.ok(art);assert.equal(art.contentId,'the-duck');assert.equal(art.creator,'Mirpyems');assert.equal(art.src,'assets/images/interactive-objects/the-duck.png');
+check('Mirpyems winged duck v2 replaces The Duck art while both originals are preserved',()=>{
+  const art=INTERACTIVE_OBJECT_ART['event:the-duck'];assert.ok(art);assert.equal(art.contentId,'the-duck');assert.equal(art.creator,'Mirpyems');assert.equal(art.version,2);assert.equal(art.src,'assets/images/interactive-objects/the-duck-v2.png');
   assert.equal(resolveArtVariant(art,'ink').src,art.src);assert.equal(resolveArtVariant(art,'colored').src,art.src);
   assert.ok(dungeonEvents['the-duck'],'the existing Duck event remains the content owner');
-  assert.ok(existsSync(resolve('assets/source/interactive-objects/the-duck-original.jpg')),'original drawing should remain preserved');
-  const {width,height}=inspectTransparentPng(art.src,{maxMargin:32});assert.ok(width>=750&&width<=800&&height>=500&&height<=570,'runtime art keeps the duck and feet in a compact transparent crop');
+  assert.ok(existsSync(resolve('assets/source/interactive-objects/the-duck-original.jpg')),'duck v1 original drawing should remain archived');
+  assert.ok(existsSync(resolve('assets/source/interactive-objects/the-duck-v2-original.jpg')),'duck v2 original drawing should remain preserved');
+  const {width,height}=inspectTransparentPng(art.src,{maxMargin:32});assert.ok(width>=830&&width<=870&&height>=670&&height<=715,'runtime art keeps the winged duck and feet in a compact transparent crop');
   const appSource=readFileSync(resolve('js/app.js'),'utf8');assert.match(appSource,/interactiveArtMarkup\(event\.id,event\.title\)/,'event scene should render its registered duck art');
   const css=readFileSync(resolve('css/mechanics.css'),'utf8');assert.match(css,/\.scene-event-object--the-duck\{[^}]*background:transparent/);assert.match(css,/\.scene-event-object--the-duck:before\{display:none\}/,'generic CSS object should not compete with the supplied duck drawing');
 });
