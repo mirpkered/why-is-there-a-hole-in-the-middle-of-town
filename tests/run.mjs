@@ -15,7 +15,7 @@ const { SAVE_KEY, SAVE_BACKUP_KEY, SAVE_RECOVERY_KEY, SAVE_VERSION, freshState, 
 const { items, monsters, lootTables, floorEncounterTable, innEvents, shopStock, roomTypes, roomDepthPresentation, dungeonEvents, townNpcs, dungeonNpcs, quests } = await import('../js/data.js?preflight');
 const { makeMarketCycle, currentSellValue, simulateMarkets, simulateInnEvents } = await import('../js/town-economy.js?preflight');
 const { generateAbsurdName, inspectNameGenerator, MAX_NAME_LENGTH } = await import('../js/name-generator.js?preflight');
-const { roomProps: props, createRoomDecoration, roomPropMarkup } = await import('../js/room-visuals.js?preflight');
+const { roomProps: props, ROOM_PROP_ZONES, createRoomDecoration, roomPropMarkup } = await import('../js/room-visuals.js?preflight');
 const { TOWN_ART_ASSETS } = await import('../js/town-art.js?preflight');
 const {resolveArtVariant,validateArtEntries}=await import('../js/art-assets.js?preflight');
 const {ROOM_BACKGROUND_REGISTRY,BATTLE_BACKGROUND_REGISTRY,backgroundForRoom,backgroundLayerMarkup,sceneImagePresentation,selectBackgroundVariant,validateBackgroundRegistry,validateDungeonSetRegistry}=await import('../js/scene-backgrounds.js?preflight');
@@ -45,7 +45,7 @@ function check(name, fn) { fn(); checks++; console.log(`✓ ${name}`); }
 
 check('all runtime JavaScript modules pass Node syntax validation',()=>{
   const sources=dir=>readdirSync(dir,{withFileTypes:true}).flatMap(entry=>entry.isDirectory()?sources(resolve(dir,entry.name)):[resolve(dir,entry.name)]);
-  for(const file of [...sources(resolve('js')).filter(path=>path.endsWith('.js')),...['tools/art-report.mjs','tools/audio-report.mjs','tools/process-mascot-cutout.mjs'].map(path=>resolve(path))]){const result=spawnSync(process.execPath,['--check',file],{encoding:'utf8'});assert.equal(result.status,0,`${file}: ${result.stderr||result.stdout}`)}
+  for(const file of [...sources(resolve('js')).filter(path=>path.endsWith('.js')),...['tools/art-report.mjs','tools/audio-report.mjs','tools/process-mascot-cutout.mjs','tools/extract-pencil-object.mjs'].map(path=>resolve(path))]){const result=spawnSync(process.execPath,['--check',file],{encoding:'utf8'});assert.equal(result.status,0,`${file}: ${result.stderr||result.stdout}`)}
 });
 
 function inspectTransparentPng(path,{maxMargin=12}={}) {
@@ -244,9 +244,9 @@ check('room props preserve opening clearance, floor perspective, and calibrated 
           assert.equal(topology.right&&prop.zone==='mid-right',false,`${topology.id} blocks right approach with ${prop.id}`);
         }
         assert.ok(Number.isFinite(prop.x)&&Number.isFinite(prop.y)&&prop.x>=0&&prop.x<=100&&prop.y>=0&&prop.y<=100);
-        assert.ok(prop.perspectiveScale>0&&prop.depth>=1&&['floor','wall'].includes(prop.anchor));
+        assert.ok(prop.perspectiveScale>0&&prop.depth>=1&&['floor','wall','center'].includes(prop.anchor));
         if(prop.anchor==='floor')assert.ok(prop.y>=73,`${prop.id} floor anchor is above the visible ground plane`);
-        assert.ok(prop.depthScale===.58||prop.depthScale===.76||prop.depthScale===.98,`${prop.id} has calibrated depth scaling`);
+        assert.ok(prop.depthScale===.58||prop.depthScale===.76||prop.depthScale===.82||prop.depthScale===.98,`${prop.id} has calibrated depth scaling`);
       }
     }
   }
@@ -256,6 +256,17 @@ check('room props preserve opening clearance, floor perspective, and calibrated 
   if(floorProp)assert.match(roomPropMarkup({props:[floorProp]}),/translate\(-50%,-100%\)/,'floor objects are bottom anchored');
   const rearShelf={...props.bookshelf,zone:'wall-center',x:50,y:74,width:15,height:29,anchor:'floor',scale:.8,perspectiveScale:.46,depth:1,flip:false};
   assert.match(roomPropMarkup({props:[rearShelf]}),/translate\(-50%,-100%\)/,'wall furniture uses a floor-contact anchor at the wall/floor seam');
+});
+
+check('Mirpyems floating debris uses extracted transparent objects with seeded rotation and scale',()=>{
+  const ids=['water-debris','floating-plank','floating-board','floating-pebble'],room=roomTypes['flooded-chamber'],map={width:11,height:11,walls:[[0,0]],upStairs:[1,1],downStairs:[9,9]};
+  assert.ok(existsSync(resolve('assets/source/room-props/floating-debris-sheet-original.jpg')),'the full original drawing remains preserved');
+  for(const id of ids){const prop=props[id],sourceId=id==='water-debris'?'floating-stone':id;assert.ok(prop);assert.equal(prop.creator,'Mirpyems');assert.ok(room.visual.propPool.includes(id));assert.ok(prop.rooms.includes('flooded-chamber'));assert.equal(prop.floating,true);assert.deepEqual(prop.rotationRange,[0,360]);assert.ok(existsSync(resolve(prop.src)));assert.ok(inspectTransparentPng(resolve(prop.src)));assert.ok(existsSync(resolve(`assets/source/room-props/${sourceId}-original-crop.jpg`)))}
+  for(const zone of ['water-left','water-center','water-right'])assert.ok(ROOM_PROP_ZONES.includes(zone));
+  const decorations=Array.from({length:80},(_,variation)=>createRoomDecoration(room,map,1,5,5,variation)),again=createRoomDecoration(room,map,1,5,5,17);
+  assert.deepEqual(again,decorations[17],'debris selection, position, size, and orientation are deterministic per room');
+  const floating=decorations.flatMap(decoration=>decoration.props.filter(prop=>prop.floating));assert.ok(floating.length>0);assert.ok(floating.every(prop=>prop.anchor==='center'&&prop.zone.startsWith('water-')&&prop.rotation>=0&&prop.rotation<=360&&prop.scale>0));assert.ok(new Set(floating.map(prop=>prop.rotation)).size>1,'debris receives varied orientations');
+  assert.match(roomPropMarkup({props:[floating.find(prop=>prop.id==='floating-plank')||floating[0]]}),/rotate\([\d.]+deg\)/);assert.match(roomPropMarkup({props:[floating[0]]}),/data-prop-rotation=/,'QA markup exposes debris rotation');
 });
 
 check('shared art resolver handles Colored, Ink, alternate style and fallback',()=>{
