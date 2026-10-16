@@ -486,6 +486,13 @@ check('Mirpyems treasure chest replaces the existing Suspicious Chest event illu
   const css=readFileSync(resolve('css/mechanics.css'),'utf8');assert.match(css,/\.scene-event-object--suspicious-chest\{[^}]*background:transparent/);assert.match(css,/\.scene-event-object--suspicious-chest:before\{display:none\}/,'generic CSS chest should not compete with the supplied drawing');
 });
 
+check('Mirpyems filing cabinet drawing replaces the Municipal Records Room placeholder',()=>{
+  const cabinet=props['filing-cabinet'];assert.ok(cabinet);assert.ok(cabinet.rooms.includes('records'));assert.ok(roomTypes.records.visual.propPool.includes('filing-cabinet'));assert.equal(cabinet.creator,'Mirpyems');assert.equal(cabinet.src,'assets/images/room-props/filing-cabinet.png');
+  assert.ok(existsSync(resolve('assets/source/room-props/filing-cabinet-original.jpg')),'original scan should remain preserved');
+  const png=readFileSync(resolve(cabinet.src));assert.equal(png.toString('hex',0,8),'89504e470d0a1a0a');assert.equal(png[25],6,'runtime art is RGBA PNG');const width=png.readUInt32BE(16),height=png.readUInt32BE(20);assert.ok(width>=430&&width<=470&&height>=1020&&height<=1080,'runtime crop retains all three drawers');
+  const sample={...cabinet,flip:false,zone:'wall-center',scale:1,depth:1};assert.match(roomPropMarkup({props:[sample]},'ink'),/filing-cabinet\.png/);assert.match(roomPropMarkup({props:[sample]},'colored'),/filing-cabinet\.png/,'single-source drawing is style independent');
+});
+
 check('hand-drawn empty box is registered as a paired storage-room prop',()=>{
   const box=props['empty-box'];assert.ok(box);assert.ok(box.rooms.includes('storage'));assert.ok(roomTypes.storage.visual.propPool.includes('empty-box'));assert.equal(box.placeholder,'box');
   for(const [style,path] of [['ink',box.ink],['colored',box.colored]]){assert.ok(path);const png=readFileSync(resolve(path));assert.equal(png.toString('hex',0,8),'89504e470d0a1a0a');assert.equal(png[25],6,`${style} box must preserve PNG alpha`);assert.ok(png.readUInt32BE(16)<=1400&&png.readUInt32BE(20)<=1100,'empty box art dimensions remain suitable for runtime use')}
