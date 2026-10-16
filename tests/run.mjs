@@ -507,6 +507,13 @@ check('Mirpyems literal labeled stone replaces the existing Library stone placeh
   const sample={...stone,flip:false,zone:'wall-center',scale:1,depth:1};assert.match(roomPropMarkup({props:[sample]},'ink'),/labeled-stone\.png/);assert.match(roomPropMarkup({props:[sample]},'colored'),/labeled-stone\.png/,'single-source drawing is style independent');
 });
 
+check('Mirpyems sleeping bag replaces the existing abandoned-camp bedroll prop art',()=>{
+  const bag=props['bedroll'];assert.ok(bag);assert.ok(bag.rooms.includes('camp'));assert.ok(roomTypes.camp.visual.propPool.includes('bedroll'));assert.equal(bag.creator,'Mirpyems');assert.equal(bag.src,'assets/images/room-props/bedroll.png');
+  assert.ok(existsSync(resolve('assets/source/room-props/bedroll-original.jpg')),'original scan should remain preserved');
+  const png=readFileSync(resolve(bag.src));assert.equal(png.toString('hex',0,8),'89504e470d0a1a0a');assert.equal(png[25],6,'runtime art is RGBA PNG');const width=png.readUInt32BE(16),height=png.readUInt32BE(20);assert.ok(width>=550&&width<=590&&height>=830&&height<=870,'runtime crop keeps the sleeping bag drawing');
+  const sample={...bag,flip:false,zone:'far-left',scale:1,depth:1};assert.match(roomPropMarkup({props:[sample]},'ink'),/bedroll\.png/);assert.match(roomPropMarkup({props:[sample]},'colored'),/bedroll\.png/,'single-source drawing is style independent');
+});
+
 check('hand-drawn empty box is registered as a paired storage-room prop',()=>{
   const box=props['empty-box'];assert.ok(box);assert.ok(box.rooms.includes('storage'));assert.ok(roomTypes.storage.visual.propPool.includes('empty-box'));assert.equal(box.placeholder,'box');
   for(const [style,path] of [['ink',box.ink],['colored',box.colored]]){assert.ok(path);const png=readFileSync(resolve(path));assert.equal(png.toString('hex',0,8),'89504e470d0a1a0a');assert.equal(png[25],6,`${style} box must preserve PNG alpha`);assert.ok(png.readUInt32BE(16)<=1400&&png.readUInt32BE(20)<=1100,'empty box art dimensions remain suitable for runtime use')}
