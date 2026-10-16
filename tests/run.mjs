@@ -477,6 +477,15 @@ check('Mirpyems statue-and-sign drawing is registered to the existing Talking St
   const css=readFileSync(resolve('css/mechanics.css'),'utf8');assert.match(css,/\.scene-event-object--talking-statue\{[^}]*background:transparent/);assert.match(css,/\.scene-event-object--talking-statue:before\{display:none\}/,'generic CSS statue should not compete with the supplied drawing');assert.match(css,/\.scene-event-object--talking-statue:after\{display:none\}/,'extra label should not cover the thought bubble artwork');
 });
 
+check('Mirpyems treasure chest replaces the existing Suspicious Chest event illustration',()=>{
+  const art=INTERACTIVE_OBJECT_ART['event:suspicious-chest'];assert.ok(art);assert.equal(art.contentId,'suspicious-chest');assert.equal(art.creator,'Mirpyems');assert.equal(art.src,'assets/images/interactive-objects/suspicious-chest.png');
+  assert.ok(dungeonEvents['suspicious-chest'],'the existing suspicious-chest event remains the content owner');assert.equal(dungeonEvents['suspicious-chest'].choices.length,3,'existing chest choices remain unchanged');
+  assert.ok(existsSync(resolve('assets/source/interactive-objects/suspicious-chest-original.jpg')),'original drawing should remain preserved');
+  const png=readFileSync(resolve(art.src));assert.equal(png.toString('hex',0,8),'89504e470d0a1a0a');assert.equal(png[25],6,'runtime art is RGBA PNG');const width=png.readUInt32BE(16),height=png.readUInt32BE(20);assert.ok(width>=970&&width<=1030&&height>=750&&height<=810,'runtime crop keeps the complete chest and warning');
+  const appSource=readFileSync(resolve('js/app.js'),'utf8');assert.match(appSource,/interactiveArtMarkup\(event\.id,event\.title\)/,'event scene renders registered chest art');
+  const css=readFileSync(resolve('css/mechanics.css'),'utf8');assert.match(css,/\.scene-event-object--suspicious-chest\{[^}]*background:transparent/);assert.match(css,/\.scene-event-object--suspicious-chest:before\{display:none\}/,'generic CSS chest should not compete with the supplied drawing');
+});
+
 check('hand-drawn empty box is registered as a paired storage-room prop',()=>{
   const box=props['empty-box'];assert.ok(box);assert.ok(box.rooms.includes('storage'));assert.ok(roomTypes.storage.visual.propPool.includes('empty-box'));assert.equal(box.placeholder,'box');
   for(const [style,path] of [['ink',box.ink],['colored',box.colored]]){assert.ok(path);const png=readFileSync(resolve(path));assert.equal(png.toString('hex',0,8),'89504e470d0a1a0a');assert.equal(png[25],6,`${style} box must preserve PNG alpha`);assert.ok(png.readUInt32BE(16)<=1400&&png.readUInt32BE(20)<=1100,'empty box art dimensions remain suitable for runtime use')}
