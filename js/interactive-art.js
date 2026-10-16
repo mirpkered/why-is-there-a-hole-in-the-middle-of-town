@@ -7,5 +7,6 @@ export const INTERACTIVE_OBJECT_ART=Object.freeze({
   'event:apple-anomaly':{id:'event:apple-anomaly',contentId:'apple-anomaly',kind:'event',src:'assets/images/interactive-objects/apple-anomaly.png',fallback:'css'},
   'event:vending-machine':{id:'event:vending-machine',contentId:'vending-machine',kind:'event',creator:'Mirpyems',src:'assets/images/interactive-objects/vending-machine.png',fallback:'css'},
   'event:comfortable-chair':{id:'event:comfortable-chair',contentId:'comfortable-chair',kind:'event',creator:'Mirpkered',src:'assets/images/interactive-objects/comfortable-chair.png',fallback:'css'},
-  'event:the-duck':{id:'event:the-duck',contentId:'the-duck',kind:'event',creator:'Mirpyems',version:2,src:'assets/images/interactive-objects/the-duck-v2.png',fallback:'css'}
+  'event:the-duck':{id:'event:the-duck',contentId:'the-duck',kind:'event',creator:'Mirpyems',version:2,src:'assets/images/interactive-objects/the-duck-v2.png',fallback:'css'},
+  'event:wishing-well':{id:'event:wishing-well',contentId:'wishing-well',kind:'event',creator:'Mirpyems',src:'assets/images/interactive-objects/wishing-well.png',fallback:'css'}
 });
