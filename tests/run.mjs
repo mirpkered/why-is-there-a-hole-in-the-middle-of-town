@@ -468,6 +468,15 @@ check('Mirpyems snack table is registered to the existing Underground Snack Stan
   const css=readFileSync(resolve('css/mechanics.css'),'utf8');assert.match(css,/\.scene-event-object--snack-stand\{[^}]*background:transparent/);assert.match(css,/\.scene-event-object--snack-stand:before\{display:none\}/,'generic CSS stand should not compete with the supplied drawing');
 });
 
+check('Mirpyems statue-and-sign drawing is registered to the existing Talking Statue event',()=>{
+  const art=INTERACTIVE_OBJECT_ART['event:talking-statue'];assert.ok(art);assert.equal(art.contentId,'talking-statue');assert.equal(art.creator,'Mirpyems');assert.equal(art.src,'assets/images/interactive-objects/talking-statue.png');
+  assert.ok(dungeonEvents['talking-statue'],'the existing talking-statue event remains the content owner');
+  assert.ok(existsSync(resolve('assets/source/interactive-objects/talking-statue-original.jpg')),'original drawing should remain preserved');
+  const png=readFileSync(resolve(art.src));assert.equal(png.toString('hex',0,8),'89504e470d0a1a0a');assert.equal(png[25],6,'runtime art is RGBA PNG');const width=png.readUInt32BE(16),height=png.readUInt32BE(20);assert.ok(width>=890&&width<=950&&height>=1030&&height<=1100,'runtime crop retains the whole statue, sign, and thought bubble');
+  const appSource=readFileSync(resolve('js/app.js'),'utf8');assert.match(appSource,/interactiveArtMarkup\(event\.id,event\.title\)/,'the existing event scene renders registered statue art');
+  const css=readFileSync(resolve('css/mechanics.css'),'utf8');assert.match(css,/\.scene-event-object--talking-statue\{[^}]*background:transparent/);assert.match(css,/\.scene-event-object--talking-statue:before\{display:none\}/,'generic CSS statue should not compete with the supplied drawing');assert.match(css,/\.scene-event-object--talking-statue:after\{display:none\}/,'extra label should not cover the thought bubble artwork');
+});
+
 check('hand-drawn empty box is registered as a paired storage-room prop',()=>{
   const box=props['empty-box'];assert.ok(box);assert.ok(box.rooms.includes('storage'));assert.ok(roomTypes.storage.visual.propPool.includes('empty-box'));assert.equal(box.placeholder,'box');
   for(const [style,path] of [['ink',box.ink],['colored',box.colored]]){assert.ok(path);const png=readFileSync(resolve(path));assert.equal(png.toString('hex',0,8),'89504e470d0a1a0a');assert.equal(png[25],6,`${style} box must preserve PNG alpha`);assert.ok(png.readUInt32BE(16)<=1400&&png.readUInt32BE(20)<=1100,'empty box art dimensions remain suitable for runtime use')}
