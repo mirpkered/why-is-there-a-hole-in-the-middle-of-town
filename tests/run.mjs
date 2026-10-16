@@ -459,6 +459,15 @@ check('Mirpyems wishing-well drawing is registered to the existing event with so
   const css=readFileSync(resolve('css/mechanics.css'),'utf8');assert.match(css,/\.scene-event-object--wishing-well\{[^}]*background:transparent/);assert.match(css,/\.scene-event-object--wishing-well:before\{display:none\}/,'generic CSS object should not compete with the supplied well drawing');
 });
 
+check('Mirpyems snack table is registered to the existing Underground Snack Stand event',()=>{
+  const art=INTERACTIVE_OBJECT_ART['event:snack-stand'];assert.ok(art);assert.equal(art.contentId,'snack-stand');assert.equal(art.creator,'Mirpyems');assert.equal(art.src,'assets/images/interactive-objects/snack-table.png');
+  assert.ok(dungeonEvents['snack-stand'],'the existing snack-stand event remains the content owner');
+  assert.ok(existsSync(resolve('assets/source/interactive-objects/snack-table-original.jpg')),'original drawing should remain preserved');
+  const png=readFileSync(resolve(art.src));assert.equal(png.toString('hex',0,8),'89504e470d0a1a0a');assert.equal(png[25],6,'runtime art is RGBA PNG');const width=png.readUInt32BE(16),height=png.readUInt32BE(20);assert.ok(width>=1070&&width<=1130&&height>=690&&height<=740,'runtime crop retains the complete table and legs');
+  const appSource=readFileSync(resolve('js/app.js'),'utf8');assert.match(appSource,/interactiveArtMarkup\(event\.id,event\.title\)/,'the existing event scene renders registered snack-table art');
+  const css=readFileSync(resolve('css/mechanics.css'),'utf8');assert.match(css,/\.scene-event-object--snack-stand\{[^}]*background:transparent/);assert.match(css,/\.scene-event-object--snack-stand:before\{display:none\}/,'generic CSS stand should not compete with the supplied drawing');
+});
+
 check('hand-drawn empty box is registered as a paired storage-room prop',()=>{
   const box=props['empty-box'];assert.ok(box);assert.ok(box.rooms.includes('storage'));assert.ok(roomTypes.storage.visual.propPool.includes('empty-box'));assert.equal(box.placeholder,'box');
   for(const [style,path] of [['ink',box.ink],['colored',box.colored]]){assert.ok(path);const png=readFileSync(resolve(path));assert.equal(png.toString('hex',0,8),'89504e470d0a1a0a');assert.equal(png[25],6,`${style} box must preserve PNG alpha`);assert.ok(png.readUInt32BE(16)<=1400&&png.readUInt32BE(20)<=1100,'empty box art dimensions remain suitable for runtime use')}
