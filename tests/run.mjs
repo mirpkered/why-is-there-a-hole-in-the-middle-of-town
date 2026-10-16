@@ -493,6 +493,13 @@ check('Mirpyems filing cabinet drawing replaces the Municipal Records Room place
   const sample={...cabinet,flip:false,zone:'wall-center',scale:1,depth:1};assert.match(roomPropMarkup({props:[sample]},'ink'),/filing-cabinet\.png/);assert.match(roomPropMarkup({props:[sample]},'colored'),/filing-cabinet\.png/,'single-source drawing is style independent');
 });
 
+check('Mirpyems labeled-box drawing replaces its existing storage-room prop art',()=>{
+  const box=props['labeled-box'];assert.ok(box);assert.ok(box.rooms.includes('storage'));assert.ok(roomTypes.storage.visual.propPool.includes('labeled-box'));assert.equal(box.creator,'Mirpyems');assert.equal(box.src,'assets/images/room-props/labeled-box.png');
+  assert.ok(existsSync(resolve('assets/source/room-props/labeled-box-original.jpg')),'original scan should remain preserved');
+  const png=readFileSync(resolve(box.src));assert.equal(png.toString('hex',0,8),'89504e470d0a1a0a');assert.equal(png[25],6,'runtime art is RGBA PNG');const width=png.readUInt32BE(16),height=png.readUInt32BE(20);assert.ok(width>=960&&width<=1040&&height>=730&&height<=820,'runtime crop keeps the full box and handwritten label');
+  const sample={...box,flip:false,zone:'mid-left',scale:1,depth:2};assert.match(roomPropMarkup({props:[sample]},'ink'),/labeled-box\.png/);assert.match(roomPropMarkup({props:[sample]},'colored'),/labeled-box\.png/,'single-source drawing is style independent');
+});
+
 check('hand-drawn empty box is registered as a paired storage-room prop',()=>{
   const box=props['empty-box'];assert.ok(box);assert.ok(box.rooms.includes('storage'));assert.ok(roomTypes.storage.visual.propPool.includes('empty-box'));assert.equal(box.placeholder,'box');
   for(const [style,path] of [['ink',box.ink],['colored',box.colored]]){assert.ok(path);const png=readFileSync(resolve(path));assert.equal(png.toString('hex',0,8),'89504e470d0a1a0a');assert.equal(png[25],6,`${style} box must preserve PNG alpha`);assert.ok(png.readUInt32BE(16)<=1400&&png.readUInt32BE(20)<=1100,'empty box art dimensions remain suitable for runtime use')}
