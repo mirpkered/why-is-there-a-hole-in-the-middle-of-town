@@ -514,6 +514,13 @@ check('Mirpyems sleeping bag replaces the existing abandoned-camp bedroll prop a
   const sample={...bag,flip:false,zone:'far-left',scale:1,depth:1};assert.match(roomPropMarkup({props:[sample]},'ink'),/bedroll\.png/);assert.match(roomPropMarkup({props:[sample]},'colored'),/bedroll\.png/,'single-source drawing is style independent');
 });
 
+check('Mirpyems extinguished-fire-and-kettle drawing replaces the existing camp prop art',()=>{
+  const kettle=props['campfire-kettle'];assert.ok(kettle);assert.ok(kettle.rooms.includes('camp'));assert.ok(roomTypes.camp.visual.propPool.includes('campfire-kettle'));assert.equal(kettle.creator,'Mirpyems');assert.equal(kettle.src,'assets/images/room-props/campfire-kettle.png');
+  assert.ok(existsSync(resolve('assets/source/room-props/campfire-kettle-original.jpg')),'original scan should remain preserved');
+  const png=readFileSync(resolve(kettle.src));assert.equal(png.toString('hex',0,8),'89504e470d0a1a0a');assert.equal(png[25],6,'runtime art is RGBA PNG');const width=png.readUInt32BE(16),height=png.readUInt32BE(20);assert.ok(width>=760&&width<=800&&height>=830&&height<=870,'runtime crop retains the complete kettle and extinguished fire');
+  const sample={...kettle,flip:false,zone:'floor-center',scale:1,depth:1};assert.match(roomPropMarkup({props:[sample]},'ink'),/campfire-kettle\.png/);assert.match(roomPropMarkup({props:[sample]},'colored'),/campfire-kettle\.png/,'single-source drawing is style independent');
+});
+
 check('hand-drawn empty box is registered as a paired storage-room prop',()=>{
   const box=props['empty-box'];assert.ok(box);assert.ok(box.rooms.includes('storage'));assert.ok(roomTypes.storage.visual.propPool.includes('empty-box'));assert.equal(box.placeholder,'box');
   for(const [style,path] of [['ink',box.ink],['colored',box.colored]]){assert.ok(path);const png=readFileSync(resolve(path));assert.equal(png.toString('hex',0,8),'89504e470d0a1a0a');assert.equal(png[25],6,`${style} box must preserve PNG alpha`);assert.ok(png.readUInt32BE(16)<=1400&&png.readUInt32BE(20)<=1100,'empty box art dimensions remain suitable for runtime use')}
