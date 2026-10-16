@@ -2,7 +2,7 @@ import {loadState,loadStateDetailed,SAVE_KEY,SAVE_VERSION,freshState,EQUIPMENT_S
 import {state,setState,startGame,STARTING_CLASSES,STARTING_STAT_RANGES,rollStartingStats,deriveStartingResources,acceptQuest,questDepthEligible,enterDungeon,move,attack,defend,useTonic,useItem,useAbility,availableAbilities,collectFind,collectGroundLoot,persist,resolveDungeonEvent,triggerEvent,triggerRandomEvent,revealLandmark,qaSetTemporaryEffect,qaResetEventState,qaSetRoom,temporaryEffect,currentThreatAssessment,unlockAchievement,bumpCareer,buyPrice,equippedEffect,qaAttackPoolReport} from './game.js?v=pip-underledger-art-20261007a';
 import {equipItem,canEquipItem,unequipSlot,buyItem,sellItem,salePrice,compareEquipment,descend,ascend,retreat,retreatChancePercent,returnPlan,attemptReturn,storeStock,canTrade,completeTrade,buyNpcStock,closeNpc,talkNpc,qaGiveItem,qaRemoveItem,qaGiveGold,qaSpawnMonster,qaSpawnNpc,qaAdvanceFloor,qaSetFloor,qaSetStat,qaClearInventory,qaTeleport,qaTeleportEdge,qaRegenerateFloor,qaRevealFloor,qaFloorValidation,qaForceAttack,qaSetResources,qaRevealNearby,qaRevealReturnRoute,qaSetClass,qaSetLevel,qaStartQuest,qaResetCareer,qaUnlockAchievement,qaEconomySimulation,inventoryUsed,inventoryCapacity,countItem,canRemoveItem,questReservedQuantity,questStatus,turnInQuest,qaEnemyScalingMatrix,marketDemand,marketState,restAtInn,innEffectSummary,qaForceInnEvent,qaClearInnEffects,qaSetWellRestedBattles,qaRestockMarket,qaSetMarketDemand,qaMarketSimulation,qaInnSimulation} from './game.js?v=pip-underledger-art-20261007a';
 import {quests,items,monsters,enemyVariants,dungeonNpcs,trades,shopStock,townNpcs,dungeonEvents,roomTypes,roomDepthPresentation,monsterForId,innEvents} from './data.js?v=skeleton-break-art-20261008a';
-import {createRoomDecoration,roomPropMarkup} from './room-visuals.js?v=mirpyems-labeled-box-20261016a';
+import {createRoomDecoration,roomPropMarkup} from './room-visuals.js?v=mirpyems-labeled-stone-20261016a';
 import {syncMusicContext,updateMusicPreferences,playBattleTheme,playDungeonPool,playLocationTrack,stopMusic,currentMusicTrack,musicPlaybackDiagnostics,prepareBattleAudio} from './audio.js?v=statistics-music-20261005a';
 import {classAbilities,achievements,depthBands,QA_PREVIEW_MAX_FLOOR,CURRENT_PLAYABLE_MAX_FLOOR} from './progression.js?v=floor4-release-prep-20261006a';
 import {validateContent} from './content-validation.js?v=floor4-release-prep-20261006a';
@@ -13,7 +13,7 @@ import {resolveArtVariant} from './art-assets.js?v=floor4-release-prep-20261006a
 import {backgroundForRoom,backgroundLayerMarkup,activeDungeonSet,setDungeonSetPreviewOverride,preloadDungeonSet,dungeonBackgroundAssetStatus} from './scene-backgrounds.js?v=combat-background-continuity-20261007a';
 import {DUNGEON_SETS,DUNGEON_SET_IDS,DUNGEON_TOPOLOGIES,openingsForFacing} from './dungeon-themes.js?v=scene-calibration-20261007a';
 import {screenPresentation} from './screen-presentation.js?v=floor4-release-prep-20261006a';
-import {INTERACTIVE_OBJECT_ART} from './interactive-art.js?v=mirpyems-labeled-box-20261016a';
+import {INTERACTIVE_OBJECT_ART} from './interactive-art.js?v=mirpyems-labeled-stone-20261016a';
 import {renderTownDestinations} from './ui/town.js?v=town-art-buttons-20261006a';
 import {renderCharacterScreen as renderCharacterPanel} from './ui/character.js?v=character-renderer-20261006a';
 import {initializeLaunchSplash} from './launch-splash.js?v=standard-mirpworks-splash-20261007a';
