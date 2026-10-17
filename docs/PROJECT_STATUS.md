@@ -1,154 +1,77 @@
 # Project Health Status
 
-Audit date: 2026-10-06  
-Audited baseline: `0ce795a4dcb010bf1a395968f07869f64898388d` (`main` and `origin/main` refs matched at audit start).  
+Audit date: 2026-10-17
+Audit baseline: bd1a2b45c1894130c5aabc6cc1b6a511c605ac88 (main matched origin/main; working tree clean before this pass).
 Live game: [GitHub Pages](https://mirpkered.github.io/why-is-there-a-hole-in-the-middle-of-town/)
 
-## Executive summary
+## Current status
 
-**Overall grade: A — Stable Early Build.** Floors 1–3 are backed by broad deterministic preflight coverage, save recovery and migration checks, and a successful last-confirmed Pages deployment. No critical gameplay, save, or content-validation failure was found in this audit. This rating describes the checked-in implementation and automated coverage; it is not a physical-device certification.
+**Floors 1–3: STABLE by automated checks. Floor 4: QA ONLY (B — Nearly Ready). Floors 5–7: QA ONLY / not release-authored.** No normal floor-cap or save-schema change was made. The only code fix in this audit reuses the existing arched small-door illustration for the distinct Floor 4 “Second Small Door” event.
 
-The canonical preflight passed **69 check groups**, with zero reported content errors, missing registered runtime assets, or stale generated inventories. The game remains a static, single-player GitHub Pages project. Normal play is capped at Floor 3. Floor 4 is still QA-only and is rated **B — Nearly Ready** in its dedicated readiness report; Floors 5–7 are previews, not release content.
+The final canonical preflight passed 107 check groups, including the Second Small Door registration regression. The existing suite covers content validation, all five Dungeon Sets and eight topology IDs, 5,001 playable layouts, 10,000 deep layouts, combat/background continuity, props, save migrations/recovery, Continue, quests, market, Inn, audio routing, and bounded simulations. Extended Floor 4 checks also completed: 50,000 encounter choices, 50,000 loot choices, 10,000 attack choices, 25,000 samples per return model, and 2,400 engine-driven fights.
 
-The largest unresolved risks are real iPhone/browser verification, remaining large image payloads, the size of the central app module, and unplayed end-to-end Floor 4 progression. These do not currently block normal Floors 1–3 play based on automated evidence.
+## System status
 
-## Live game scope
-
-- Playable: Floors 1–3, four classes, turn-based combat and exploration, Town services, equipment and inventory, quests, NPCs, events, market, Inn, achievements, statistics, and settings.
-- QA-only: Floors 1–7 generation and preview controls. The normal playable cap is `CURRENT_PLAYABLE_MAX_FLOOR = 3` in `js/depth-config.js`; Floor 3’s lower stair is sealed.
-- Saves: local browser storage only; saves do not sync between devices. Current save version is 8.
-- Hosting/runtime: static HTML, CSS, and native JavaScript modules on GitHub Pages. No backend, bundler, or runtime framework.
-
-## Stable systems
-
-| Area | Current status and evidence |
-|---|---|
-| Content and local assets | The validator reports no critical errors; every registered runtime asset exists. Generated art/audio reports are fresh. |
-| Dungeon generation | 5,001 playable-depth layouts and 10,000 QA layouts (2,500 each on Floors 4–7) passed deterministic, connectivity, bounds, room, and stair checks. |
-| Save/Continue | Sequential migrations v1–v8, round trips, optional-field repair, corrupt-primary backup recovery, raw-save preservation, storage exceptions, repeated candidate reads, active combat, and Continue error/audio isolation are covered. |
-| Content systems | Regression coverage includes quests and chain graphs, items/equipment, attack eligibility, statuses, market cycles, Inn events, encounter pacing, loot, Town art, and full-tile accessible Town navigation. |
-| Background/art architecture | Exploration and battle registries are separate, variant selection is stable, failed/missing images retain CSS rendering, and Colored/Ink selection shares a resolver. |
-| Normal depth gate | Explicit regression keeps normal descent capped at Floor 3 while QA previews remain bounded and opt-in. |
-
-## Live but needs device verification
-
-- **Mobile layout and touch:** Settings provide large text, reduced motion, high-contrast map, and handedness controls. The viewport includes safe-area support and Town tiles remain full-button targets. The live title screen was inspected at 320×740, 390×844, and 430×932: document width matched viewport width and all primary buttons were 48 px tall. Other screens and physical iPhone behavior were not tested in this browser pass.
-- **iOS audio session:** `audio-session.js` requests the ambient session type when supported and falls back to the existing Web Audio/HTML media paths. Automated tests verify feature detection and routing. Physical Silent-switch behavior, background/foreground resume, and Home Screen standalone behavior still need device checks.
-- **Live deployment:** The live URL loaded to completion in the in-app browser and exposed build tag `town-art-buttons-20261006a`. No browser console errors or warnings appeared during the title-screen check. The latest Pages workflow run could not be freshly queried in this audit.
-
-## Implemented / not yet exposed
-
-- Old Foundations content and scaling support exists for QA Floors 4–7. It does not raise the normal cap.
-- Floor 4 has a distinct room weight profile, six authored events, two depth-gated quest chains, Nell reactions, one-time Town return reaction, a differentiated 12-monster encounter table, deeper loot weights, and a provisional return-risk curve.
-- Floor 4 remains **B — Nearly Ready** pending a real QA expedition through both quest chains and event outcomes, economy/inventory/return/recovery checks, and mobile/browser verification. Release Floors one at a time; Floors 5–7 lack authored release progression.
-- Exploration registry currently has 10 room entries with zero image variants; all use CSS fallbacks. Battle registry has 11 entries including `default`, also with zero image variants and CSS fallback. The receiving architecture is ready; final scene backgrounds are not present.
-- DJ Penguin is registered as a single custom mascot asset for the trivia-generator role. It is not currently part of the game’s playable screens.
-
-## Partial systems and technical debt
-
-- `js/app.js` is still the main screen-routing and event module at roughly 109 KB, down 7.3 KB from the audited baseline. Character/Inventory rendering now lives in `js/ui/character.js`; service, dungeon, and QA rendering remain coupled in the app module.
-- Screen policy metadata is centralized, while the actual render/action dispatch still uses nested branches in `app.js`; a single full route registry does not exist.
-- Image-background registries are ready but empty. Pip Underledger now has an illustrated portrait; other NPC portraits, item illustrations, most interactive-landmark illustrations, and 16 room props use text/CSS fallbacks.
-- Saves are local to one browser/device. No cloud sync or cross-device recovery is implemented.
-- There is no interactive browser/device regression in the canonical Node preflight. Those checks remain a manual release task for mobile-specific changes.
-- Static scan found no `TODO`, `FIXME`, or `HACK` markers in tracked project files and no `eval()`/`new Function()` use in the runtime modules. `app.js` uses `innerHTML` for templates; player/content strings in audited dynamic templates are escaped, while remaining template inputs are controlled definitions/state. Keep this boundary in future UI work.
-
-## Known issues
-
-1. No physical iPhone verification was performed in this audit, including Silent mode, Home Screen launch, background/foreground resume, orientation changes, and service/dungeon touch hit-testing. Browser sizing covered only the live title screen.
-2. Several user-drawn runtime PNGs remain large for mobile delivery. The largest current files include `home-screen-art.png` (about 2.6 MiB; no runtime reference found), `wooden-crate-colored.png` (about 1.7 MiB), `settings-button-colored.png` (about 1.7 MiB after compression), `character-button-colored.png` (about 1.4 MiB), and `statistics-button-colored.png` (about 1.2 MiB). The unreferenced home-screen file is only an orphan candidate; source/user artwork was not deleted.
-3. Floor 4 content has not had a full browser-played expedition. Its automated combat/economy models do not replace playtesting with ordinary gear and realistic resource decisions.
-4. Town character/NPC and item art coverage is intentionally incomplete; fallback presentation remains usable.
-
-## Floor status
-
-| Floors | Status | Notes |
+| System | Status | Evidence and limits |
 |---|---|---|
-| 1–3 | Playable | Normal cap remains 3. Existing rooms, events, encounters, saves, and return paths are covered by preflight. |
-| 4 | QA preview; not unlocked | **B — Nearly Ready.** Six events and two gated chains exist; manual progression, economy/inventory, return/recovery, and device checks are remaining release gates. |
-| 5–7 | QA preview; not authored for release | Generation and shared scaling are verified. No floor-specific event/quest progression or expedition validation. |
+| Dungeon backgrounds | STABLE / needs visual verification | All 40 registered PNGs exist across five sets × eight topology states. Facing-to-openings mapping and generated-cell selection are regression-tested. All 40 PNGs decoded into a contact sheet, and the active set loaded in Chrome at all three requested portrait widths. Physical-device visibility remains unverified. Visual review flagged the Set 5 true-dead-end face/mouth as a possible passage look; its art was left unchanged pending user review. |
+| Floor set assignments | STABLE | Run-seed/floor assignments are deterministic and independent from gameplay RNG; persistence and backward-compatible state are tested. |
+| Combat transition | STABLE by regression | Exploration/combat share the frozen set/topology background; props hide for battle and return after it. Enemy and environment fallback paths are separate in renderer tests. Real image decode timing still needs device verification. |
+| Prop placement | STABLE by deterministic checks | Compatibility, stable layouts, floor anchors, depth scales, viewport bounds, and passage clearance are covered. This is algorithmic validation, not a visual review of every randomized scene. |
+| Quests and events | STABLE by content validator/model tests | IDs, quest graph links/cycles, depth gates, outcomes, rewards, and pre-owned quest-item readiness have coverage. Floor 4 chains/events still need one real expedition through return and reload. |
+| NPCs and art | PARTIAL / fallback allowed | Current NPC registry has five entries: Pip Underledger has custom Mirpyems portrait; Linna Venn, Juniper Dunn, Sal Morrow, and Nell use text/CSS fallbacks. Bowser and DJ Penguin are separately registered mascots. |
+| Loot/equipment/status | STABLE by data and simulation tests | Item references, slots/class rules, stat/effect data, special-item interactions, status ticking/refresh, and loot distributions are checked. Models do not establish subjective balance. |
+| Market and Inn | STABLE by bounded simulation | 10,000 market cycles and 25,000 eligible Inn rests are covered; core stock/buyback limits and all 14 Inn events were observed. |
+| Save / Continue | STABLE by regression | Sequential historical migrations, round trips, active combat, malformed-primary backup recovery, raw recovery retention, storage exceptions, repeated Continue candidates, and over-cap resume are tested. Browser storage behavior remains device-specific. |
+| Audio | STABLE by registry and mock routing | 42 processed tracks are registered and present; all 40 source/master records map to runtime assets. Inn, Store, Statistics, Character, Settings and dungeon pools are present; Quest Board/Achievements are intentionally silent; no runtime SFX tracks are registered. Mock routing and context exit are tested; iOS playback needs device verification. |
+| Main/Town presentation | NO REDESIGN | This pass made no subjective CSS/UI edits. Chrome browser emulation at 320×740, 390×844, and 430×932 found no horizontal overflow, clipped main/Town/dungeon text, or undersized primary movement targets. |
+| Floor 4 readiness | QA ONLY — B, Nearly Ready | Normal cap stays at 3. Six Floor 4 events, two quest chains/four stages, Nell follow-ups, encounter/loot weighting, and the provisional return curve exist. The manual expedition, economy/inventory/return/recovery, and browser/device gates remain. |
+| Floors 5–7 | QA ONLY | Generation and shared scaling are supported; floor-specific release progression and expedition checks are absent. |
 
-Floor 4 readiness details and exact release checklist: [FLOOR_4_7_READINESS.md](FLOOR_4_7_READINESS.md).
+## Art and asset inventory
 
-## Content coverage
+The generated [art inventory](ART_BACKLOG.md) is refreshed from current registries. It separates custom paired/single assets from CSS/text fallbacks and optional missing art.
 
-| Content | Current count |
-|---|---:|
-| Monsters | 12 |
-| Items | 48: 32 equipment, 3 consumables, 9 trade goods, 3 quest items, 1 junk item |
-| Quests | 35 definitions across 12 named chains plus standalone quests |
-| Rooms | 10 |
-| Dungeon events | 26 |
-| NPCs | 5: 3 Town, 2 dungeon |
-| Achievements | 20 |
-| Room props | 28 |
+- All 40 Dungeon Set background paths are registered; their combined PNG payload is about 108.3 MB (largest file about 3.12 MiB). No recompression was done.
+- All currently registered local runtime asset paths pass the validator.
+- Custom room art includes mushroom variants, doors, candle, storage props, camp props, market sign, bookshelves/book stack, paper/record props, warning sign, spoon(s), flowers, and floating water debris. Remaining CSS/text props include altar, abandoned pack, market stall/basket, archive box, and stone debris.
+- Interactive art includes the vending machine, chair/ottoman, chest, snack stand, statue, wishing well, Duck v2, apple core, and the newly wired Second Small Door, which reuses the arched-door pair.
+- Optional equipment/item art remains mostly unillustrated; missing optional art does not block play.
+- Mirpyems credit remains attached to the Pip portrait and Duck v2 and their registered user art.
 
-## Art coverage
+The generated [audio inventory](AUDIO_INVENTORY.md) distinguishes source records, processed runtime files, and registered playback pools. The runtime report currently has no missing files, unmapped sources, or unregistered processed tracks.
 
-The generated inventory is [ART_BACKLOG.md](ART_BACKLOG.md); refresh it with `node tools/art-report.mjs --write`.
+## Needs device/browser verification
 
-- Enemies: all 12 have registered custom art; some use paired Ink/Colored assets and some have a single style asset.
-- Town: all 8 art-led destinations have paired custom assets and accessible labels.
-- Room props: 12 paired custom illustrations; 16 CSS/text fallbacks.
-- NPCs: five registered NPCs use fallback presentation; portraits are optional and absent.
-- Items: all 48 remain playable without item-specific art; item art is optional and absent.
-- DJ Penguin: one custom single-style mascot asset, registered but not presented in gameplay.
-- Exploration/battle backgrounds: registries exist, no image variants are registered; CSS fallback is active.
-- Interactive landmarks: metadata/fallback presentation exists; no final custom illustration set is registered.
+- iPhone Safari and installed-PWA behavior: launch, Silent switch, background/foreground audio, orientation, save/Continue, touch movement, and service/dungeon controls.
+- Viewports 320×740, 390×844, and 430×932 for main/Town/dungeon/combat, including text-large mode, safe areas, overflow, and clipped content.
+- Floor 4 QA expedition through both quest chains, all six events, Town return, economy, defeat/retreat, save/reload, and Continue.
+- Browser image decode/preload cost and image-memory lifecycle. Current dungeon background set assets total about 108.3 MB before browser caching; preloading and device transfer/decode timing merit separate measurement. PNG compression was intentionally left untouched.
 
-## Audio coverage
+## Performance and technical debt
 
-The generated inventory is [AUDIO_INVENTORY.md](AUDIO_INVENTORY.md); refresh with `node tools/audio-report.mjs --write`.
+The preflight and Floor 4 simulations completed successfully, but no controlled startup/Continue/render/movement/combat/save timing benchmark was captured. js/app.js remains a large integration module. No broad refactor or aggressive optimization was made. Continue and combat are designed not to wait for optional audio/enemy asset readiness; test coverage guards their fail-open behavior.
 
-- 42 runtime tracks are registered and present: one battle theme, 18 dungeon tracks, Inn 3, Store 5, Statistics 6, Character 5, and Settings 4.
-- Quest Board and Achievements pools are intentionally empty; silence is supported. There are 40 source/master records, all mapped to runtime files. No standalone runtime SFX tracks are registered; SFX routing/settings infrastructure exists.
-- Location tracks are one-shot and stop on context exit. Dungeon tracks sequence; battle music loops. Pools do not consume gameplay RNG.
-- Ambient iOS audio-session behavior is feature-detected; physical device/Silent-switch behavior still needs verification.
+## Known content/release gaps
 
-## Save and Continue
+1. Floor 4 remains locked until an actual full expedition and mobile/browser pass confirm the authored path and practical economy/return loop.
+2. Floors 5–7 do not have release-ready authored progression.
+3. Four of five NPC portraits are fallback-only; item illustrations, many interactive object illustrations, and several prop drawings remain optional/fallback content.
+4. Physical iPhone and iOS audio behavior remain unverified.
+5. The 40 photorealistic Dungeon Set PNGs total 103.2 MiB on disk; each floor set is 18.7–22.5 MiB and the largest single image is 3.12 MiB. Compression is deferred until framing is approved.
 
-- Current schema: v8; no migration is required for the current presentation registries or QA floor support.
-- The loader validates/migrates a candidate before accepting it, attempts the last valid backup when needed, and preserves raw malformed primary data in a recovery key.
-- Continue reports a player-facing failure instead of silently ignoring load errors, is guarded against repeat activation, and does not wait for audio or optional asset preparation.
-- Over-cap normal saves resume safely in Town while retaining deeper maps/history.
-- The current preflight synthetic Floors 1–7 fixture serialized to 9,069 bytes; a separate fresh-state sample was about 3.5 KB. These fixtures are not a formal save-size maximum.
-- Saves are device-local. See [GAME_STATE.md](GAME_STATE.md) for the actual field groups and migration table.
+## Validation references
 
-## Mobile and accessibility
+- Canonical preflight: node tests/run.mjs.
+- Generated asset inventories: node tools/art-report.mjs --check, node tools/audio-report.mjs --check.
+- Extended local Floor 4 diagnostics: node tools/floor4-release-sim.mjs, node tools/floor4-battle-sim.mjs.
+- Deployment workflow: GitHub Actions “Deploy static site to GitHub Pages”. The last verified run before this audit corresponds to the audit baseline and completed successfully.
+- No claim of subjective visual acceptance is made from automated tests.
 
-Implemented settings include large text, reduced motion, high-contrast map, sprite style, threat-display mode, music/SFX toggles and levels, and touch handedness. Keyboard movement remains W/Up, A/Left, S/Down, D/Right; handedness affects touch controls only. Town art buttons preserve accessible names and full-tile interaction. The live title screen had no horizontal overflow at 320×740, 390×844, or 430×932, and its buttons measured 48 px tall. Service, dungeon, combat, text-large, focus, orientation, and safe-area behavior still need browser/device checks.
+## Top five recommended next steps
 
-## Tests and validation
-
-Command: `node tests/run.mjs`  
-Result: **69 check groups passed.**
-
-Coverage includes syntax, content/assets and generated inventories, save migrations/recovery/Continue, 5,001 playable maps, 10,000 deep maps, 400 deep return/resume routes, 1,440 basic-only deep combat samples, 25,000 encounter decisions and loot selections per representative depth, 25,000 room-weight selections per Old Foundations floor, status and attack pools, four-class stat generation (50,000 each), 50,000 generated names, 10,000 market cycles, 25,000 Inn rest attempts, and UI/audio regressions. These are deterministic/model-based checks; they do not simulate a full expedition or certify browser rendering.
-
-## Deployment
-
-- Baseline: `0ce795a4dcb010bf1a395968f07869f64898388d`; `main` and `origin/main` refs matched when inspected.
-- Live check: URL loaded successfully in the in-app browser, document reached `complete`, and build tag was `town-art-buttons-20261006a`; title-screen console showed no errors or warnings. Prior confirmed Pages workflow for this baseline completed validation and deployment.
-- A fresh GitHub Actions query and fetch could not be completed in this project mirror: `.git` is read-only and outbound Git/network checks were unavailable. No deployment was initiated by this audit.
-
-## Top five priorities
-
-1. **Run a real iPhone/Safari and Home Screen pass.** Verify Continue, orientation, foreground/background resume, touch/focus, 320×740 / 390×844 / 430×932 layouts, and supported Silent-mode behavior.
-2. **Playtest Floor 4 end to end in QA.** Exercise both quest chains, all six events, ordinary gear, healing/Inn costs, inventory capacity, return interruptions, defeat recovery, and save/Continue before considering release.
-3. **Measure the remaining mobile art cost on device.** The targeted lossless pass is complete: 24 of 59 registered PNG derivatives were re-encoded after verifying identical RGBA pixels and dimensions. It saved 1,797,246 bytes (9.5% across the optimized files; about 5.9% of the 29.0 MiB image PNG set). Source files were untouched. No resize was made; decoded pixel counts are unchanged. Browser performance-trace tools and a local preview were unavailable, so real-device transfer/decode timing remains open.
-4. **Continue reducing `app.js` responsibility in bounded slices.** Character/Inventory rendering is the first extracted UI boundary. The app now has one render call for this screen instead of generating and discarding a second legacy view. Service and dungeon boundaries remain candidates for separately tested follow-up slices.
-5. **Close art gaps where they improve play readability.** Highest-impact next illustrations are NPC portraits, item icons, survey/landmark art, and fallback props; none are required for current playability.
-
-## Risk matrix
-
-| Risk | Likelihood | Impact | Current handling |
-|---|---|---|---|
-| iOS/browser-specific Continue, audio, or viewport issue | Medium | High | Automated regressions cover data and routing, but no physical-device run was performed here. |
-| Large runtime image payloads cause slow mobile transfer/decode | Medium | Medium | 24 lossless derivatives saved 1.80 MB; the largest remaining images exceed 1.4 MiB and device timing is unmeasured. |
-| Future refactor causes regressions in central app rendering/routing | Medium | Medium | Character output has focused regression coverage and the full preflight passes; app.js remains a large integration point. |
-| Floor 4 is released before its quest/return/economy loop is field-tested | Medium | High | Cap remains 3; dedicated checklist marks manual QA and mobile verification as release gates. |
-| Local-storage loss or browser/device change loses access to a save | Low–Medium | High | Backup and raw recovery preserve same-browser failures; saves do not sync across devices. |
-
-## Final status
-
-The current Floors 1–3 game is in **A — Stable Early Build** condition by the stated automated and repository evidence. The release cap is intact, the canonical preflight is green, and the deployed title screen loaded at all three checked mobile viewport sizes. Treat physical iPhone behavior and non-title screens as unverified until a real device/browser pass is recorded. Floor 4 remains QA-only and is **B — Nearly Ready**; it must not be unlocked until its authored progression and mobile release checklist are completed.
+1. Complete a real iPhone Safari/PWA pass for launch, audio, touch, save/Continue, and the three target portrait sizes.
+2. Play Floor 4 end to end in QA with ordinary gear, including both quest chains, all six events, return interruptions, defeat recovery, and reload.
+3. Measure Dungeon Set transfer, decode, and memory use on a phone before deciding whether to compress the 40 PNGs.
+4. Capture and review the eight topology types across all five sets in browser screenshots; confirm openings remain visually readable.
+5. Add portraits for Linna Venn, Juniper Dunn, Sal Morrow, and Nell only when user-supplied art is available; maintain fallback behavior meanwhile.

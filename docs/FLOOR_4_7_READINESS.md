@@ -23,7 +23,7 @@
 | Economy and inventory | PARTIAL | Loot and encounter simulations are sampled. No complete player expedition currently models shop/Inn spending, capacity, quest rewards, and return frequency together. |
 | Room/battle backgrounds | OPTIONAL | Current registries and CSS fallback are usable. No Old Foundations-specific background image is needed for release. |
 | Art and audio | OPTIONAL | Existing art, fallback renderers, and dungeon music are serviceable. See wishlists below; neither needs to block a first Floor 4 release. |
-| Mobile/browser | BLOCKED for release | Automated preflight passes, but viewport interaction and QA preview were not visually exercised in a browser/device during this pass. Check 320×740, 390×844, and 430×932 before unlock. |
+| Mobile/browser | NEEDS DEVICE VERIFICATION | Chrome responsive emulation exercised the title, Town, and dungeon at 320×740, 390×844, and 430×932 with no horizontal overflow or clipped text. This does not replace physical iPhone/PWA and full QA-floor expedition checks. |
 
 ## Floor 4 content
 
@@ -47,7 +47,7 @@ Return routes sampled from generated Floor 4 preview states were 30–69 known s
 
 Attack selection was sampled 10,000 times per current monster profile at a representative mid-health state. Basic attacks remained common, while special/status moves appeared often enough to test the deeper attack pool; no move occupied 95% of selections. Some high-cost/situational moves remained uncommon. Floor 4 combat policies should be checked against real resource decisions before release.
 
-In the level-5 battle harness, all 2,400 fights were won across Fighter, Wizard, Rogue, and Cleric, low/average/high starting rolls, and basic/ability/tonic/ability-plus-counter policies. Mean fight length ranged from 2.6 to 10.3 player turns by class/profile/policy; low-roll Wizard and Rogue basic-only fights took the longest (8.5 and 9.3 turns) and retained about 16 HP on average. Tonic policies consumed 0–0.78 tonics per fight in the sampled setups; counter items were available only for matching Poo Gas encounters. This is a level-5 controlled sample; the canonical preflight's separate 1,440 basic-only fights across Floors 4–7 had Floor 4 win rate 93.6%, showing why the richer harness does not replace full-expedition playtesting.
+In the level-5 battle harness, all 2,400 fights were won across Fighter, Wizard, Rogue, and Cleric, low/average/high starting rolls, and basic/ability/tonic/ability-plus-counter policies. Mean fight length ranged from 2.6 to 10.3 player turns by class/profile/policy; low-roll Wizard and Rogue basic-only fights took the longest (8.5 and 9.3 turns) and retained about 16 HP on average. Tonic policies consumed 0–0.78 tonics per fight in the sampled setups; counter items were available only for matching Poo Gas encounters. This is a level-5 controlled sample; the canonical preflight's separate 1,440 basic-only fights across Floors 4–7 had Floor 4 win rate 94.2% (339/360), showing why the richer harness does not replace full-expedition playtesting.
 
 The canonical preflight also reports 10,000 generated layouts across Floors 4–7 (2,500 each), all connected, deterministic, bounded, and with reachable stairs. Keep the 11×11 map: content and weighting create identity without a navigation-size change.
 

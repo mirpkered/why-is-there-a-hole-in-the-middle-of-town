@@ -11,5 +11,6 @@ export const INTERACTIVE_OBJECT_ART=Object.freeze({
   'event:wishing-well':{id:'event:wishing-well',contentId:'wishing-well',kind:'event',creator:'Mirpyems',src:'assets/images/interactive-objects/wishing-well.png',fallback:'css'},
   'event:snack-stand':{id:'event:snack-stand',contentId:'snack-stand',kind:'event',creator:'Mirpyems',src:'assets/images/interactive-objects/snack-table.png',fallback:'css'},
   'event:talking-statue':{id:'event:talking-statue',contentId:'talking-statue',kind:'event',creator:'Mirpyems',src:'assets/images/interactive-objects/talking-statue.png',fallback:'css'},
-  'event:suspicious-chest':{id:'event:suspicious-chest',contentId:'suspicious-chest',kind:'event',creator:'Mirpyems',src:'assets/images/interactive-objects/suspicious-chest.png',fallback:'css'}
+  'event:suspicious-chest':{id:'event:suspicious-chest',contentId:'suspicious-chest',kind:'event',creator:'Mirpyems',src:'assets/images/interactive-objects/suspicious-chest.png',fallback:'css'},
+  'event:second-small-door':{id:'event:second-small-door',contentId:'second-small-door',kind:'event',ink:'assets/images/room-props/arched-small-door-ink.png',colored:'assets/images/room-props/arched-small-door-colored.png',fallback:'css'}
 });

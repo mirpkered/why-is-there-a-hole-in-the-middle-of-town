@@ -497,6 +497,13 @@ check('Mirpyems treasure chest replaces the existing Suspicious Chest event illu
   const css=readFileSync(resolve('css/mechanics.css'),'utf8');assert.match(css,/\.scene-event-object--suspicious-chest\{[^}]*background:transparent/);assert.match(css,/\.scene-event-object--suspicious-chest:before\{display:none\}/,'generic CSS chest should not compete with the supplied drawing');
 });
 
+check('Second Small Door reuses existing arched-door artwork in both sprite styles',()=>{
+  const art=INTERACTIVE_OBJECT_ART['event:second-small-door'];assert.ok(art);assert.equal(art.contentId,'second-small-door');assert.equal(art.ink,'assets/images/room-props/arched-small-door-ink.png');assert.equal(art.colored,'assets/images/room-props/arched-small-door-colored.png');
+  assert.ok(dungeonEvents['second-small-door']);assert.ok(existsSync(resolve(art.ink)));assert.ok(existsSync(resolve(art.colored)));
+  assert.equal(resolveArtVariant(art,'ink').src,art.ink);assert.equal(resolveArtVariant(art,'colored').src,art.colored);
+  const css=readFileSync(resolve('css/mechanics.css'),'utf8');assert.match(css,/\.scene-event-object--second-small-door\{[^}]*background:transparent/);assert.match(css,/\.scene-event-object--second-small-door:before,\.scene-event-object--second-small-door:after\{display:none\}/,'generic CSS door should not compete with the reused illustration');
+});
+
 check('Mirpyems filing cabinet drawing replaces the Municipal Records Room placeholder',()=>{
   const cabinet=props['filing-cabinet'];assert.ok(cabinet);assert.ok(cabinet.rooms.includes('records'));assert.ok(roomTypes.records.visual.propPool.includes('filing-cabinet'));assert.equal(cabinet.creator,'Mirpyems');assert.equal(cabinet.src,'assets/images/room-props/filing-cabinet.png');
   assert.ok(existsSync(resolve('assets/source/room-props/filing-cabinet-original.jpg')),'original scan should remain preserved');
